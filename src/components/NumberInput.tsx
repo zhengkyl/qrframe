@@ -11,7 +11,7 @@ type Props = {
   setValue: (v: number) => void;
 };
 
-export default function NumberInput(props: Props) {
+export function NumberInput(props: Props) {
   const [rawValue, setRawValue] = createSignal(props.value);
 
   const safeSetValue = (value: number) => {
@@ -56,7 +56,7 @@ export default function NumberInput(props: Props) {
         onRawValueChange={safeSetValue}
       >
         <NumberField.Input
-          class="w-20 text-sm rounded-md leading-none px-3 py-2 border border-fore-subtle bg-back-base focus:outline-none"
+          class="w-20 text-sm rounded-md leading-none px-3 py-2 border bg-back-base focus:outline-none"
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
         />

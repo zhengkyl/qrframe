@@ -1,3 +1,3 @@
 # QR Frame
 
-Powered by [`solid-start`](https://start.solidjs.com);
+Powered by [`solid-start`](https://start.solidjs.com).

@@ -7,13 +7,21 @@ export default defineConfig({
     colors: {
       fore: {
         base: "#fafafa",
-        subtle: "#adb5b2",
+        subtle: "#858c8a",
+        border: "#4c4f4e",
       },
       back: {
-        base: "#09090b",
-        subtle: "#2e3130",
+        base: "#0e0f0f",
+        subtle: "#1a1b1c",
+        active: "#27272a",
         hover: "#5b625f",
       },
     },
   },
+  preflights: [
+    {
+      getCSS: ({ theme }) =>
+        `*{--un-default-border-color:${theme.colors.fore.border};}`,
+    },
+  ],
 });
