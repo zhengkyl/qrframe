@@ -4,7 +4,7 @@ import UnoCSS from "unocss/vite";
 import wasmpack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
-  // server: { preset: "" },
+  server: { preset: "vercel" },
   ssr: false,
   vite: {
     build: {
