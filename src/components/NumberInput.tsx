@@ -51,26 +51,26 @@ export function NumberInput(props: Props) {
         </Slider.Track>
       </Slider>
       <NumberField
-        class="relative rounded-md focus-within:(ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
+        class="relative rounded-md focus-within:(ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) hover:bg-fore-base/5"
         minValue={props.min}
         maxValue={props.max}
         rawValue={focused() ? rawValue() : props.value}
         onRawValueChange={safeSetValue}
       >
         <NumberField.Input
-          class="w-20 text-sm rounded-md leading-none px-3 py-2 border bg-back-base focus:outline-none"
+          class="w-20 text-sm rounded-md px-3 py-2 border bg-transparent focus:outline-none "
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
         />
         <NumberField.IncrementTrigger
           aria-label="Increment"
-          class="absolute right-1 top-1 h-3 w-3 bg-back-subtle rounded-t hover:(bg-back-hover)"
+          class="absolute right-1 top-1 h-3 w-3 bg-back-subtle rounded-t hover:(bg-fore-base/10)"
         >
           <ChevronUp size={12} />
         </NumberField.IncrementTrigger>
         <NumberField.DecrementTrigger
           aria-label="Decrement"
-          class="absolute right-1 bottom-1 h-3 w-3 bg-back-subtle rounded-b hover:(bg-back-hover)"
+          class="absolute right-1 bottom-1 h-3 w-3 bg-back-subtle rounded-b hover:(bg-fore-base/10)"
         >
           <ChevronDown size={12} />
         </NumberField.DecrementTrigger>

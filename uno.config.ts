@@ -13,8 +13,6 @@ export default defineConfig({
       back: {
         base: "#0e0f0f",
         subtle: "#1a1b1c",
-        active: "#27272a",
-        hover: "#5b625f",
       },
     },
   },

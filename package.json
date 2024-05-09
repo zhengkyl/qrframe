@@ -11,8 +11,6 @@
     "@solidjs/router": "^0.13.3",
     "@solidjs/start": "^1.0.0-rc.0",
     "@unocss/reset": "^0.59.4",
-    "clsx": "^2.1.1",
-    "fuqr": "^0.1.1",
     "lucide-solid": "^0.378.0",
     "solid-js": "^1.8.17",
     "unocss": "^0.59.4",
@@ -23,6 +21,6 @@
   },
   "devDependencies": {
     "@unocss/transformer-variant-group": "^0.59.4",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite-plugin-wasm-pack": "^0.1.12"
   }
 }

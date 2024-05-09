@@ -1,26 +1,32 @@
 import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
+import { clientOnly } from "@solidjs/start";
+import init, { ECL, FinderPattern, Mode } from "fuqr";
+
 import { ButtonGroup, ButtonGroupItem } from "~/components/ButtonGroup";
 import { ModeTextInput } from "~/components/ModeTextInput";
 import { NumberInput } from "~/components/NumberInput";
-import { ECL, FinderPattern, Mode } from "fuqr";
-import QRCode, { min_version } from "~/components/QRCode";
 import { ColorInput } from "~/components/ColorInput";
+import { min_version } from "../components/QRCode";
 
-const ECL_VALUE = {
-  Low: ECL.Low,
-  Medium: ECL.Medium,
-  Quartile: ECL.Quartile,
-  High: ECL.High,
-};
-
-const MODE_NAME = {
-  [Mode.Numeric]: "Numeric",
-  [Mode.Alphanumeric]: "Alphanumeric",
-  [Mode.Byte]: "Byte",
-};
+const QRCode = clientOnly(async () => {
+  await init();
+  return import("../components/QRCode");
+});
 
 export default function Home() {
-  const [version, setVersion] = createSignal(1);
+  const ECL_VALUE = {
+    Low: ECL.Low,
+    Medium: ECL.Medium,
+    Quartile: ECL.Quartile,
+    High: ECL.High,
+  };
+
+  const MODE_NAME = {
+    [Mode.Numeric]: "Numeric",
+    [Mode.Alphanumeric]: "Alphanumeric",
+    [Mode.Byte]: "Byte",
+  };
+  const [minVersion, setMinVersion] = createSignal(1);
   const [margin, setMargin] = createSignal(2);
   const [ecl, setEcl] = createSignal<keyof typeof ECL_VALUE>("Low");
   const [mask, setMask] = createSignal("0");
@@ -37,8 +43,8 @@ export default function Home() {
   const [mode, setMode] = createSignal(Mode.Byte);
 
   // TODO TEMPORARY FIX TO PREVENT CRASHING UNTIL I ADD SIZE ADJUSTMENT TO FUQR
-  const min_v = createMemo(() =>
-    min_version(input(), mode(), version(), ECL_VALUE[ecl()])
+  const version = createMemo(() =>
+    min_version(input(), mode(), minVersion(), ECL_VALUE[ecl()])
   );
 
   const valid_mode = createMemo(() => {
@@ -85,12 +91,12 @@ export default function Home() {
             mode={MODE_NAME[mode()]}
             setMode={setMode}
           />
-          <Row title="Version">
+          <Row title="Min version">
             <NumberInput
               min={1}
               max={40}
-              value={version()}
-              setValue={setVersion}
+              value={minVersion()}
+              setValue={setMinVersion}
             />
           </Row>
           <Row title="Error correction">
@@ -169,21 +175,19 @@ export default function Home() {
         </div>
         <div class="flex-1 min-w-200px">
           <Show
-            when={valid_mode() && min_v() < 41}
+            when={valid_mode() && version() < 41}
             fallback={
-              valid_mode() ? (
-                <span>Data exceeds max capacity</span>
-              ) : (
-                <span>
-                  Text cannot be encoded using {MODE_NAME[mode()]} mode
-                </span>
-              )
+              <div class="aspect-[1/1] border rounded-md flex justify-center items-center">
+                {valid_mode()
+                  ? "Data exceeds max capacity"
+                  : `Input cannot be encoded using ${MODE_NAME[mode()]} mode`}
+              </div>
             }
           >
             <QRCode
               input={input()}
               mode={mode()}
-              version={min_v()}
+              version={version()}
               ecl={ECL_VALUE[ecl()]}
               mask={parseInt(mask())}
               finderPattern={parseInt(finderPattern())}
@@ -204,7 +208,7 @@ function Row(props: { title: string; children: JSX.Element }) {
   // clicking <label/> sometimes selects first button
   return (
     <div class="flex items-center">
-      <span class="w-50 text-left">{props.title}</span>
+      <span class="w-40 text-left text-sm">{props.title}</span>
       {props.children}
     </div>
   );

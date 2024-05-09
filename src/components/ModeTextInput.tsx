@@ -16,8 +16,14 @@ export function ModeTextInput(props: Props) {
   const onInput = debounce(props.setInput, 500);
   return (
     <div class="flex flex-col gap-2">
+      <textarea
+        class="bg-back-subtle min-h-[80px] px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
+        value={props.input}
+        onInput={(e) => onInput(e.target.value)}
+        onChange={(e) => props.setInput(e.target.value)}
+      ></textarea>
       <div class="flex justify-between items-center">
-        <span>Segment 1</span>
+        <span class="text-sm">Encoding</span>
         <Select
           value={props.mode}
           onChange={(v) =>
@@ -27,7 +33,7 @@ export function ModeTextInput(props: Props) {
           options={["Numeric", "Alphanumeric", "Byte"]}
           itemComponent={(itemProps) => (
             <Select.Item
-              class="flex justify-between items-center pl-2 pr-1 py-2 rounded select-none data-[highlighted]:(bg-back-active outline-none)"
+              class="flex justify-between items-center pl-2 pr-1 py-2 rounded select-none data-[highlighted]:(bg-fore-base/10 outline-none)"
               item={itemProps.item}
             >
               <Select.Label>{itemProps.item.rawValue}</Select.Label>
@@ -37,7 +43,7 @@ export function ModeTextInput(props: Props) {
             </Select.Item>
           )}
         >
-          <Select.Trigger class="w-full inline-flex justify-between items-center rounded-md border pl-3 pr-2 py-2 focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)">
+          <Select.Trigger class="leading-tight w-full inline-flex justify-between items-center rounded-md border pl-3 pr-2 py-2 focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) hover:bg-fore-base/5">
             <Select.Value>
               {(state) => state.selectedOption() as string}
             </Select.Value>
@@ -52,12 +58,6 @@ export function ModeTextInput(props: Props) {
           </Select.Portal>
         </Select>
       </div>
-      <textarea
-        class="bg-back-subtle min-h-[80px] px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
-        value={props.input}
-        onInput={(e) => onInput(e.target.value)}
-        onChange={(e) => props.setInput(e.target.value)}
-      ></textarea>
     </div>
   );
 }

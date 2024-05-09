@@ -1,0 +1,12 @@
+{
+  "name": "fuqr",
+  "version": "0.1.0",
+  "files": [
+    "fuqr_bg.wasm",
+    "fuqr.js",
+    "fuqr.d.ts"
+  ],
+  "module": "fuqr.js",
+  "types": "fuqr.d.ts",
+  "sideEffects": false
+}
