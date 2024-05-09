@@ -30,7 +30,7 @@ type ItemProps = {
 export function ButtonGroupItem(props: ItemProps) {
   return (
     <ToggleGroup.Item
-      class="w-8 h-8 border-l first:(border-none rounded-l-md) last:rounded-r-md text-fore-subtle aria-pressed:(bg-back-active text-fore-base) hover:bg-back-active"
+      class="px-3 min-w-8 h-8 border-l first:(border-none rounded-l-md) last:rounded-r-md text-fore-subtle aria-pressed:(bg-back-active text-fore-base) hover:bg-back-active"
       value={props.value}
       aria-label={props.value ?? props.ariaLabel}
       title={props.title ? props.value ?? props.ariaLabel : undefined}

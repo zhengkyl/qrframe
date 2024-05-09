@@ -1,5 +1,5 @@
 {
-  "name": "example-with-unocss",
+  "name": "qrframe",
   "type": "module",
   "scripts": {
     "dev": "vinxi dev",
@@ -12,6 +12,7 @@
     "@solidjs/start": "^1.0.0-rc.0",
     "@unocss/reset": "^0.59.4",
     "clsx": "^2.1.1",
+    "fuqr": "^0.1.1",
     "lucide-solid": "^0.378.0",
     "solid-js": "^1.8.17",
     "unocss": "^0.59.4",
@@ -21,6 +22,7 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "@unocss/transformer-variant-group": "^0.59.4"
+    "@unocss/transformer-variant-group": "^0.59.4",
+    "vite-plugin-wasm": "^3.3.0"
   }
 }

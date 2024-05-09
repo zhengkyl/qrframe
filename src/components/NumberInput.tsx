@@ -7,6 +7,7 @@ import { createSignal } from "solid-js";
 type Props = {
   min: number;
   max: number;
+  step?: number;
   value: number;
   setValue: (v: number) => void;
 };
@@ -33,6 +34,7 @@ export function NumberInput(props: Props) {
     <div class="flex items-center gap-4 w-full">
       <Slider
         class="w-full"
+        step={props.step}
         minValue={props.min}
         maxValue={props.max}
         value={[props.value]}
