@@ -5,7 +5,6 @@ import wasmpack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
   server: { preset: "vercel" },
-  ssr: false,
   vite: {
     build: {
       target: "esnext",

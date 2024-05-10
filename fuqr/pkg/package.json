@@ -6,6 +6,7 @@
     "fuqr.js",
     "fuqr.d.ts"
   ],
+  "type": "module",
   "module": "fuqr.js",
   "types": "fuqr.d.ts",
   "sideEffects": false
