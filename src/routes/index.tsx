@@ -1,30 +1,35 @@
 import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
 import { clientOnly } from "@solidjs/start";
-import init, { ECL, FinderPattern, Mode } from "fuqr";
+import init, { ECL, FinderPattern, Mode, Module } from "fuqr";
 
 import { ButtonGroup, ButtonGroupItem } from "~/components/ButtonGroup";
 import { ModeTextInput } from "~/components/ModeTextInput";
 import { NumberInput } from "~/components/NumberInput";
 import { ColorInput } from "~/components/ColorInput";
+import { ToggleButton } from "~/components/Button";
+import { createStore } from "solid-js/store";
 
 const QRCode = clientOnly(async () => {
   await init();
   return import("../components/QRCode");
 });
 
-export default function Home() {
-  const ECL_VALUE = {
-    Low: ECL.Low,
-    Medium: ECL.Medium,
-    Quartile: ECL.Quartile,
-    High: ECL.High,
-  };
+const ECL_VALUE = {
+  Low: ECL.Low,
+  Medium: ECL.Medium,
+  Quartile: ECL.Quartile,
+  High: ECL.High,
+};
 
-  const MODE_NAME = {
-    [Mode.Numeric]: "Numeric",
-    [Mode.Alphanumeric]: "Alphanumeric",
-    [Mode.Byte]: "Byte",
-  };
+const MODE_NAME = {
+  [Mode.Numeric]: "Numeric",
+  [Mode.Alphanumeric]: "Alphanumeric",
+  [Mode.Byte]: "Byte",
+};
+
+const MODULES = ["Data", "Finder", "Alignment", "Timing", "Format", "Version"];
+
+export default function Home() {
   const [minVersion, setMinVersion] = createSignal(1);
   const [margin, setMargin] = createSignal(2);
   const [ecl, setEcl] = createSignal<keyof typeof ECL_VALUE>("Low");
@@ -40,6 +45,10 @@ export default function Home() {
 
   const [input, setInput] = createSignal("Greetings traveler");
   const [mode, setMode] = createSignal(Mode.Byte);
+
+  const [renderedPixels, setRenderedPixels] = createStore(
+    MODULES.map(() => true)
+  );
 
   // TODO TEMPORARY FIX TO PREVENT CRASHING UNTIL I ADD SIZE ADJUSTMENT TO FUQR
   const version = createMemo(() =>
@@ -83,9 +92,9 @@ export default function Home() {
     <main class="text-center max-w-screen-lg mx-auto my-16 p-4">
       <div class="flex gap-4 flex-wrap">
         <div class="flex flex-col gap-2 flex-1">
-          {/* <textarea class="bg-back-subtle min-h-[80px] px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"></textarea> */}
           <ModeTextInput
-            input={input()}
+            // textarea does not have a controlled value, input is only default value
+            input={"Greetings travelers"}
             setInput={setInput}
             mode={MODE_NAME[mode()]}
             setMode={setMode}
@@ -171,6 +180,24 @@ export default function Home() {
           <Row title="Background">
             <ColorInput color={background()} setColor={setBackground} />
           </Row>
+
+          <div class="flex mt-2">
+            <span class="w-30 text-left text-sm flex-shrink-0">
+              Rendered pixels
+            </span>
+            <div class="flex flex-wrap gap-2 text-sm leading-tight">
+              <For each={renderedPixels}>
+                {(value, i) => (
+                  <ToggleButton
+                    value={value}
+                    onClick={() => setRenderedPixels(i(), !value)}
+                  >
+                    {MODULES[i()]}
+                  </ToggleButton>
+                )}
+              </For>
+            </div>
+          </div>
         </div>
         <div class="flex-1 min-w-200px">
           <Show
@@ -195,6 +222,7 @@ export default function Home() {
               moduleSize={moduleScale()}
               foreground={foreground()}
               background={background()}
+              renderedPixels={renderedPixels}
             />
           </Show>
         </div>
@@ -207,7 +235,7 @@ function Row(props: { title: string; children: JSX.Element }) {
   // clicking <label/> sometimes selects first button
   return (
     <div class="flex items-center">
-      <span class="w-40 text-left text-sm">{props.title}</span>
+      <span class="w-30 text-left text-sm flex-shrink-0">{props.title}</span>
       {props.children}
     </div>
   );

@@ -10,13 +10,19 @@ export default function QRCode(props: any) {
       .ecl(props.ecl)
       .mask(new Mask(props.mask))
       .mode(props.mode);
-    const renderOptions = new RenderOptions()
+    let renderOptions = new RenderOptions()
       .finder_pattern(props.finderPattern)
       .finder_roundness(props.finderRoundness)
       .margin(props.margin)
       .module_size(props.moduleSize)
       .foreground(props.foreground)
       .background(props.background);
+
+    props.renderedPixels.forEach((v: boolean, i: number) => {
+      if (!v) {
+        renderOptions = renderOptions.toggle_render_type(1 + 2 * i);
+      }
+    });
 
     return get_svg(props.input, svgOptions, renderOptions);
   };

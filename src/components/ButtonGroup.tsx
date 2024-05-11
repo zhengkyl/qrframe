@@ -2,7 +2,7 @@ import { ToggleGroup } from "@kobalte/core/toggle-group";
 import { type JSX } from "solid-js";
 
 type Props = {
-  value: string;
+  value?: string;
   setValue: (v: string) => void;
   children: JSX.Element;
 };
@@ -11,7 +11,6 @@ export function ButtonGroup(props: Props) {
   return (
     <ToggleGroup
       class="border rounded-md flex"
-      defaultValue={props.value}
       value={props.value}
       onChange={(v) => v && props.setValue(v)}
     >
