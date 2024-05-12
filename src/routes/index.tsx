@@ -1,6 +1,6 @@
 import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
 import { clientOnly } from "@solidjs/start";
-import init, { ECL, FinderPattern, Mode, Module } from "fuqr";
+import init, { ECL, FinderPattern, Mode } from "fuqr";
 
 import { ButtonGroup, ButtonGroupItem } from "~/components/ButtonGroup";
 import { ModeTextInput } from "~/components/ModeTextInput";
@@ -8,6 +8,7 @@ import { NumberInput } from "~/components/NumberInput";
 import { ColorInput } from "~/components/ColorInput";
 import { ToggleButton } from "~/components/Button";
 import { createStore } from "solid-js/store";
+import { Switch } from "~/components/Switch";
 
 const QRCode = clientOnly(async () => {
   await init();
@@ -49,6 +50,8 @@ export default function Home() {
   const [renderedPixels, setRenderedPixels] = createStore(
     MODULES.map(() => true)
   );
+
+  const [invertSVG, setInvertSVG] = createSignal(false);
 
   // TODO TEMPORARY FIX TO PREVENT CRASHING UNTIL I ADD SIZE ADJUSTMENT TO FUQR
   const version = createMemo(() =>
@@ -93,8 +96,6 @@ export default function Home() {
       <div class="flex gap-4 flex-wrap">
         <div class="flex flex-col gap-2 flex-1">
           <ModeTextInput
-            // textarea does not have a controlled value, input is only default value
-            input={"Greetings travelers"}
             setInput={setInput}
             mode={MODE_NAME[mode()]}
             setMode={setMode}
@@ -181,7 +182,7 @@ export default function Home() {
             <ColorInput color={background()} setColor={setBackground} />
           </Row>
 
-          <div class="flex mt-2">
+          <div class="flex my-2">
             <span class="w-30 text-left text-sm flex-shrink-0">
               Rendered pixels
             </span>
@@ -198,6 +199,10 @@ export default function Home() {
               </For>
             </div>
           </div>
+
+          <Row title="Render negative">
+            <Switch value={invertSVG()} setValue={setInvertSVG} />
+          </Row>
         </div>
         <div class="flex-1 min-w-200px">
           <Show
@@ -223,6 +228,7 @@ export default function Home() {
               foreground={foreground()}
               background={background()}
               renderedPixels={renderedPixels}
+              invertSVG={invertSVG()}
             />
           </Show>
         </div>

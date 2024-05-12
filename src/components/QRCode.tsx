@@ -1,16 +1,16 @@
-import { Mask, RenderOptions, SvgOptions, Version, get_svg } from "fuqr";
+import { QrOptions, SvgOptions, Version, get_svg } from "fuqr";
 
 import { FlatButton } from "~/components/Button";
 import Download from "lucide-solid/icons/download";
 
 export default function QRCode(props: any) {
   const svg = () => {
-    const svgOptions = new SvgOptions()
+    const qrOptions = new QrOptions()
       .version(new Version(props.version))
       .ecl(props.ecl)
-      .mask(new Mask(props.mask))
+      .mask(props.mask)
       .mode(props.mode);
-    let renderOptions = new RenderOptions()
+    let svgOptions = new SvgOptions()
       .finder_pattern(props.finderPattern)
       .finder_roundness(props.finderRoundness)
       .margin(props.margin)
@@ -20,11 +20,15 @@ export default function QRCode(props: any) {
 
     props.renderedPixels.forEach((v: boolean, i: number) => {
       if (!v) {
-        renderOptions = renderOptions.toggle_render_type(1 + 2 * i);
+        svgOptions = svgOptions.toggle_render_modules(1 + 2 * i);
       }
     });
 
-    return get_svg(props.input, svgOptions, renderOptions);
+    if (props.invertSVG) {
+      svgOptions = svgOptions.toggle_invert_modules();
+    }
+
+    return get_svg(props.input, qrOptions, svgOptions);
   };
 
   function download(href: string, name: string) {

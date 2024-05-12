@@ -5,11 +5,12 @@ import wasmpack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
   server: { preset: "vercel" },
+  ssr: false,
   vite: {
     build: {
       target: "esnext",
     },
-    plugins: [UnoCSS(), wasmpack(["./fuqr"])],
+    plugins: [UnoCSS(), wasmpack([], ["fuqr"])],
     resolve: {
       alias: {
         // https://christopher.engineering/en/blog/lucide-icons-with-vite-dev-server/

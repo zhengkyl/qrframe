@@ -7,22 +7,19 @@ const MODE_VALUE = {
   Byte: 2,
 };
 type Props = {
-  input: string;
   mode: string;
   setInput: (i: string) => void;
   setMode: (m: number) => void;
 };
 export function ModeTextInput(props: Props) {
-  const onInput = debounce(props.setInput, 500);
+  const onInput = debounce(props.setInput, 300);
   return (
     <div class="flex flex-col gap-2">
       <textarea
         class="bg-back-subtle min-h-[80px] px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
         onInput={(e) => onInput(e.target.value)}
         onChange={(e) => props.setInput(e.target.value)}
-      >
-        {props.input}
-      </textarea>
+      ></textarea>
       <div class="flex justify-between items-center">
         <span class="text-sm">Encoding</span>
         <Select

@@ -14,7 +14,7 @@ export default function App() {
       <footer class="text-sm text-center p-4">
         made with ⬛⬜ by{" "}
         <a
-          class="font-semibold hover:text-fore-base/80"
+          class="font-semibold hover:text-fore-base/80 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
           href="https://kylezhe.ng"
           target="_blank"
         >
