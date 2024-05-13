@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
+import { For, Show, batch, createMemo, createSignal, type JSX } from "solid-js";
 import { clientOnly } from "@solidjs/start";
 import init, { ECL, FinderPattern, Mode } from "fuqr";
 
@@ -6,9 +6,10 @@ import { ButtonGroup, ButtonGroupItem } from "~/components/ButtonGroup";
 import { ModeTextInput } from "~/components/ModeTextInput";
 import { NumberInput } from "~/components/NumberInput";
 import { ColorInput } from "~/components/ColorInput";
-import { ToggleButton } from "~/components/Button";
+import { FlatButton, ToggleButton } from "~/components/Button";
 import { createStore } from "solid-js/store";
 import { Switch } from "~/components/Switch";
+import { ImageInput } from "~/components/ImageInput";
 
 const QRCode = clientOnly(async () => {
   await init();
@@ -43,6 +44,7 @@ export default function Home() {
 
   const [foreground, setForeground] = createSignal("#000000");
   const [background, setBackground] = createSignal("#ffffff");
+  const [image, setImage] = createSignal(null);
 
   const [input, setInput] = createSignal("Greetings traveler");
   const [mode, setMode] = createSignal(Mode.Byte);
@@ -51,7 +53,8 @@ export default function Home() {
     MODULES.map(() => true)
   );
 
-  const [invertSVG, setInvertSVG] = createSignal(false);
+  const [invert, setInvert] = createSignal(false);
+  const [negative, setNegative] = createSignal(false);
 
   // TODO TEMPORARY FIX TO PREVENT CRASHING UNTIL I ADD SIZE ADJUSTMENT TO FUQR
   const version = createMemo(() =>
@@ -92,7 +95,7 @@ export default function Home() {
   });
 
   return (
-    <main class="text-center max-w-screen-lg mx-auto my-16 p-4">
+    <main class="text-center max-w-screen-lg mx-auto p-4">
       <div class="flex gap-4 flex-wrap">
         <div class="flex flex-col gap-2 flex-1">
           <ModeTextInput
@@ -166,7 +169,7 @@ export default function Home() {
               setValue={setMargin}
             />
           </Row>
-          <Row title="Data pixel scale">
+          <Row title="Data pixel scale" sparkle>
             <NumberInput
               min={0}
               max={2}
@@ -177,31 +180,48 @@ export default function Home() {
           </Row>
           <Row title="Foreground">
             <ColorInput color={foreground()} setColor={setForeground} />
+            <FlatButton
+              class="text-sm px-2 py-2"
+              onMouseDown={() => {
+                batch(() => {
+                  let tmp = foreground();
+                  setForeground(background());
+                  setBackground(tmp);
+                });
+              }}
+            >
+              Swap
+            </FlatButton>
           </Row>
           <Row title="Background">
-            <ColorInput color={background()} setColor={setBackground} />
+            <div class="flex flex-col items-start gap-1">
+              <ColorInput color={background()} setColor={setBackground} />
+              <ImageInput value={image()} setValue={setImage} />
+            </div>
           </Row>
-
-          <div class="flex my-2">
-            <span class="w-30 text-left text-sm flex-shrink-0">
-              Rendered pixels
-            </span>
+          <Row title="Render options" sparkle>
+            <div class="flex gap-8">
+              <Switch value={invert()} setValue={setInvert} label="Invert" />
+              <Switch
+                value={negative()}
+                setValue={setNegative}
+                label="Negative"
+              />
+            </div>
+          </Row>
+          <Row title="Visible pixels">
             <div class="flex flex-wrap gap-2 text-sm leading-tight">
               <For each={renderedPixels}>
                 {(value, i) => (
                   <ToggleButton
                     value={value}
-                    onClick={() => setRenderedPixels(i(), !value)}
+                    onMouseDown={() => setRenderedPixels(i(), !value)}
                   >
                     {MODULES[i()]}
                   </ToggleButton>
                 )}
               </For>
             </div>
-          </div>
-
-          <Row title="Render negative">
-            <Switch value={invertSVG()} setValue={setInvertSVG} />
           </Row>
         </div>
         <div class="flex-1 min-w-200px">
@@ -227,8 +247,10 @@ export default function Home() {
               moduleSize={moduleScale()}
               foreground={foreground()}
               background={background()}
+              backgroundImage={image()}
               renderedPixels={renderedPixels}
-              invertSVG={invertSVG()}
+              invert={invert()}
+              negative={negative()}
             />
           </Show>
         </div>
@@ -237,11 +259,40 @@ export default function Home() {
   );
 }
 
-function Row(props: { title: string; children: JSX.Element }) {
+function Row(props: {
+  title: string;
+  children: JSX.Element;
+  sparkle?: boolean;
+}) {
   // clicking <label/> sometimes selects first button
   return (
-    <div class="flex items-center">
-      <span class="w-30 text-left text-sm flex-shrink-0">{props.title}</span>
+    <div class="flex gap-2">
+      <Show when={props.sparkle}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 29 29"
+          class="w-5 h-5 absolute -translate-x-full mt-2"
+        >
+          <path
+            d="M14.6 5.8c.5 0 .8 7.4 1.2 7.8.4.4 7.9.5 7.9 1 0 .6-7.5.9-7.8 1.3-.4.4-.5 7.8-1 7.9-.6 0-1-7.5-1.3-7.9-.4-.4-7.9-.5-7.9-1 0-.6 7.5-.9 7.9-1.3.3-.4.4-7.8 1-7.8z"
+            style="fill:#fca4a4"
+            class="animate-pulse"
+          />
+          <path
+            d="M25.5 7.5c.1.3-2.3.6-2.4.8-.2.2-.3 2.6-.5 2.7-.3 0-.5-2.3-.7-2.5-.3-.2-2.7-.2-2.8-.5 0-.2 2.3-.5 2.5-.7.2-.2.2-2.7.5-2.7.2 0 .5 2.3.7 2.4.2.2 2.7.3 2.7.5z"
+            style="fill:#fca4a4"
+            class="animate-pulse"
+          />
+          <path
+            d="M11.3 21.9c0 .3-3 .1-3.2.3-.2.3 0 3.2-.3 3.2s-.1-3-.4-3.2c-.2-.2-3 0-3-.3s2.8-.1 3-.3c.3-.3 0-3.2.4-3.2.3 0 .1 3 .3 3.2.3.2 3.2 0 3.2.3z"
+            style="fill:#fca4a4"
+            class="animate-pulse"
+          />
+        </svg>
+      </Show>
+      <span class="w-30 py-2 text-left text-sm flex-shrink-0">
+        {props.title}
+      </span>
       {props.children}
     </div>
   );

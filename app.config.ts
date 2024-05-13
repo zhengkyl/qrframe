@@ -5,11 +5,8 @@ import wasmpack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
   server: { preset: "vercel" },
-  ssr: false,
+  ssr: true,
   vite: {
-    build: {
-      target: "esnext",
-    },
     plugins: [UnoCSS(), wasmpack([], ["fuqr"])],
     resolve: {
       alias: {

@@ -18,8 +18,8 @@ dependencies:
     specifier: ^0.59.4
     version: 0.59.4
   fuqr:
-    specifier: ^0.0.1
-    version: 0.0.1
+    specifier: ^0.0.4
+    version: 0.0.4
   lucide-solid:
     specifier: ^0.378.0
     version: 0.378.0(solid-js@1.8.17)
@@ -38,8 +38,8 @@ devDependencies:
     specifier: ^0.59.4
     version: 0.59.4
   vite-plugin-wasm-pack:
-    specifier: 0.1.11
-    version: 0.1.11
+    specifier: ^0.1.12
+    version: 0.1.12
 
 packages:
 
@@ -3064,8 +3064,8 @@ packages:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
     dev: false
 
-  /fuqr@0.0.1:
-    resolution: {integrity: sha512-2Mwbm6Ejn+iNt/KSbr4DYVHZTwoSc4ojbHcjPFCl6QKHworXWrPtk359zQ1f8a+BzvhiKzXkUO3DWYeQJJoX9w==}
+  /fuqr@0.0.4:
+    resolution: {integrity: sha512-AgqlAHY6tq8Uxd3w78Mu/pa6MNadNTIDuLPdUq6rbyXZBvW+8PKcXL0F4Ur+E9cXQUhkDuHoXcQ9NWytPYJaFw==}
     dev: false
 
   /gauge@3.0.2:
@@ -5120,8 +5120,8 @@ packages:
       - supports-color
     dev: false
 
-  /vite-plugin-wasm-pack@0.1.11:
-    resolution: {integrity: sha512-eImq3bVNUXd2MAjz9WztqLSKabvWf6/7x2KDJdPYYqQncDOo7IqvuSvQiGW+8ihRgbI3uQuzqAL5AG4vAoHcEg==}
+  /vite-plugin-wasm-pack@0.1.12:
+    resolution: {integrity: sha512-WliYvQp9HXluir4OKGbngkcKxtYtifU11cqLurRRJGsl770Sjr1iIkp5RuvU3IC1poT4A57Z2/YgAKI2Skm7ZA==}
     dependencies:
       chalk: 4.1.2
       fs-extra: 10.1.0
