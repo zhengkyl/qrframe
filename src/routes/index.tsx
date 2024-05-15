@@ -44,7 +44,9 @@ export default function Home() {
 
   const [foreground, setForeground] = createSignal("#000000");
   const [background, setBackground] = createSignal("#ffffff");
-  const [image, setImage] = createSignal(null);
+  const [backgroundImage, setBackgroundImage] = createSignal(null);
+  const [logoImage, setLogoImage] = createSignal(null);
+  const [logoSize, setLogoSize] = createSignal(7);
 
   const [input, setInput] = createSignal("Greetings traveler");
   const [mode, setMode] = createSignal(Mode.Byte);
@@ -196,7 +198,10 @@ export default function Home() {
           <Row title="Background">
             <div class="flex flex-col items-start gap-1">
               <ColorInput color={background()} setColor={setBackground} />
-              <ImageInput value={image()} setValue={setImage} />
+              <ImageInput
+                value={backgroundImage()}
+                setValue={setBackgroundImage}
+              />
             </div>
           </Row>
           <Row title="Render options" sparkle>
@@ -223,6 +228,18 @@ export default function Home() {
               </For>
             </div>
           </Row>
+          <Row title="Logo">
+            <div class="flex flex-col gap-1 w-full">
+              <ImageInput value={logoImage()} setValue={setLogoImage} />
+              <NumberInput
+                min={1}
+                max={version() * 4 + 11}
+                step={1}
+                value={logoSize()}
+                setValue={setLogoSize}
+              />
+            </div>
+          </Row>
         </div>
         <div class="flex-1 min-w-200px">
           <Show
@@ -247,7 +264,9 @@ export default function Home() {
               moduleSize={moduleScale()}
               foreground={foreground()}
               background={background()}
-              backgroundImage={image()}
+              backgroundImage={backgroundImage()}
+              logoImage={logoImage()}
+              logoSize={logoSize()}
               renderedPixels={renderedPixels}
               invert={invert()}
               negative={negative()}
