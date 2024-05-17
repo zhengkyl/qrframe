@@ -40,11 +40,13 @@ export default function Home() {
     FinderPattern.Square.toString()
   );
   const [finderRoundness, setFinderRoundness] = createSignal(0);
-  const [moduleScale, setModuleScale] = createSignal(1);
+  const [fgModuleScale, setFgModuleScale] = createSignal(1);
+  const [bgModuleScale, setBgModuleScale] = createSignal(0);
 
   const [foreground, setForeground] = createSignal("#000000");
   const [background, setBackground] = createSignal("#ffffff");
   const [backgroundImage, setBackgroundImage] = createSignal(null);
+  const [pixelate, setPixelate] = createSignal(false);
   const [logoImage, setLogoImage] = createSignal(null);
   const [logoSize, setLogoSize] = createSignal(7);
 
@@ -54,9 +56,11 @@ export default function Home() {
   const [renderedPixels, setRenderedPixels] = createStore(
     MODULES.map(() => true)
   );
+  const [scaledPixels, setScaledPixels] = createStore(MODULES.map(() => true));
 
   const [invert, setInvert] = createSignal(false);
-  const [negative, setNegative] = createSignal(false);
+  const [finderForeground, setFinderForeground] = createSignal(false);
+  const [finderBackground, setFinderBackground] = createSignal(false);
 
   // TODO TEMPORARY FIX TO PREVENT CRASHING UNTIL I ADD SIZE ADJUSTMENT TO FUQR
   const version = createMemo(() =>
@@ -171,13 +175,22 @@ export default function Home() {
               setValue={setMargin}
             />
           </Row>
-          <Row title="Data pixel scale" sparkle>
+          <Row title="Foreground pixel scale" sparkle>
             <NumberInput
               min={0}
               max={2}
               step={0.05}
-              value={moduleScale()}
-              setValue={setModuleScale}
+              value={fgModuleScale()}
+              setValue={setFgModuleScale}
+            />
+          </Row>
+          <Row title="Background pixel scale">
+            <NumberInput
+              min={0}
+              max={2}
+              step={0.05}
+              value={bgModuleScale()}
+              setValue={setBgModuleScale}
             />
           </Row>
           <Row title="Foreground">
@@ -202,15 +215,25 @@ export default function Home() {
                 value={backgroundImage()}
                 setValue={setBackgroundImage}
               />
+              <Switch
+                value={pixelate()}
+                setValue={setPixelate}
+                label="Disable smoothing"
+              />
             </div>
           </Row>
           <Row title="Render options" sparkle>
             <div class="flex gap-8">
               <Switch value={invert()} setValue={setInvert} label="Invert" />
               <Switch
-                value={negative()}
-                setValue={setNegative}
-                label="Negative"
+                value={finderBackground()}
+                setValue={setFinderBackground}
+                label="Finder BG"
+              />
+              <Switch
+                value={finderForeground()}
+                setValue={setFinderForeground}
+                label="Finder FG"
               />
             </div>
           </Row>
@@ -221,6 +244,20 @@ export default function Home() {
                   <ToggleButton
                     value={value}
                     onMouseDown={() => setRenderedPixels(i(), !value)}
+                  >
+                    {MODULES[i()]}
+                  </ToggleButton>
+                )}
+              </For>
+            </div>
+          </Row>
+          <Row title="Scaled pixels">
+            <div class="flex flex-wrap gap-2 text-sm leading-tight">
+              <For each={scaledPixels}>
+                {(value, i) => (
+                  <ToggleButton
+                    value={value}
+                    onMouseDown={() => setScaledPixels(i(), !value)}
                   >
                     {MODULES[i()]}
                   </ToggleButton>
@@ -261,15 +298,19 @@ export default function Home() {
               finderPattern={parseInt(finderPattern())}
               finderRoundness={finderRoundness()}
               margin={margin()}
-              moduleSize={moduleScale()}
+              fgModuleSize={fgModuleScale()}
+              bgModuleSize={bgModuleScale()}
               foreground={foreground()}
               background={background()}
               backgroundImage={backgroundImage()}
+              pixelate={pixelate()}
               logoImage={logoImage()}
               logoSize={logoSize()}
               renderedPixels={renderedPixels}
+              scaledPixels={scaledPixels}
               invert={invert()}
-              negative={negative()}
+              finderBackground={finderBackground()}
+              finderForeground={finderForeground()}
             />
           </Show>
         </div>

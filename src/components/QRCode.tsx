@@ -1,4 +1,4 @@
-import { QrOptions, SvgOptions, Version, get_svg } from "fuqr";
+import { QrOptions, SvgOptions, Version, get_svg, Toggle } from "fuqr";
 
 import { FlatButton } from "~/components/Button";
 import Download from "lucide-solid/icons/download";
@@ -17,24 +17,33 @@ export default function QRCode(props: any) {
       .finder_pattern(props.finderPattern)
       .finder_roundness(props.finderRoundness)
       .margin(props.margin)
-      .module_size(props.moduleSize)
+      .fg_module_size(props.fgModuleSize)
+      .bg_module_size(props.bgModuleSize)
       .foreground(props.foreground)
       .background(props.background);
 
     props.renderedPixels.forEach((v: boolean, i: number) => {
       if (!v) {
-        svgOptions = svgOptions.toggle_modules(1 + 2 * i);
+        svgOptions = svgOptions.toggle_render(1 + 2 * i);
+      }
+    });
+    props.scaledPixels.forEach((v: boolean, i: number) => {
+      if (!v) {
+        svgOptions = svgOptions.toggle_scale(1 + 2 * i);
       }
     });
 
-    if (props.negative) {
-      svgOptions = svgOptions.toggle_negative();
-    }
     if (props.invert) {
-      svgOptions = svgOptions.toggle_invert();
+      svgOptions = svgOptions.toggle(Toggle.Invert);
+    }
+    if (props.finderForeground) {
+      svgOptions = svgOptions.toggle(Toggle.FinderForeground);
+    }
+    if (props.finderBackground) {
+      svgOptions = svgOptions.toggle(Toggle.FinderBackground);
     }
     if (props.backgroundImage) {
-      svgOptions = svgOptions.toggle_background();
+      svgOptions = svgOptions.toggle(Toggle.Background);
     }
 
     return get_svg(props.input, qrOptions, svgOptions);
@@ -71,8 +80,15 @@ export default function QRCode(props: any) {
           />
         </Show>
         <Show when={props.backgroundImage}>
-          {/* @ts-expect-error i'm right */}
-          <img src={bgSrc()} ref={bgImg} class="absolute h-full w-full -z-1" />
+          <img
+            src={bgSrc()}
+            // @ts-expect-error i'm right
+            ref={bgImg}
+            class="absolute h-full w-full -z-1"
+            style={{
+              "image-rendering": props.pixelate ? "pixelated" : undefined,
+            }}
+          />
         </Show>
         <div innerHTML={svg()}></div>
       </div>
@@ -86,6 +102,10 @@ export default function QRCode(props: any) {
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext("2d", { alpha: false });
+
+            if (props.pixelate) {
+              ctx!.imageSmoothingEnabled = false;
+            }
 
             if (props.backgroundImage) {
               const bgImg = new Image();
