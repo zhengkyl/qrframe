@@ -1,0 +1,34 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export function __wbg_svgoptions_free(a: number): void;
+export function svgoptions_new(): number;
+export function svgoptions_margin(a: number, b: number): number;
+export function svgoptions_unit(a: number, b: number): number;
+export function svgoptions_fg_module_size(a: number, b: number): number;
+export function svgoptions_bg_module_size(a: number, b: number): number;
+export function svgoptions_finder_pattern(a: number, b: number): number;
+export function svgoptions_finder_roundness(a: number, b: number): number;
+export function svgoptions_foreground(a: number, b: number, c: number): number;
+export function svgoptions_background(a: number, b: number, c: number): number;
+export function svgoptions_toggle_render(a: number, b: number): number;
+export function svgoptions_toggle_scale(a: number, b: number): number;
+export function svgoptions_render(a: number, b: number): number;
+export function svgoptions_scale(a: number, b: number): number;
+export function svgoptions_toggle(a: number, b: number): number;
+export function svgoptions_get(a: number, b: number): number;
+export function __wbg_version_free(a: number): void;
+export function __wbg_get_version_0(a: number): number;
+export function __wbg_set_version_0(a: number, b: number): void;
+export function version_new(a: number): number;
+export function __wbg_qroptions_free(a: number): void;
+export function qroptions_new(): number;
+export function qroptions_mode(a: number, b: number): number;
+export function qroptions_version(a: number, b: number): number;
+export function qroptions_ecl(a: number, b: number): number;
+export function qroptions_mask(a: number, b: number): number;
+export function get_svg(a: number, b: number, c: number, d: number, e: number): void;
+export function __wbindgen_malloc(a: number, b: number): number;
+export function __wbindgen_realloc(a: number, b: number, c: number, d: number): number;
+export function __wbindgen_add_to_stack_pointer(a: number): number;
+export function __wbindgen_free(a: number, b: number, c: number): void;
