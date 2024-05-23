@@ -1,6 +1,6 @@
 type Props = {
   color: string;
-  setColor: (c: String) => void;
+  setColor: (c: string) => void;
 };
 export function ColorInput(props: Props) {
   return (

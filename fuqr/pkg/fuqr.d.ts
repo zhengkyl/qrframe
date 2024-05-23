@@ -1,19 +1,17 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
-* @param {string} text
-* @param {QrOptions} svg_options
-* @param {SvgOptions} render_options
-* @returns {string}
+* @param {string} input
+* @param {QrOptions} qr_options
+* @param {SvgBuilder} render_options
+* @returns {SvgResult}
 */
-export function get_svg(text: string, svg_options: QrOptions, render_options: SvgOptions): string;
+export function get_svg(input: string, qr_options: QrOptions, render_options: SvgBuilder): SvgResult;
 /**
 */
-export enum Toggle {
-  Background = 0,
-  Invert = 1,
-  FinderForeground = 2,
-  FinderBackground = 3,
+export enum FinderPattern {
+  Square = 0,
+  Cross = 1,
 }
 /**
 */
@@ -35,9 +33,19 @@ export enum Module {
 }
 /**
 */
-export enum FinderPattern {
-  Square = 0,
-  Cross = 1,
+export enum ECL {
+  Low = 0,
+  Medium = 1,
+  Quartile = 2,
+  High = 3,
+}
+/**
+*/
+export enum Toggle {
+  Background = 0,
+  Invert = 1,
+  FinderForeground = 2,
+  FinderBackground = 3,
 }
 /**
 */
@@ -45,14 +53,6 @@ export enum Mode {
   Numeric = 0,
   Alphanumeric = 1,
   Byte = 2,
-}
-/**
-*/
-export enum ECL {
-  Low = 0,
-  Medium = 1,
-  Quartile = 2,
-  High = 3,
 }
 /**
 */
@@ -68,89 +68,95 @@ export enum Mask {
 }
 /**
 */
+export enum SvgError {
+  InvalidEncoding = 0,
+  ExceedsMaxCapacity = 1,
+}
+/**
+*/
 export class QrOptions {
   free(): void;
 /**
 */
   constructor();
 /**
-* @param {Mode} mode
-* @returns {QrOptions}
-*/
-  mode(mode: Mode): QrOptions;
-/**
 * @param {Version} version
 * @returns {QrOptions}
 */
-  version(version: Version): QrOptions;
+  min_version(version: Version): QrOptions;
 /**
 * @param {ECL} ecl
 * @returns {QrOptions}
 */
-  ecl(ecl: ECL): QrOptions;
+  min_ecl(ecl: ECL): QrOptions;
 /**
-* @param {Mask} mask
+* @param {Mode | undefined} [mode]
 * @returns {QrOptions}
 */
-  mask(mask: Mask): QrOptions;
+  mode(mode?: Mode): QrOptions;
+/**
+* @param {Mask | undefined} [mask]
+* @returns {QrOptions}
+*/
+  mask(mask?: Mask): QrOptions;
 }
 /**
 */
-export class SvgOptions {
+export class SvgBuilder {
   free(): void;
 /**
 */
   constructor();
 /**
 * @param {number} margin
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  margin(margin: number): SvgOptions;
+  margin(margin: number): SvgBuilder;
 /**
 * @param {number} unit
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  unit(unit: number): SvgOptions;
+  unit(unit: number): SvgBuilder;
 /**
 * @param {number} module_size
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  fg_module_size(module_size: number): SvgOptions;
+  fg_module_size(module_size: number): SvgBuilder;
 /**
 * @param {number} module_size
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  bg_module_size(module_size: number): SvgOptions;
+  bg_module_size(module_size: number): SvgBuilder;
 /**
 * @param {FinderPattern} finder_pattern
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  finder_pattern(finder_pattern: FinderPattern): SvgOptions;
+  finder_pattern(finder_pattern: FinderPattern): SvgBuilder;
 /**
 * @param {number} finder_roundness
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  finder_roundness(finder_roundness: number): SvgOptions;
+  finder_roundness(finder_roundness: number): SvgBuilder;
 /**
 * @param {string} foreground
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  foreground(foreground: string): SvgOptions;
+  foreground(foreground: string): SvgBuilder;
 /**
 * @param {string} background
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  background(background: string): SvgOptions;
+  background(background: string): SvgBuilder;
 /**
 * @param {Module} module
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  toggle_render(module: Module): SvgOptions;
+  toggle_render(module: Module): SvgBuilder;
 /**
 * @param {Module} module
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  toggle_scale(module: Module): SvgOptions;
+  toggle_scale(module: Module): SvgBuilder;
 /**
 * @param {Module} module
 * @returns {boolean}
@@ -163,14 +169,34 @@ export class SvgOptions {
   scale(module: Module): boolean;
 /**
 * @param {Toggle} toggle
-* @returns {SvgOptions}
+* @returns {SvgBuilder}
 */
-  toggle(toggle: Toggle): SvgOptions;
+  toggle(toggle: Toggle): SvgBuilder;
 /**
 * @param {Toggle} option
 * @returns {boolean}
 */
   get(option: Toggle): boolean;
+}
+/**
+*/
+export class SvgResult {
+  free(): void;
+/**
+*/
+  ecl: ECL;
+/**
+*/
+  mask: Mask;
+/**
+*/
+  mode: Mode;
+/**
+*/
+  svg: string;
+/**
+*/
+  version: Version;
 }
 /**
 */
@@ -189,32 +215,43 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly __wbg_svgoptions_free: (a: number) => void;
-  readonly svgoptions_new: () => number;
-  readonly svgoptions_margin: (a: number, b: number) => number;
-  readonly svgoptions_unit: (a: number, b: number) => number;
-  readonly svgoptions_fg_module_size: (a: number, b: number) => number;
-  readonly svgoptions_bg_module_size: (a: number, b: number) => number;
-  readonly svgoptions_finder_pattern: (a: number, b: number) => number;
-  readonly svgoptions_finder_roundness: (a: number, b: number) => number;
-  readonly svgoptions_foreground: (a: number, b: number, c: number) => number;
-  readonly svgoptions_background: (a: number, b: number, c: number) => number;
-  readonly svgoptions_toggle_render: (a: number, b: number) => number;
-  readonly svgoptions_toggle_scale: (a: number, b: number) => number;
-  readonly svgoptions_render: (a: number, b: number) => number;
-  readonly svgoptions_scale: (a: number, b: number) => number;
-  readonly svgoptions_toggle: (a: number, b: number) => number;
-  readonly svgoptions_get: (a: number, b: number) => number;
+  readonly __wbg_svgbuilder_free: (a: number) => void;
+  readonly svgbuilder_new: () => number;
+  readonly svgbuilder_margin: (a: number, b: number) => number;
+  readonly svgbuilder_unit: (a: number, b: number) => number;
+  readonly svgbuilder_fg_module_size: (a: number, b: number) => number;
+  readonly svgbuilder_bg_module_size: (a: number, b: number) => number;
+  readonly svgbuilder_finder_pattern: (a: number, b: number) => number;
+  readonly svgbuilder_finder_roundness: (a: number, b: number) => number;
+  readonly svgbuilder_foreground: (a: number, b: number, c: number) => number;
+  readonly svgbuilder_background: (a: number, b: number, c: number) => number;
+  readonly svgbuilder_toggle_render: (a: number, b: number) => number;
+  readonly svgbuilder_toggle_scale: (a: number, b: number) => number;
+  readonly svgbuilder_render: (a: number, b: number) => number;
+  readonly svgbuilder_scale: (a: number, b: number) => number;
+  readonly svgbuilder_toggle: (a: number, b: number) => number;
+  readonly svgbuilder_get: (a: number, b: number) => number;
   readonly __wbg_version_free: (a: number) => void;
   readonly __wbg_get_version_0: (a: number) => number;
   readonly __wbg_set_version_0: (a: number, b: number) => void;
   readonly version_new: (a: number) => number;
   readonly __wbg_qroptions_free: (a: number) => void;
   readonly qroptions_new: () => number;
+  readonly qroptions_min_version: (a: number, b: number) => number;
+  readonly qroptions_min_ecl: (a: number, b: number) => number;
   readonly qroptions_mode: (a: number, b: number) => number;
-  readonly qroptions_version: (a: number, b: number) => number;
-  readonly qroptions_ecl: (a: number, b: number) => number;
   readonly qroptions_mask: (a: number, b: number) => number;
+  readonly __wbg_svgresult_free: (a: number) => void;
+  readonly __wbg_get_svgresult_svg: (a: number, b: number) => void;
+  readonly __wbg_set_svgresult_svg: (a: number, b: number, c: number) => void;
+  readonly __wbg_get_svgresult_mode: (a: number) => number;
+  readonly __wbg_set_svgresult_mode: (a: number, b: number) => void;
+  readonly __wbg_get_svgresult_ecl: (a: number) => number;
+  readonly __wbg_set_svgresult_ecl: (a: number, b: number) => void;
+  readonly __wbg_get_svgresult_version: (a: number) => number;
+  readonly __wbg_set_svgresult_version: (a: number, b: number) => void;
+  readonly __wbg_get_svgresult_mask: (a: number) => number;
+  readonly __wbg_set_svgresult_mask: (a: number, b: number) => void;
   readonly get_svg: (a: number, b: number, c: number, d: number, e: number) => void;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

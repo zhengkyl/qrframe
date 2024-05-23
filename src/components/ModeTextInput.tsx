@@ -1,15 +1,12 @@
 import { Select } from "@kobalte/core/select";
 import ChevronsUpDown from "lucide-solid/icons/chevrons-up-down";
 import Check from "lucide-solid/icons/check";
-const MODE_VALUE = {
-  Numeric: 0,
-  Alphanumeric: 1,
-  Byte: 2,
-};
+import { MODE_NAMES } from "~/lib/options";
+
 type Props = {
   mode: string;
   setInput: (i: string) => void;
-  setMode: (m: number) => void;
+  setMode: (m: string) => void;
 };
 export function ModeTextInput(props: Props) {
   const onInput = debounce(props.setInput, 300);
@@ -24,11 +21,10 @@ export function ModeTextInput(props: Props) {
         <span class="text-sm">Encoding</span>
         <Select
           value={props.mode}
-          onChange={(v) =>
-            props.setMode(MODE_VALUE[v as keyof typeof MODE_VALUE])
-          }
+          onChange={props.setMode}
           class="w-[160px]"
-          options={["Numeric", "Alphanumeric", "Byte"]}
+          // @ts-expect-error readonly array should be accepted, type wrong
+          options={MODE_NAMES}
           itemComponent={(itemProps) => (
             <Select.Item
               class="flex justify-between items-center pl-2 pr-1 py-2 rounded select-none data-[highlighted]:(bg-fore-base/10 outline-none)"

@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@internationalized/date': ^3.5.4
+  '@internationalized/number': ^3.5.3
+
 dependencies:
   '@kobalte/core':
     specifier: ^0.13.1
@@ -851,14 +855,14 @@ packages:
       - supports-color
     dev: false
 
-  /@internationalized/date@3.5.3:
-    resolution: {integrity: sha512-X9bi8NAEHAjD8yzmPYT2pdJsbe+tYSEBAfowtlxJVJdZR3aK8Vg7ZUT1Fm5M47KLzp/M1p1VwAaeSma3RT7biw==}
+  /@internationalized/date@3.5.4:
+    resolution: {integrity: sha512-qoVJVro+O0rBaw+8HPjUB1iH8Ihf8oziEnqMnvhJUSuVIrHOuZ6eNLHNvzXJKUvAtaDiqMnRlg8Z2mgh09BlUw==}
     dependencies:
       '@swc/helpers': 0.5.11
     dev: false
 
-  /@internationalized/number@3.5.2:
-    resolution: {integrity: sha512-4FGHTi0rOEX1giSkt5MH4/te0eHBq3cvAYsfLlpguV6pzJAReXymiYpE5wPCqKqjkUO3PIsyvk+tBiIV1pZtbA==}
+  /@internationalized/number@3.5.3:
+    resolution: {integrity: sha512-rd1wA3ebzlp0Mehj5YTuTI50AQEx80gWFyHcQu+u91/5NgdwBecO8BH6ipPfE+lmQ9d63vpB3H9SHoIUiupllw==}
     dependencies:
       '@swc/helpers': 0.5.11
     dev: false
@@ -922,8 +926,8 @@ packages:
       solid-js: ^1.8.15
     dependencies:
       '@floating-ui/dom': 1.6.4
-      '@internationalized/date': 3.5.3
-      '@internationalized/number': 3.5.2
+      '@internationalized/date': 3.5.4
+      '@internationalized/number': 3.5.3
       '@kobalte/utils': 0.9.0(solid-js@1.8.17)
       solid-js: 1.8.17
       solid-prevent-scroll: 0.1.6(solid-js@1.8.17)

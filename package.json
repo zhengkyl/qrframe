@@ -16,11 +16,17 @@
     "unocss": "^0.59.4",
     "vinxi": "^0.3.11"
   },
-  "engines": {
-    "node": ">=18"
-  },
   "devDependencies": {
     "@unocss/transformer-variant-group": "^0.59.4",
     "vite-plugin-wasm-pack": "^0.1.12"
+  },
+  "pnpm": {
+    "overrides": {
+      "@internationalized/date": "^3.5.4",
+      "@internationalized/number": "^3.5.3"
+    }
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
