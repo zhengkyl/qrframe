@@ -47,6 +47,17 @@ function getStringFromWasm0(ptr, len) {
     return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len));
 }
 
+function _assertClass(instance, klass) {
+    if (!(instance instanceof klass)) {
+        throw new Error(`expected instance of ${klass.name}`);
+    }
+    return instance.ptr;
+}
+
+function isLikeNone(x) {
+    return x === undefined || x === null;
+}
+
 let WASM_VECTOR_LEN = 0;
 
 const cachedTextEncoder = (typeof TextEncoder !== 'undefined' ? new TextEncoder('utf-8') : { encode: () => { throw Error('TextEncoder not available') } } );
@@ -103,15 +114,11 @@ function passStringToWasm0(arg, malloc, realloc) {
     return ptr;
 }
 
-function _assertClass(instance, klass) {
-    if (!(instance instanceof klass)) {
-        throw new Error(`expected instance of ${klass.name}`);
-    }
-    return instance.ptr;
-}
-
-function isLikeNone(x) {
-    return x === undefined || x === null;
+function passArray8ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 1, 1) >>> 0;
+    getUint8Memory0().set(arg, ptr / 1);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
 }
 
 let cachedInt32Memory0 = null;
@@ -125,18 +132,18 @@ function getInt32Memory0() {
 /**
 * @param {string} input
 * @param {QrOptions} qr_options
-* @param {SvgBuilder} render_options
+* @param {SvgOptions} svg_options
 * @returns {SvgResult}
 */
-export function get_svg(input, qr_options, render_options) {
+export function get_svg(input, qr_options, svg_options) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
         _assertClass(qr_options, QrOptions);
         var ptr1 = qr_options.__destroy_into_raw();
-        _assertClass(render_options, SvgBuilder);
-        var ptr2 = render_options.__destroy_into_raw();
+        _assertClass(svg_options, SvgOptions);
+        var ptr2 = svg_options.__destroy_into_raw();
         wasm.get_svg(retptr, ptr0, len0, ptr1, ptr2);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
@@ -152,25 +159,22 @@ export function get_svg(input, qr_options, render_options) {
 
 /**
 */
-export const FinderPattern = Object.freeze({ Square:0,"0":"Square",Cross:1,"1":"Cross", });
-/**
-*/
-export const Module = Object.freeze({ DataOFF:0,"0":"DataOFF",DataON:1,"1":"DataON",FinderOFF:2,"2":"FinderOFF",FinderON:3,"3":"FinderON",AlignmentOFF:4,"4":"AlignmentOFF",AlignmentON:5,"5":"AlignmentON",TimingOFF:6,"6":"TimingOFF",TimingON:7,"7":"TimingON",FormatOFF:8,"8":"FormatOFF",FormatON:9,"9":"FormatON",VersionOFF:10,"10":"VersionOFF",VersionON:11,"11":"VersionON",Separator:12,"12":"Separator",Unset:13,"13":"Unset", });
-/**
-*/
 export const ECL = Object.freeze({ Low:0,"0":"Low",Medium:1,"1":"Medium",Quartile:2,"2":"Quartile",High:3,"3":"High", });
 /**
 */
-export const Toggle = Object.freeze({ Background:0,"0":"Background",Invert:1,"1":"Invert",FinderForeground:2,"2":"FinderForeground",FinderBackground:3,"3":"FinderBackground", });
-/**
-*/
-export const Mode = Object.freeze({ Numeric:0,"0":"Numeric",Alphanumeric:1,"1":"Alphanumeric",Byte:2,"2":"Byte", });
+export const Module = Object.freeze({ DataOFF:0,"0":"DataOFF",DataON:1,"1":"DataON",FinderOFF:2,"2":"FinderOFF",FinderON:3,"3":"FinderON",AlignmentOFF:4,"4":"AlignmentOFF",AlignmentON:5,"5":"AlignmentON",TimingOFF:6,"6":"TimingOFF",TimingON:7,"7":"TimingON",FormatOFF:8,"8":"FormatOFF",FormatON:9,"9":"FormatON",VersionOFF:10,"10":"VersionOFF",VersionON:11,"11":"VersionON",Unset:12,"12":"Unset", });
 /**
 */
 export const Mask = Object.freeze({ M0:0,"0":"M0",M1:1,"1":"M1",M2:2,"2":"M2",M3:3,"3":"M3",M4:4,"4":"M4",M5:5,"5":"M5",M6:6,"6":"M6",M7:7,"7":"M7", });
 /**
 */
+export const Toggle = Object.freeze({ Background:0,"0":"Background",FinderForeground:1,"1":"FinderForeground",FinderBackground:2,"2":"FinderBackground",OtherForeground:3,"3":"OtherForeground",OtherBackground:4,"4":"OtherBackground", });
+/**
+*/
 export const SvgError = Object.freeze({ InvalidEncoding:0,"0":"InvalidEncoding",ExceedsMaxCapacity:1,"1":"ExceedsMaxCapacity", });
+/**
+*/
+export const Mode = Object.freeze({ Numeric:0,"0":"Numeric",Alphanumeric:1,"1":"Alphanumeric",Byte:2,"2":"Byte", });
 
 const QrOptionsFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
@@ -245,165 +249,80 @@ export class QrOptions {
     }
 }
 
-const SvgBuilderFinalization = (typeof FinalizationRegistry === 'undefined')
+const SvgOptionsFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
-    : new FinalizationRegistry(ptr => wasm.__wbg_svgbuilder_free(ptr >>> 0));
+    : new FinalizationRegistry(ptr => wasm.__wbg_svgoptions_free(ptr >>> 0));
 /**
 */
-export class SvgBuilder {
+export class SvgOptions {
 
     static __wrap(ptr) {
         ptr = ptr >>> 0;
-        const obj = Object.create(SvgBuilder.prototype);
+        const obj = Object.create(SvgOptions.prototype);
         obj.__wbg_ptr = ptr;
-        SvgBuilderFinalization.register(obj, obj.__wbg_ptr, obj);
+        SvgOptionsFinalization.register(obj, obj.__wbg_ptr, obj);
         return obj;
     }
 
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
-        SvgBuilderFinalization.unregister(this);
+        SvgOptionsFinalization.unregister(this);
         return ptr;
     }
 
     free() {
         const ptr = this.__destroy_into_raw();
-        wasm.__wbg_svgbuilder_free(ptr);
+        wasm.__wbg_svgoptions_free(ptr);
     }
     /**
     */
     constructor() {
-        const ret = wasm.svgbuilder_new();
+        const ret = wasm.svgoptions_new();
         this.__wbg_ptr = ret >>> 0;
         return this;
     }
     /**
-    * @param {number} margin
-    * @returns {SvgBuilder}
-    */
-    margin(margin) {
-        const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_margin(ptr, margin);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
-    * @param {number} unit
-    * @returns {SvgBuilder}
-    */
-    unit(unit) {
-        const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_unit(ptr, unit);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
-    * @param {number} module_size
-    * @returns {SvgBuilder}
-    */
-    fg_module_size(module_size) {
-        const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_fg_module_size(ptr, module_size);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
-    * @param {number} module_size
-    * @returns {SvgBuilder}
-    */
-    bg_module_size(module_size) {
-        const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_bg_module_size(ptr, module_size);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
-    * @param {FinderPattern} finder_pattern
-    * @returns {SvgBuilder}
-    */
-    finder_pattern(finder_pattern) {
-        const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_finder_pattern(ptr, finder_pattern);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
-    * @param {number} finder_roundness
-    * @returns {SvgBuilder}
-    */
-    finder_roundness(finder_roundness) {
-        const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_finder_roundness(ptr, finder_roundness);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
     * @param {string} foreground
-    * @returns {SvgBuilder}
+    * @returns {SvgOptions}
     */
     foreground(foreground) {
         const ptr = this.__destroy_into_raw();
         const ptr0 = passStringToWasm0(foreground, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.svgbuilder_foreground(ptr, ptr0, len0);
-        return SvgBuilder.__wrap(ret);
+        const ret = wasm.svgoptions_foreground(ptr, ptr0, len0);
+        return SvgOptions.__wrap(ret);
     }
     /**
     * @param {string} background
-    * @returns {SvgBuilder}
+    * @returns {SvgOptions}
     */
     background(background) {
         const ptr = this.__destroy_into_raw();
         const ptr0 = passStringToWasm0(background, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.svgbuilder_background(ptr, ptr0, len0);
-        return SvgBuilder.__wrap(ret);
+        const ret = wasm.svgoptions_background(ptr, ptr0, len0);
+        return SvgOptions.__wrap(ret);
     }
     /**
-    * @param {Module} module
-    * @returns {SvgBuilder}
+    * @param {Uint8Array} scale_matrix
+    * @returns {SvgOptions}
     */
-    toggle_render(module) {
+    scale_matrix(scale_matrix) {
         const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_toggle_render(ptr, module);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
-    * @param {Module} module
-    * @returns {SvgBuilder}
-    */
-    toggle_scale(module) {
-        const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_toggle_scale(ptr, module);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
-    * @param {Module} module
-    * @returns {boolean}
-    */
-    render(module) {
-        const ret = wasm.svgbuilder_render(this.__wbg_ptr, module);
-        return ret !== 0;
-    }
-    /**
-    * @param {Module} module
-    * @returns {boolean}
-    */
-    scale(module) {
-        const ret = wasm.svgbuilder_scale(this.__wbg_ptr, module);
-        return ret !== 0;
+        const ptr0 = passArray8ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.svgoptions_scale_matrix(ptr, ptr0, len0);
+        return SvgOptions.__wrap(ret);
     }
     /**
     * @param {Toggle} toggle
-    * @returns {SvgBuilder}
+    * @returns {SvgOptions}
     */
     toggle(toggle) {
         const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgbuilder_toggle(ptr, toggle);
-        return SvgBuilder.__wrap(ret);
-    }
-    /**
-    * @param {Toggle} option
-    * @returns {boolean}
-    */
-    get(option) {
-        const ret = wasm.svgbuilder_get(this.__wbg_ptr, option);
-        return ret !== 0;
+        const ret = wasm.svgoptions_toggle(ptr, toggle);
+        return SvgOptions.__wrap(ret);
     }
 }
 

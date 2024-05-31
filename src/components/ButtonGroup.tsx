@@ -1,18 +1,18 @@
 import { ToggleGroup } from "@kobalte/core/toggle-group";
 import { type JSX } from "solid-js";
 
-type Props = {
-  value?: string;
-  setValue: (v: string) => void;
+type Props<T extends string> = {
+  value?: T;
+  setValue: (v: T) => void;
   children: JSX.Element;
 };
 
-export function ButtonGroup(props: Props) {
+export function ButtonGroup<T extends string>(props: Props<T>) {
   return (
     <ToggleGroup
       class="border rounded-md flex"
       value={props.value}
-      onChange={(v) => v && props.setValue(v)}
+      onChange={(v) => v && props.setValue(v as T)}
     >
       {props.children}
     </ToggleGroup>

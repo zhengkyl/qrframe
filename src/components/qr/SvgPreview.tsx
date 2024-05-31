@@ -1,78 +1,61 @@
 import {
   QrOptions,
-  SvgBuilder,
+  SvgOptions,
   Version,
   get_svg,
-  Toggle,
   SvgError,
   SvgResult,
-  Mask,
-  Mode,
 } from "fuqr";
 
 import { FlatButton } from "~/components/Button";
 import Download from "lucide-solid/icons/download";
-import { Match, Show, Switch, createMemo } from "solid-js";
-import { ECL_LABELS, ECL_NAMES, MASK_NAMES, MODE_NAMES } from "~/lib/options";
+import { Match, Show, Switch, createMemo, createSignal } from "solid-js";
+import {
+  ECL_LABELS,
+  ECL_NAMES,
+  MASK_KEY,
+  MODE_KEY,
+  MODE_NAMES,
+} from "~/lib/options";
+import { createStore } from "solid-js/store";
+import { RenderGrid } from "../RenderGrid";
+import { useQrContext } from "~/lib/QrContext";
+import { useSvgContext } from "~/lib/SvgContext";
 
 const PIXELS_PER_MODULE = 20;
 
-type Props = {
-  mode: Mode | null;
-  mask: Mask | null;
-  [key: string]: any;
-};
-export default function QRCode(props: Props) {
+export default function SvgPreview() {
+  const { inputQr } = useQrContext();
+
+  const { svgOptions } = useSvgContext();
+
+  const [grid, setGrid] = createStore(Array(177 * 177).fill(100));
   const svgResult = createMemo(() => {
-    console.log("svgResult");
+    console.log("svgResult", inputQr);
     const qrOptions = new QrOptions()
-      .min_version(new Version(props.version))
-      .min_ecl(props.ecl)
-      // @ts-expect-error null is valid input
-      .mask(props.mask)
-      // @ts-expect-error null is valid input
-      .mode(props.mode);
+      .min_version(new Version(inputQr.minVersion))
+      .min_ecl(inputQr.minEcl)
+      .mask(inputQr.mask!) // null makes more sense than undefined
+      .mode(inputQr.mode!); // null makes more sense than undefined
 
-    let svgOptions = new SvgBuilder()
-      .finder_pattern(props.finderPattern)
-      .finder_roundness(props.finderRoundness)
-      .margin(props.margin)
-      .fg_module_size(props.fgModuleSize)
-      .bg_module_size(props.bgModuleSize)
-      .foreground(props.foreground)
-      .background(props.background);
+    let svgOpts = new SvgOptions()
+      // .finder_pattern(props.finderPattern)
+      // .finder_roundness(props.finderRoundness)
+      // .margin(margin)
+      .foreground(svgOptions.fgColor)
+      .background(svgOptions.bgColor)
+      .scale_matrix(new Uint8Array(grid));
 
-    props.renderedPixels.forEach((v: boolean, i: number) => {
-      if (!v) {
-        svgOptions = svgOptions.toggle_render(1 + 2 * i);
-      }
-    });
-    props.scaledPixels.forEach((v: boolean, i: number) => {
-      if (!v) {
-        svgOptions = svgOptions.toggle_scale(1 + 2 * i);
-      }
-    });
-
-    if (props.invert) {
-      svgOptions = svgOptions.toggle(Toggle.Invert);
-    }
-    if (props.finderForeground) {
-      svgOptions = svgOptions.toggle(Toggle.FinderForeground);
-    }
-    if (props.finderBackground) {
-      svgOptions = svgOptions.toggle(Toggle.FinderBackground);
-    }
-    if (props.backgroundImage) {
-      svgOptions = svgOptions.toggle(Toggle.Background);
-    }
-
+    let t;
     try {
-      return get_svg(props.input, qrOptions, svgOptions);
+      t = get_svg(inputQr.text, qrOptions, svgOpts);
     } catch (e) {
       // <Show> doesn't play nicely with unions
-      // this requires one "as any" as opposed to 20
-      return e as SvgResult;
+      // this requires one "as any" instead of 20
+      t = e as SvgResult;
     }
+    console.log(typeof t);
+    return t;
   });
 
   function download(href: string, name: string) {
@@ -84,18 +67,27 @@ export default function QRCode(props: Props) {
     document.body.removeChild(a);
   }
 
-  let bgImg: HTMLImageElement;
-  let logoImg: HTMLImageElement;
-  const bgSrc = () => URL.createObjectURL(props.backgroundImage);
-  const logoSrc = () => URL.createObjectURL(props.logoImage);
+  let bgImg!: HTMLImageElement;
+  let fgImg!: HTMLImageElement;
 
-  const fullWidth = () => props.version * 4 + 17 + 2 * props.margin;
+  const bgSrc = () => URL.createObjectURL(svgOptions.bgImgFile!);
+  const logoSrc = () => URL.createObjectURL(svgOptions.fgImgFile!);
+
+  const fullWidth = () =>
+    svgResult().version["0"] * 4 + 17 + 2 * svgOptions.margin;
 
   const checkerboardPixel = () => (1 / fullWidth()) * 100;
+
+  const [color, setColor] = createSignal(0);
+
+  // createEffect(() => {
+  //   console.log("effect", svgResult());
+  // });
+
   return (
     <>
       <Show
-        when={typeof svgResult() != "number"}
+        when={typeof svgResult() != "number" && svgResult() != null}
         fallback={
           <div class="aspect-[1/1] border rounded-md flex justify-center items-center">
             <Switch>
@@ -123,29 +115,41 @@ export default function QRCode(props: Props) {
             "background-size": `${checkerboardPixel()}% ${checkerboardPixel()}%`,
           }}
         >
-          <Show when={props.backgroundImage}>
+          <Show when={svgOptions.bgImgFile != null}>
             <img
               src={bgSrc()}
-              // @ts-expect-error i'm right
               ref={bgImg}
               class="absolute h-full w-full"
               style={{
-                "image-rendering": props.pixelate ? "pixelated" : undefined,
+                "image-rendering": svgOptions.pixelateBgImg
+                  ? "pixelated"
+                  : undefined,
               }}
             />
           </Show>
           <div class="relative" innerHTML={svgResult().svg}></div>
-          <Show when={props.logoImage}>
+          <Show when={svgOptions.fgImgFile != null}>
             <img
               class="absolute top-0 bottom-0 left-0 right-0 m-auto"
               src={logoSrc()}
-              // @ts-expect-error i'm right
-              ref={logoImg}
+              ref={fgImg}
               style={{
-                width: `${props.logoSize}%`,
+                // TODO
+                width: `${25}%`,
+                "image-rendering": svgOptions.pixelateFgImg
+                  ? "pixelated"
+                  : undefined,
               }}
             />
           </Show>
+          <RenderGrid
+            margin={svgOptions.margin}
+            width={fullWidth()}
+            height={fullWidth()}
+            color={color()}
+            grid={grid}
+            setGrid={setGrid}
+          />
         </div>
         <div class="p-4 grid grid-cols-2 gap-y-2 text-sm text-left">
           <div class="">
@@ -164,13 +168,13 @@ export default function QRCode(props: Props) {
           <div class="">
             Encoding{" "}
             <span class="font-bold text-base">
-              {MODE_NAMES[svgResult().mode + 1]}
+              {MODE_KEY[svgResult().mode]}
             </span>
           </div>
           <div class="">
             Mask{" "}
             <span class="font-bold text-base">
-              {MASK_NAMES[svgResult().mask + 1]}
+              {MASK_KEY[svgResult().mask]}
             </span>
           </div>
         </div>
@@ -184,11 +188,8 @@ export default function QRCode(props: Props) {
               canvas.height = size;
               const ctx = canvas.getContext("2d");
 
-              if (props.pixelate) {
-                ctx!.imageSmoothingEnabled = false;
-              }
-
-              if (props.backgroundImage) {
+              if (svgOptions.bgImgFile != null) {
+                ctx!.imageSmoothingEnabled = !svgOptions.pixelateBgImg;
                 const bgImg = new Image();
                 bgImg.src = bgSrc();
                 await bgImg.decode();
@@ -200,18 +201,20 @@ export default function QRCode(props: Props) {
               await svgImg.decode();
               ctx!.drawImage(svgImg, 0, 0, size, size);
 
-              if (props.logoImage) {
+              if (svgOptions.fgImgFile != null) {
+                ctx!.imageSmoothingEnabled = !svgOptions.pixelateFgImg;
                 const logoImg = new Image();
                 logoImg.src = logoSrc();
                 await logoImg.decode();
-                const logoSize = props.logoSize * PIXELS_PER_MODULE;
+                // TODO logoSize
+                const logoSize = (fullWidth() / 4) * PIXELS_PER_MODULE;
                 const offset = (size - logoSize) / 2;
                 ctx!.drawImage(logoImg, offset, offset, logoSize, logoSize);
               }
 
               download(
                 canvas.toDataURL("image/png"),
-                `${props.input.slice(0, 15).trim()}.svg`
+                `${inputQr.text.slice(0, 15).trim()}.svg`
               );
             }}
           >
@@ -224,7 +227,7 @@ export default function QRCode(props: Props) {
                 URL.createObjectURL(
                   new Blob([svgResult().svg], { type: "image/svg" })
                 ),
-                `${props.input.slice(0, 10).trim()}.svg`
+                `${inputQr.text.slice(0, 10).trim()}.svg`
               );
             }}
           >

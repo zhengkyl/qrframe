@@ -9,7 +9,7 @@
   "dependencies": {
     "@kobalte/core": "^0.13.1",
     "@solidjs/router": "^0.13.3",
-    "@solidjs/start": "^1.0.0-rc.0",
+    "@solidjs/start": "^1.0.0",
     "@unocss/reset": "^0.59.4",
     "lucide-solid": "^0.378.0",
     "solid-js": "^1.8.17",
