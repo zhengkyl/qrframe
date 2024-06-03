@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, onMount, splitProps } from "solid-js";
+import { createEffect, createSignal, onCleanup } from "solid-js";
 import { type SetStoreFunction } from "solid-js/store";
 
 type Props = {
@@ -14,7 +14,13 @@ enum Mode {
   Brush,
 }
 
-const UNIT = 10;
+type Selection = {
+  left: number;
+  right: number;
+  top: number;
+  bot: number;
+};
+const UNIT = 1;
 
 function clamp(a: number, min: number, max: number) {
   return Math.min(Math.max(a, min), max);
@@ -42,7 +48,6 @@ export function RenderGrid(props: Props) {
     if (props.color === props.grid[y * props.width + x]) return;
 
     props.setGrid(y * props.width + x, props.color!);
-    console.log("set", x, y);
     if (props.color) {
       ctx.fillRect(x * UNIT, y * UNIT, UNIT, UNIT);
     } else {
@@ -50,12 +55,7 @@ export function RenderGrid(props: Props) {
     }
   };
 
-  let selection = {
-    left: 0,
-    right: 0,
-    top: 0,
-    bot: 0,
-  };
+  let selection: Selection | null;
 
   function onMouseMove(e: MouseEvent) {
     const { x, y } = getPos(e);
@@ -65,34 +65,39 @@ export function RenderGrid(props: Props) {
 
       selectCtx.clearRect(0, 0, props.width * UNIT, props.height * UNIT);
 
-      selectedBoxes.forEach((s) => {
+      selectCtx.fillStyle = "rgb(59, 130, 246)";
+      selectedBoxes.forEach((sel) => {
         selectCtx.fillRect(
-          s.left * UNIT,
-          s.top * UNIT,
-          (s.right - s.left) * UNIT,
-          (s.bot - s.top) * UNIT
+          sel.left * UNIT,
+          sel.top * UNIT,
+          (sel.right - sel.left) * UNIT,
+          (sel.bot - sel.top) * UNIT
         );
       });
 
+      // @ts-expect-error initialized below
+      let sel: Selection = {};
       if (x <= prevX) {
-        selection.left = x;
-        selection.right = prevX + 1;
+        sel.left = x;
+        sel.right = prevX + 1;
       } else {
-        selection.left = prevX;
-        selection.right = x + 1;
+        sel.left = prevX;
+        sel.right = x + 1;
       }
       if (y <= prevY) {
-        selection.top = y;
-        selection.bot = prevY + 1;
+        sel.top = y;
+        sel.bot = prevY + 1;
       } else {
-        selection.top = prevY;
-        selection.bot = y + 1;
+        sel.top = prevY;
+        sel.bot = y + 1;
       }
+      selection = sel;
+
       selectCtx.fillRect(
-        selection.left * UNIT,
-        selection.top * UNIT,
-        (selection.right - selection.left) * UNIT,
-        (selection.bot - selection.top) * UNIT
+        sel.left * UNIT,
+        sel.top * UNIT,
+        (sel.right - sel.left) * UNIT,
+        (sel.bot - sel.top) * UNIT
       );
     } else {
       const xDist = Math.abs(x - prevX);
@@ -136,7 +141,9 @@ export function RenderGrid(props: Props) {
   }
 
   const onMouseUp = () => {
-    selectedBoxes.push({ ...selection });
+    if (selection != null) {
+      selectedBoxes.push(selection);
+    }
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
   };
@@ -150,17 +157,17 @@ export function RenderGrid(props: Props) {
 
   const [brushSize, setBrushSize] = createSignal(1);
 
-  let selectedBoxes: (typeof selection)[] = [];
+  let selectedBoxes: Selection[] = [];
 
   let prevX: number;
   let prevY: number;
 
   let deselectIntent: boolean;
 
-  onMount(() => {
-    selectCtx.fillStyle = "rgb(59, 130, 246)";
-    // selectCtx.globalAlpha = 0.5;
-    // selectCtx.globalCompositeOperation = "source-out";
+  createEffect(() => {
+    props.width;
+    props.height;
+    selectedBoxes = [];
   });
 
   return (
@@ -184,14 +191,6 @@ export function RenderGrid(props: Props) {
         }}
         width={props.width * UNIT}
         height={props.height * UNIT}
-        // onContextMenu={(e) => {
-        //   // ctx.clearRect(0, 0, props.width, props.width);
-        //   // props.setGrid(Array(props.width * props.height).fill(false));
-        //   e.preventDefault();
-        //   ctx.fillStyle = "red";
-        //   // ctx.globalAlpha = 0.5;
-        //   ctx.fillRect(0, 0, props.width, props.height);
-        // }}
         onMouseDown={(e) => {
           if (e.button != 0) return;
 
@@ -201,6 +200,7 @@ export function RenderGrid(props: Props) {
             deselectIntent = false;
             if (!(e.shiftKey || e.ctrlKey)) {
               deselectIntent = selectedBoxes.length > 0;
+
               if (deselectIntent) {
                 selectCtx.clearRect(
                   0,
@@ -209,14 +209,18 @@ export function RenderGrid(props: Props) {
                   props.height * UNIT
                 );
                 selectedBoxes = [];
+                selection = null
               }
             }
 
             if (!deselectIntent) {
-              selection.left = x;
-              selection.right = x + 1;
-              selection.top = y;
-              selection.bot = y + 1;
+              selection = {
+                left: x,
+                right: x + 1,
+                top: y,
+                bot: y + 1,
+              };
+              selectCtx.fillStyle = "rgb(59, 130, 246)";
               selectCtx.fillRect(x * UNIT, y * UNIT, UNIT, UNIT);
             }
           } else {
