@@ -44,7 +44,7 @@ export default function SvgPreview() {
       // .margin(margin)
       .foreground(svgOptions.fgColor)
       .background(svgOptions.bgColor)
-      .scale_matrix(new Uint8Array(grid));
+      .scale_matrix(grid);
 
     let t;
     try {
@@ -143,7 +143,6 @@ export default function SvgPreview() {
             />
           </Show>
           <RenderGrid
-            margin={svgOptions.margin}
             width={fullWidth()}
             height={fullWidth()}
             color={color()}

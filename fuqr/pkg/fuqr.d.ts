@@ -3,18 +3,16 @@
 /**
 * @param {string} input
 * @param {QrOptions} qr_options
+* @returns {Matrix}
+*/
+export function get_matrix(input: string, qr_options: QrOptions): Matrix;
+/**
+* @param {string} input
+* @param {QrOptions} qr_options
 * @param {SvgOptions} svg_options
 * @returns {SvgResult}
 */
 export function get_svg(input: string, qr_options: QrOptions, svg_options: SvgOptions): SvgResult;
-/**
-*/
-export enum ECL {
-  Low = 0,
-  Medium = 1,
-  Quartile = 2,
-  High = 3,
-}
 /**
 */
 export enum Module {
@@ -34,6 +32,21 @@ export enum Module {
 }
 /**
 */
+export enum Toggle {
+  Background = 0,
+  BackgroundPixels = 1,
+  ForegroundPixels = 2,
+}
+/**
+*/
+export enum ECL {
+  Low = 0,
+  Medium = 1,
+  Quartile = 2,
+  High = 3,
+}
+/**
+*/
 export enum Mask {
   M0 = 0,
   M1 = 1,
@@ -43,15 +56,6 @@ export enum Mask {
   M5 = 5,
   M6 = 6,
   M7 = 7,
-}
-/**
-*/
-export enum Toggle {
-  Background = 0,
-  FinderForeground = 1,
-  FinderBackground = 2,
-  OtherForeground = 3,
-  OtherBackground = 4,
 }
 /**
 */
@@ -65,6 +69,26 @@ export enum Mode {
   Numeric = 0,
   Alphanumeric = 1,
   Byte = 2,
+}
+/**
+*/
+export class Matrix {
+  free(): void;
+/**
+*/
+  ecl: ECL;
+/**
+*/
+  mask: Mask;
+/**
+*/
+  value: any[];
+/**
+*/
+  version: Version;
+/**
+*/
+  width: number;
 }
 /**
 */
@@ -102,6 +126,16 @@ export class SvgOptions {
 */
   constructor();
 /**
+* @param {number} margin
+* @returns {SvgOptions}
+*/
+  margin(margin: number): SvgOptions;
+/**
+* @param {number} unit
+* @returns {SvgOptions}
+*/
+  unit(unit: number): SvgOptions;
+/**
 * @param {string} foreground
 * @returns {SvgOptions}
 */
@@ -112,10 +146,20 @@ export class SvgOptions {
 */
   background(background: string): SvgOptions;
 /**
-* @param {Uint8Array} scale_matrix
+* @param {Float64Array} scale_matrix
 * @returns {SvgOptions}
 */
-  scale_matrix(scale_matrix: Uint8Array): SvgOptions;
+  scale_x_matrix(scale_matrix: Float64Array): SvgOptions;
+/**
+* @param {Float64Array} scale_matrix
+* @returns {SvgOptions}
+*/
+  scale_y_matrix(scale_matrix: Float64Array): SvgOptions;
+/**
+* @param {Float64Array} scale_matrix
+* @returns {SvgOptions}
+*/
+  scale_matrix(scale_matrix: Float64Array): SvgOptions;
 /**
 * @param {Toggle} toggle
 * @returns {SvgOptions}
@@ -159,6 +203,17 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly __wbg_matrix_free: (a: number) => void;
+  readonly __wbg_get_matrix_value: (a: number, b: number) => void;
+  readonly __wbg_set_matrix_value: (a: number, b: number, c: number) => void;
+  readonly __wbg_get_matrix_width: (a: number) => number;
+  readonly __wbg_set_matrix_width: (a: number, b: number) => void;
+  readonly __wbg_get_matrix_version: (a: number) => number;
+  readonly __wbg_set_matrix_version: (a: number, b: number) => void;
+  readonly __wbg_get_matrix_ecl: (a: number) => number;
+  readonly __wbg_set_matrix_ecl: (a: number, b: number) => void;
+  readonly __wbg_get_matrix_mask: (a: number) => number;
+  readonly __wbg_set_matrix_mask: (a: number, b: number) => void;
   readonly __wbg_qroptions_free: (a: number) => void;
   readonly qroptions_new: () => number;
   readonly qroptions_min_version: (a: number, b: number) => number;
@@ -167,8 +222,12 @@ export interface InitOutput {
   readonly qroptions_mask: (a: number, b: number) => number;
   readonly __wbg_svgoptions_free: (a: number) => void;
   readonly svgoptions_new: () => number;
+  readonly svgoptions_margin: (a: number, b: number) => number;
+  readonly svgoptions_unit: (a: number, b: number) => number;
   readonly svgoptions_foreground: (a: number, b: number, c: number) => number;
   readonly svgoptions_background: (a: number, b: number, c: number) => number;
+  readonly svgoptions_scale_x_matrix: (a: number, b: number, c: number) => number;
+  readonly svgoptions_scale_y_matrix: (a: number, b: number, c: number) => number;
   readonly svgoptions_scale_matrix: (a: number, b: number, c: number) => number;
   readonly svgoptions_toggle: (a: number, b: number) => number;
   readonly __wbg_svgresult_free: (a: number) => void;
@@ -182,15 +241,16 @@ export interface InitOutput {
   readonly __wbg_set_svgresult_version: (a: number, b: number) => void;
   readonly __wbg_get_svgresult_mask: (a: number) => number;
   readonly __wbg_set_svgresult_mask: (a: number, b: number) => void;
+  readonly get_matrix: (a: number, b: number, c: number, d: number) => void;
   readonly get_svg: (a: number, b: number, c: number, d: number, e: number) => void;
   readonly __wbg_version_free: (a: number) => void;
   readonly __wbg_get_version_0: (a: number) => number;
   readonly __wbg_set_version_0: (a: number, b: number) => void;
   readonly version_new: (a: number) => number;
-  readonly __wbindgen_malloc: (a: number, b: number) => number;
-  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly __wbindgen_malloc: (a: number, b: number) => number;
+  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
 }
 
 export type SyncInitInput = BufferSource | WebAssembly.Module;
