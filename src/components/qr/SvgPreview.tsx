@@ -1,9 +1,9 @@
 import {
   QrOptions,
   SvgOptions,
-  Version,
   get_svg,
-  SvgError,
+  QrError,
+  Version,
   SvgResult,
 } from "fuqr";
 
@@ -17,45 +17,43 @@ import {
   MODE_KEY,
   MODE_NAMES,
 } from "~/lib/options";
-import { createStore } from "solid-js/store";
 import { RenderGrid } from "../RenderGrid";
-import { useQrContext } from "~/lib/QrContext";
+import { useQrContext, type OutputQr } from "~/lib/QrContext";
 import { useSvgContext } from "~/lib/SvgContext";
+import { usePaintContext } from "~/lib/PaintContext";
 
 const PIXELS_PER_MODULE = 20;
 
 export default function SvgPreview() {
-  const { inputQr } = useQrContext();
+  const { inputQr, outputQr, setOutputQr } = useQrContext();
 
   const { svgOptions } = useSvgContext();
+  const { scaleX, scaleY } = usePaintContext();
 
-  const [grid, setGrid] = createStore(Array(177 * 177).fill(100));
   const svgResult = createMemo(() => {
-    console.log("svgResult", inputQr);
+    // what if iterate func return list of coords
+    // combine with list of true/false for placement
+    //
+    let output = outputQr();
+    if (typeof output === "number") {
+      // See <Show> component
+      // svgResult() only called when outputQr() is successful
+      return null as unknown as SvgResult;
+    }
     const qrOptions = new QrOptions()
-      .min_version(new Version(inputQr.minVersion))
-      .min_ecl(inputQr.minEcl)
-      .mask(inputQr.mask!) // null makes more sense than undefined
-      .mode(inputQr.mode!); // null makes more sense than undefined
+      .min_version(new Version(output.version))
+      .min_ecl(output.ecl)
+      .mask(output.mask!) // wasm-bindgen types None as `undefined`, but null works
+      .mode(output.mode!); // wasm-bindgen types None as `undefined`, but null works
 
     let svgOpts = new SvgOptions()
-      // .finder_pattern(props.finderPattern)
-      // .finder_roundness(props.finderRoundness)
-      // .margin(margin)
       .foreground(svgOptions.fgColor)
       .background(svgOptions.bgColor)
-      .scale_matrix(grid);
+      .scale_x_matrix(new Uint8Array(scaleX()))
+      .scale_y_matrix(new Uint8Array(scaleY()));
 
-    let t;
-    try {
-      t = get_svg(inputQr.text, qrOptions, svgOpts);
-    } catch (e) {
-      // <Show> doesn't play nicely with unions
-      // this requires one "as any" instead of 20
-      t = e as SvgResult;
-    }
-    console.log(typeof t);
-    return t;
+    // infallible b/c outputQr contains successful options
+    return get_svg(inputQr.text, qrOptions, svgOpts);
   });
 
   function download(href: string, name: string) {
@@ -73,33 +71,31 @@ export default function SvgPreview() {
   const bgSrc = () => URL.createObjectURL(svgOptions.bgImgFile!);
   const logoSrc = () => URL.createObjectURL(svgOptions.fgImgFile!);
 
-  const fullWidth = () =>
-    svgResult().version["0"] * 4 + 17 + 2 * svgOptions.margin;
-
-  const checkerboardPixel = () => (1 / fullWidth()) * 100;
+  const fullWidth = () => {
+    const output = outputQr() as OutputQr;
+    return output.version * 4 + 17 + output.margin.left + output.margin.right;
+  };
+  const fullHeight = () => {
+    const output = outputQr() as OutputQr;
+    return output.version * 4 + 17 + output.margin.top + output.margin.bottom;
+  };
 
   const [color, setColor] = createSignal(0);
-
-  // createEffect(() => {
-  //   console.log("effect", svgResult());
-  // });
 
   return (
     <>
       <Show
-        when={typeof svgResult() != "number" && svgResult() != null}
+        when={typeof outputQr() != "number"}
         fallback={
           <div class="aspect-[1/1] border rounded-md flex justify-center items-center">
             <Switch>
-              <Match
-                when={(svgResult() as any) === SvgError.ExceedsMaxCapacity}
-              >
+              <Match when={outputQr() === QrError.ExceedsMaxCapacity}>
                 Data exceeds max capacity
               </Match>
-              <Match when={(svgResult() as any) === SvgError.InvalidEncoding}>
+              <Match when={outputQr() === QrError.InvalidEncoding}>
                 {`Input cannot be encoded in ${
                   // @ts-expect-error props.mode not null b/c InvalidEncoding implies mode
-                  MODE_NAMES[props.mode + 1]
+                  MODE_NAMES[inputQr.mode + 1]
                 } mode`}
               </Match>
             </Switch>
@@ -112,7 +108,9 @@ export default function SvgPreview() {
             "background-image":
               "repeating-conic-gradient(#ddd 0% 25%, #aaa 25% 50%)",
             "background-position": "50%",
-            "background-size": `${checkerboardPixel()}% ${checkerboardPixel()}%`,
+            "background-size": `${(1 / fullWidth()) * 100}% ${
+              (1 / fullHeight()) * 100
+            }%`,
           }}
         >
           <Show when={svgOptions.bgImgFile != null}>
@@ -144,10 +142,8 @@ export default function SvgPreview() {
           </Show>
           <RenderGrid
             width={fullWidth()}
-            height={fullWidth()}
+            height={fullHeight()}
             color={color()}
-            grid={grid}
-            setGrid={setGrid}
           />
         </div>
         <div class="p-4 grid grid-cols-2 gap-y-2 text-sm text-left">
@@ -181,10 +177,11 @@ export default function SvgPreview() {
           <FlatButton
             class="flex-1 px-3 py-2"
             onClick={async () => {
-              const size = fullWidth() * PIXELS_PER_MODULE;
+              const width = fullWidth() * PIXELS_PER_MODULE;
+              const height = fullHeight() * PIXELS_PER_MODULE;
               const canvas = document.createElement("canvas");
-              canvas.width = size;
-              canvas.height = size;
+              canvas.width = width;
+              canvas.height = height;
               const ctx = canvas.getContext("2d");
 
               if (svgOptions.bgImgFile != null) {
@@ -192,13 +189,13 @@ export default function SvgPreview() {
                 const bgImg = new Image();
                 bgImg.src = bgSrc();
                 await bgImg.decode();
-                ctx!.drawImage(bgImg, 0, 0, size, size);
+                ctx!.drawImage(bgImg, 0, 0, width, height);
               }
 
               const svgImg = new Image();
               svgImg.src = `data:image/svg+xml;base64,${btoa(svgResult().svg)}`;
               await svgImg.decode();
-              ctx!.drawImage(svgImg, 0, 0, size, size);
+              ctx!.drawImage(svgImg, 0, 0, width, height);
 
               if (svgOptions.fgImgFile != null) {
                 ctx!.imageSmoothingEnabled = !svgOptions.pixelateFgImg;
@@ -207,8 +204,9 @@ export default function SvgPreview() {
                 await logoImg.decode();
                 // TODO logoSize
                 const logoSize = (fullWidth() / 4) * PIXELS_PER_MODULE;
-                const offset = (size - logoSize) / 2;
-                ctx!.drawImage(logoImg, offset, offset, logoSize, logoSize);
+                const xOffset = (width - logoSize) / 2;
+                const yOffset = (height - logoSize) / 2;
+                ctx!.drawImage(logoImg, xOffset, yOffset, logoSize, logoSize);
               }
 
               download(

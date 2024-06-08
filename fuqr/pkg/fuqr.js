@@ -17,18 +17,6 @@ function addHeapObject(obj) {
 
 function getObject(idx) { return heap[idx]; }
 
-function dropObject(idx) {
-    if (idx < 132) return;
-    heap[idx] = heap_next;
-    heap_next = idx;
-}
-
-function takeObject(idx) {
-    const ret = getObject(idx);
-    dropObject(idx);
-    return ret;
-}
-
 function isLikeNone(x) {
     return x === undefined || x === null;
 }
@@ -49,6 +37,18 @@ function getInt32Memory0() {
         cachedInt32Memory0 = new Int32Array(wasm.memory.buffer);
     }
     return cachedInt32Memory0;
+}
+
+function dropObject(idx) {
+    if (idx < 132) return;
+    heap[idx] = heap_next;
+    heap_next = idx;
+}
+
+function takeObject(idx) {
+    const ret = getObject(idx);
+    dropObject(idx);
+    return ret;
 }
 
 const cachedTextDecoder = (typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true }) : { decode: () => { throw Error('TextDecoder not available') } } );
@@ -162,9 +162,9 @@ function passStringToWasm0(arg, malloc, realloc) {
     return ptr;
 }
 
-function passArrayF64ToWasm0(arg, malloc) {
-    const ptr = malloc(arg.length * 8, 8) >>> 0;
-    getFloat64Memory0().set(arg, ptr / 8);
+function passArray8ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 1, 1) >>> 0;
+    getUint8Memory0().set(arg, ptr / 1);
     WASM_VECTOR_LEN = arg.length;
     return ptr;
 }
@@ -229,16 +229,158 @@ export const Module = Object.freeze({ DataOFF:0,"0":"DataOFF",DataON:1,"1":"Data
 export const Toggle = Object.freeze({ Background:0,"0":"Background",BackgroundPixels:1,"1":"BackgroundPixels",ForegroundPixels:2,"2":"ForegroundPixels", });
 /**
 */
-export const ECL = Object.freeze({ Low:0,"0":"Low",Medium:1,"1":"Medium",Quartile:2,"2":"Quartile",High:3,"3":"High", });
-/**
-*/
 export const Mask = Object.freeze({ M0:0,"0":"M0",M1:1,"1":"M1",M2:2,"2":"M2",M3:3,"3":"M3",M4:4,"4":"M4",M5:5,"5":"M5",M6:6,"6":"M6",M7:7,"7":"M7", });
 /**
 */
-export const SvgError = Object.freeze({ InvalidEncoding:0,"0":"InvalidEncoding",ExceedsMaxCapacity:1,"1":"ExceedsMaxCapacity", });
+export const ECL = Object.freeze({ Low:0,"0":"Low",Medium:1,"1":"Medium",Quartile:2,"2":"Quartile",High:3,"3":"High", });
 /**
 */
 export const Mode = Object.freeze({ Numeric:0,"0":"Numeric",Alphanumeric:1,"1":"Alphanumeric",Byte:2,"2":"Byte", });
+/**
+*/
+export const QrError = Object.freeze({ InvalidEncoding:0,"0":"InvalidEncoding",ExceedsMaxCapacity:1,"1":"ExceedsMaxCapacity", });
+
+const MarginFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_margin_free(ptr >>> 0));
+/**
+*/
+export class Margin {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Margin.prototype);
+        obj.__wbg_ptr = ptr;
+        MarginFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        MarginFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_margin_free(ptr);
+    }
+    /**
+    * @returns {number}
+    */
+    get top() {
+        const ret = wasm.__wbg_get_margin_top(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+    * @param {number} arg0
+    */
+    set top(arg0) {
+        wasm.__wbg_set_margin_top(this.__wbg_ptr, arg0);
+    }
+    /**
+    * @returns {number}
+    */
+    get right() {
+        const ret = wasm.__wbg_get_margin_right(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+    * @param {number} arg0
+    */
+    set right(arg0) {
+        wasm.__wbg_set_margin_right(this.__wbg_ptr, arg0);
+    }
+    /**
+    * @returns {number}
+    */
+    get bottom() {
+        const ret = wasm.__wbg_get_margin_bottom(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+    * @param {number} arg0
+    */
+    set bottom(arg0) {
+        wasm.__wbg_set_margin_bottom(this.__wbg_ptr, arg0);
+    }
+    /**
+    * @returns {number}
+    */
+    get left() {
+        const ret = wasm.__wbg_get_margin_left(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+    * @param {number} arg0
+    */
+    set left(arg0) {
+        wasm.__wbg_set_margin_left(this.__wbg_ptr, arg0);
+    }
+    /**
+    * @param {number} margin
+    */
+    constructor(margin) {
+        const ret = wasm.margin_new(margin);
+        this.__wbg_ptr = ret >>> 0;
+        return this;
+    }
+    /**
+    * @param {number} top
+    * @returns {Margin}
+    */
+    setTop(top) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.margin_setTop(ptr, top);
+        return Margin.__wrap(ret);
+    }
+    /**
+    * @param {number} right
+    * @returns {Margin}
+    */
+    setRight(right) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.margin_setRight(ptr, right);
+        return Margin.__wrap(ret);
+    }
+    /**
+    * @param {number} bottom
+    * @returns {Margin}
+    */
+    setBottom(bottom) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.margin_setBottom(ptr, bottom);
+        return Margin.__wrap(ret);
+    }
+    /**
+    * @param {number} left
+    * @returns {Margin}
+    */
+    setLeft(left) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.margin_setLeft(ptr, left);
+        return Margin.__wrap(ret);
+    }
+    /**
+    * @param {number} y
+    * @returns {Margin}
+    */
+    y(y) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.margin_y(ptr, y);
+        return Margin.__wrap(ret);
+    }
+    /**
+    * @param {number} x
+    * @returns {Margin}
+    */
+    x(x) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.margin_x(ptr, x);
+        return Margin.__wrap(ret);
+    }
+}
 
 const MatrixFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
@@ -291,17 +433,32 @@ export class Matrix {
         wasm.__wbg_set_matrix_value(this.__wbg_ptr, ptr0, len0);
     }
     /**
-    * @returns {number}
+    * @returns {Margin}
     */
-    get width() {
-        const ret = wasm.__wbg_get_matrix_width(this.__wbg_ptr);
-        return ret >>> 0;
+    get margin() {
+        const ret = wasm.__wbg_get_matrix_margin(this.__wbg_ptr);
+        return Margin.__wrap(ret);
     }
     /**
-    * @param {number} arg0
+    * @param {Margin} arg0
     */
-    set width(arg0) {
-        wasm.__wbg_set_matrix_width(this.__wbg_ptr, arg0);
+    set margin(arg0) {
+        _assertClass(arg0, Margin);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_matrix_margin(this.__wbg_ptr, ptr0);
+    }
+    /**
+    * @returns {Mode}
+    */
+    get mode() {
+        const ret = wasm.__wbg_get_matrix_mode(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+    * @param {Mode} arg0
+    */
+    set mode(arg0) {
+        wasm.__wbg_set_matrix_mode(this.__wbg_ptr, arg0);
     }
     /**
     * @returns {Version}
@@ -343,6 +500,20 @@ export class Matrix {
     */
     set mask(arg0) {
         wasm.__wbg_set_matrix_mask(this.__wbg_ptr, arg0);
+    }
+    /**
+    * @returns {number}
+    */
+    width() {
+        const ret = wasm.matrix_width(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+    * @returns {number}
+    */
+    height() {
+        const ret = wasm.matrix_height(this.__wbg_ptr);
+        return ret >>> 0;
     }
 }
 
@@ -415,6 +586,17 @@ export class QrOptions {
     mask(mask) {
         const ptr = this.__destroy_into_raw();
         const ret = wasm.qroptions_mask(ptr, isLikeNone(mask) ? 8 : mask);
+        return QrOptions.__wrap(ret);
+    }
+    /**
+    * @param {Margin} margin
+    * @returns {QrOptions}
+    */
+    margin(margin) {
+        const ptr = this.__destroy_into_raw();
+        _assertClass(margin, Margin);
+        var ptr0 = margin.__destroy_into_raw();
+        const ret = wasm.qroptions_margin(ptr, ptr0);
         return QrOptions.__wrap(ret);
     }
 }
@@ -493,34 +675,34 @@ export class SvgOptions {
         return SvgOptions.__wrap(ret);
     }
     /**
-    * @param {Float64Array} scale_matrix
+    * @param {Uint8Array} scale_matrix
     * @returns {SvgOptions}
     */
     scale_x_matrix(scale_matrix) {
         const ptr = this.__destroy_into_raw();
-        const ptr0 = passArrayF64ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
+        const ptr0 = passArray8ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.svgoptions_scale_x_matrix(ptr, ptr0, len0);
         return SvgOptions.__wrap(ret);
     }
     /**
-    * @param {Float64Array} scale_matrix
+    * @param {Uint8Array} scale_matrix
     * @returns {SvgOptions}
     */
     scale_y_matrix(scale_matrix) {
         const ptr = this.__destroy_into_raw();
-        const ptr0 = passArrayF64ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
+        const ptr0 = passArray8ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.svgoptions_scale_y_matrix(ptr, ptr0, len0);
         return SvgOptions.__wrap(ret);
     }
     /**
-    * @param {Float64Array} scale_matrix
+    * @param {Uint8Array} scale_matrix
     * @returns {SvgOptions}
     */
     scale_matrix(scale_matrix) {
         const ptr = this.__destroy_into_raw();
-        const ptr0 = passArrayF64ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
+        const ptr0 = passArray8ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.svgoptions_scale_matrix(ptr, ptr0, len0);
         return SvgOptions.__wrap(ret);
@@ -732,9 +914,6 @@ function __wbg_get_imports() {
         const ret = arg0;
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_object_drop_ref = function(arg0) {
-        takeObject(arg0);
-    };
     imports.wbg.__wbindgen_try_into_number = function(arg0) {
         let result;
     try { result = +getObject(arg0) } catch (e) { result = e }
@@ -746,6 +925,9 @@ imports.wbg.__wbindgen_number_get = function(arg0, arg1) {
     const ret = typeof(obj) === 'number' ? obj : undefined;
     getFloat64Memory0()[arg0 / 8 + 1] = isLikeNone(ret) ? 0 : ret;
     getInt32Memory0()[arg0 / 4 + 0] = !isLikeNone(ret);
+};
+imports.wbg.__wbindgen_object_drop_ref = function(arg0) {
+    takeObject(arg0);
 };
 imports.wbg.__wbg_new_abda76e883ba8a5f = function() {
     const ret = new Error();

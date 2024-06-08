@@ -19,10 +19,14 @@ import { NumberInput } from "./NumberInput";
 import { Select } from "./Select";
 import { Switch } from "./Switch";
 import { useSvgContext } from "~/lib/SvgContext";
+import { usePaintContext } from "~/lib/PaintContext";
+import { qroptions_margin } from "../../fuqr/pkg/fuqr_bg.wasm";
 
 export function Editor(props: any) {
-  const { inputQr, setInputQr } = useQrContext();
+  const { inputQr, setInputQr, outputQr } = useQrContext();
   const { svgOptions, setSvgOptions } = useSvgContext();
+  const { selections, scaleX, scaleY, setScaleXInPlace, setScaleYInPlace } =
+    usePaintContext();
 
   // const [logoSize, setLogoSize] = createSignal(25);
 
@@ -67,15 +71,15 @@ export function Editor(props: any) {
             </For>
           </ButtonGroup>
         </Row>
-        <Row title="Margin">
+        {/* <Row title="Margin">
           <NumberInput
             min={0}
             max={10}
             step={1}
-            value={svgOptions.margin}
-            setValue={(v) => setSvgOptions("margin", v)}
+            value={inputQr.margin.top}
+            setValue={(v) => setInputQr("margin", (prev) => prev.setTop(v))}
           />
-        </Row>
+        </Row> */}
         <Row title="Foreground">
           <ColorInput
             color={svgOptions.fgColor}
@@ -131,6 +135,64 @@ export function Editor(props: any) {
               setValue={setLogoSize}
             /> */}
           </div>
+        </Row>
+        <Row title="Scale X">
+          <NumberInput
+            min={0}
+            max={200}
+            step={1}
+            value={
+              selections().length
+                ? scaleX()[
+                    selections()[0].top * Math.sqrt(scaleX().length) +
+                      selections()[0].left
+                  ]
+                : 100
+            }
+            setValue={(v) => {
+              if (!selections().length) return
+              setScaleXInPlace((prev) => {
+                let width = Math.sqrt(prev.length);
+                selections().forEach((sel) => {
+                  for (let i = sel.top; i < sel.bot; i++) {
+                    for (let j = sel.left; j < sel.right; j++) {
+                      prev[i * width + j] = v;
+                    }
+                  }
+                });
+                return prev;
+              });
+            }}
+          />
+        </Row>
+        <Row title="Scale Y">
+          <NumberInput
+            min={0}
+            max={200}
+            step={1}
+            value={
+              selections().length
+                ? scaleY()[
+                    selections()[0].top * Math.sqrt(scaleY().length) +
+                      selections()[0].left
+                  ]
+                : 100
+            }
+            setValue={(v) => {
+              if (!selections().length) return
+              setScaleYInPlace((prev) => {
+                let width = Math.sqrt(prev.length);
+                selections().forEach((sel) => {
+                  for (let i = sel.top; i < sel.bot; i++) {
+                    for (let j = sel.left; j < sel.right; j++) {
+                      prev[i * width + j] = v;
+                    }
+                  }
+                });
+                return prev;
+              });
+            }}
+          />
         </Row>
       </div>
     </div>

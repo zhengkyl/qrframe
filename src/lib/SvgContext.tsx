@@ -2,7 +2,6 @@ import { createContext, useContext, type JSX } from "solid-js";
 import { createStore, type SetStoreFunction } from "solid-js/store";
 
 type SvgOptions = {
-  margin: number;
   bgColor: string;
   fgColor: string;
   bgImgFile: File | null;
@@ -18,7 +17,6 @@ export const SvgContext = createContext<{
 
 export function SvgContextProvider(props: { children: JSX.Element }) {
   const [svgOptions, setSvgOptions] = createStore<SvgOptions>({
-    margin: 2,
     bgColor: "#ffffff",
     fgColor: "#000000",
     bgImgFile: null,
@@ -28,12 +26,7 @@ export function SvgContextProvider(props: { children: JSX.Element }) {
   });
 
   return (
-    <SvgContext.Provider
-      value={{
-        svgOptions: svgOptions,
-        setSvgOptions: setSvgOptions,
-      }}
-    >
+    <SvgContext.Provider value={{ svgOptions, setSvgOptions }}>
       {props.children}
     </SvgContext.Provider>
   );

@@ -25,7 +25,12 @@ export function NumberInput(props: Props) {
     ) {
       return;
     }
-    props.setValue(value);
+
+    if (value !== props.value) {
+      // TODO, revisit this for x scale/y scale slider
+      // console.log("safe Set", value);
+      props.setValue(value);
+    }
   };
 
   const [focused, setFocused] = createSignal(false);

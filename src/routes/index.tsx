@@ -2,10 +2,15 @@ import { Switch, Match, createSignal } from "solid-js";
 import { clientOnly } from "@solidjs/start";
 import init from "fuqr";
 import { Editor } from "~/components/Editor";
+import SvgPreview from "~/components/qr/SvgPreview";
+import { PaintContextProvider } from "~/lib/PaintContext";
+import { SvgContextProvider } from "~/lib/SvgContext";
 
-const QRCode = clientOnly(async () => {
+const QrContextProvider = clientOnly(async () => {
   await init();
-  return import("../components/qr/SvgPreview");
+  return {
+    default: (await import("../lib/QrContext")).QrContextProvider,
+  };
 });
 
 // const MODULE_NAMES = [
@@ -24,18 +29,24 @@ enum Stage {
 export default function Home() {
   const [stage, setStage] = createSignal(Stage.Create);
   return (
-    <main class="max-w-screen-lg mx-auto">
-      <Switch>
-        <Match when={stage() == Stage.Create}>
-          <div class="flex gap-4 flex-wrap">
-            <Editor />
-            <div class="flex-1 min-w-200px sticky top-0 self-start p-4">
-              <QRCode />
-            </div>
-          </div>
-        </Match>
-        {/* <Match when={stage() == Stage.Customize}></Match> */}
-      </Switch>
-    </main>
+    <QrContextProvider>
+      <SvgContextProvider>
+        <PaintContextProvider>
+          <main class="max-w-screen-lg mx-auto">
+            <Switch>
+              <Match when={stage() == Stage.Create}>
+                <div class="flex gap-4 flex-wrap">
+                  <Editor />
+                  <div class="flex-1 min-w-200px sticky top-0 self-start p-4">
+                    <SvgPreview />
+                  </div>
+                </div>
+              </Match>
+              {/* <Match when={stage() == Stage.Customize}></Match> */}
+            </Switch>
+          </main>
+        </PaintContextProvider>
+      </SvgContextProvider>
+    </QrContextProvider>
   );
 }

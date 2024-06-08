@@ -39,14 +39,6 @@ export enum Toggle {
 }
 /**
 */
-export enum ECL {
-  Low = 0,
-  Medium = 1,
-  Quartile = 2,
-  High = 3,
-}
-/**
-*/
 export enum Mask {
   M0 = 0,
   M1 = 1,
@@ -59,9 +51,11 @@ export enum Mask {
 }
 /**
 */
-export enum SvgError {
-  InvalidEncoding = 0,
-  ExceedsMaxCapacity = 1,
+export enum ECL {
+  Low = 0,
+  Medium = 1,
+  Quartile = 2,
+  High = 3,
 }
 /**
 */
@@ -72,23 +66,91 @@ export enum Mode {
 }
 /**
 */
+export enum QrError {
+  InvalidEncoding = 0,
+  ExceedsMaxCapacity = 1,
+}
+/**
+*/
+export class Margin {
+  free(): void;
+/**
+* @param {number} margin
+*/
+  constructor(margin: number);
+/**
+* @param {number} top
+* @returns {Margin}
+*/
+  setTop(top: number): Margin;
+/**
+* @param {number} right
+* @returns {Margin}
+*/
+  setRight(right: number): Margin;
+/**
+* @param {number} bottom
+* @returns {Margin}
+*/
+  setBottom(bottom: number): Margin;
+/**
+* @param {number} left
+* @returns {Margin}
+*/
+  setLeft(left: number): Margin;
+/**
+* @param {number} y
+* @returns {Margin}
+*/
+  y(y: number): Margin;
+/**
+* @param {number} x
+* @returns {Margin}
+*/
+  x(x: number): Margin;
+/**
+*/
+  bottom: number;
+/**
+*/
+  left: number;
+/**
+*/
+  right: number;
+/**
+*/
+  top: number;
+}
+/**
+*/
 export class Matrix {
   free(): void;
+/**
+* @returns {number}
+*/
+  width(): number;
+/**
+* @returns {number}
+*/
+  height(): number;
 /**
 */
   ecl: ECL;
 /**
 */
+  margin: Margin;
+/**
+*/
   mask: Mask;
+/**
+*/
+  mode: Mode;
 /**
 */
   value: any[];
 /**
 */
   version: Version;
-/**
-*/
-  width: number;
 }
 /**
 */
@@ -117,6 +179,11 @@ export class QrOptions {
 * @returns {QrOptions}
 */
   mask(mask?: Mask): QrOptions;
+/**
+* @param {Margin} margin
+* @returns {QrOptions}
+*/
+  margin(margin: Margin): QrOptions;
 }
 /**
 */
@@ -146,20 +213,20 @@ export class SvgOptions {
 */
   background(background: string): SvgOptions;
 /**
-* @param {Float64Array} scale_matrix
+* @param {Uint8Array} scale_matrix
 * @returns {SvgOptions}
 */
-  scale_x_matrix(scale_matrix: Float64Array): SvgOptions;
+  scale_x_matrix(scale_matrix: Uint8Array): SvgOptions;
 /**
-* @param {Float64Array} scale_matrix
+* @param {Uint8Array} scale_matrix
 * @returns {SvgOptions}
 */
-  scale_y_matrix(scale_matrix: Float64Array): SvgOptions;
+  scale_y_matrix(scale_matrix: Uint8Array): SvgOptions;
 /**
-* @param {Float64Array} scale_matrix
+* @param {Uint8Array} scale_matrix
 * @returns {SvgOptions}
 */
-  scale_matrix(scale_matrix: Float64Array): SvgOptions;
+  scale_matrix(scale_matrix: Uint8Array): SvgOptions;
 /**
 * @param {Toggle} toggle
 * @returns {SvgOptions}
@@ -203,23 +270,44 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly __wbg_margin_free: (a: number) => void;
+  readonly __wbg_get_margin_top: (a: number) => number;
+  readonly __wbg_set_margin_top: (a: number, b: number) => void;
+  readonly __wbg_get_margin_right: (a: number) => number;
+  readonly __wbg_set_margin_right: (a: number, b: number) => void;
+  readonly __wbg_get_margin_bottom: (a: number) => number;
+  readonly __wbg_set_margin_bottom: (a: number, b: number) => void;
+  readonly __wbg_get_margin_left: (a: number) => number;
+  readonly __wbg_set_margin_left: (a: number, b: number) => void;
+  readonly margin_new: (a: number) => number;
+  readonly margin_setTop: (a: number, b: number) => number;
+  readonly margin_setRight: (a: number, b: number) => number;
+  readonly margin_setBottom: (a: number, b: number) => number;
+  readonly margin_setLeft: (a: number, b: number) => number;
+  readonly margin_y: (a: number, b: number) => number;
+  readonly margin_x: (a: number, b: number) => number;
   readonly __wbg_matrix_free: (a: number) => void;
   readonly __wbg_get_matrix_value: (a: number, b: number) => void;
   readonly __wbg_set_matrix_value: (a: number, b: number, c: number) => void;
-  readonly __wbg_get_matrix_width: (a: number) => number;
-  readonly __wbg_set_matrix_width: (a: number, b: number) => void;
+  readonly __wbg_get_matrix_margin: (a: number) => number;
+  readonly __wbg_set_matrix_margin: (a: number, b: number) => void;
+  readonly __wbg_get_matrix_mode: (a: number) => number;
+  readonly __wbg_set_matrix_mode: (a: number, b: number) => void;
   readonly __wbg_get_matrix_version: (a: number) => number;
   readonly __wbg_set_matrix_version: (a: number, b: number) => void;
   readonly __wbg_get_matrix_ecl: (a: number) => number;
   readonly __wbg_set_matrix_ecl: (a: number, b: number) => void;
   readonly __wbg_get_matrix_mask: (a: number) => number;
   readonly __wbg_set_matrix_mask: (a: number, b: number) => void;
+  readonly matrix_width: (a: number) => number;
+  readonly matrix_height: (a: number) => number;
   readonly __wbg_qroptions_free: (a: number) => void;
   readonly qroptions_new: () => number;
   readonly qroptions_min_version: (a: number, b: number) => number;
   readonly qroptions_min_ecl: (a: number, b: number) => number;
   readonly qroptions_mode: (a: number, b: number) => number;
   readonly qroptions_mask: (a: number, b: number) => number;
+  readonly qroptions_margin: (a: number, b: number) => number;
   readonly __wbg_svgoptions_free: (a: number) => void;
   readonly svgoptions_new: () => number;
   readonly svgoptions_margin: (a: number, b: number) => number;

@@ -1,12 +1,13 @@
 import { createEffect, createSignal, onCleanup } from "solid-js";
 import { type SetStoreFunction } from "solid-js/store";
+import { usePaintContext, type BoxSelection } from "~/lib/PaintContext";
 
 type Props = {
   width: number;
   height: number;
   color: number;
-  grid: number[];
-  setGrid: SetStoreFunction<number[]>;
+  // grid: number[];
+  // setGrid: SetStoreFunction<number[]>;
 };
 
 enum Mode {
@@ -27,6 +28,8 @@ function clamp(a: number, min: number, max: number) {
 }
 
 export function RenderGrid(props: Props) {
+  const { selections, setSelectionsInPlace } = usePaintContext();
+
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
@@ -45,17 +48,17 @@ export function RenderGrid(props: Props) {
   };
 
   const setPixel = (x: number, y: number) => {
-    if (props.color === props.grid[y * props.width + x]) return;
+  //   if (props.color === props.grid[y * props.width + x]) return;
 
-    props.setGrid(y * props.width + x, props.color!);
-    if (props.color) {
-      ctx.fillRect(x * UNIT, y * UNIT, UNIT, UNIT);
-    } else {
-      ctx.clearRect(x * UNIT, y * UNIT, UNIT, UNIT);
-    }
+  //   props.setGrid(y * props.width + x, props.color!);
+  //   if (props.color) {
+  //     ctx.fillRect(x * UNIT, y * UNIT, UNIT, UNIT);
+  //   } else {
+  //     ctx.clearRect(x * UNIT, y * UNIT, UNIT, UNIT);
+  //   }
   };
 
-  let selection: Selection | null;
+  let selection: BoxSelection | null;
 
   function onMouseMove(e: MouseEvent) {
     const { x, y } = getPos(e);
@@ -66,7 +69,7 @@ export function RenderGrid(props: Props) {
       selectCtx.clearRect(0, 0, props.width * UNIT, props.height * UNIT);
 
       selectCtx.fillStyle = "rgb(59, 130, 246)";
-      selectedBoxes.forEach((sel) => {
+      selections().forEach((sel) => {
         selectCtx.fillRect(
           sel.left * UNIT,
           sel.top * UNIT,
@@ -142,7 +145,11 @@ export function RenderGrid(props: Props) {
 
   const onMouseUp = () => {
     if (selection != null) {
-      selectedBoxes.push(selection);
+      setSelectionsInPlace((prev) => {
+        // @ts-expect-error i'm right unless somehow this isn't synchronous
+        prev.push(selection);
+        return prev;
+      });
     }
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
@@ -157,18 +164,12 @@ export function RenderGrid(props: Props) {
 
   const [brushSize, setBrushSize] = createSignal(1);
 
-  let selectedBoxes: Selection[] = [];
+  // let selectedBoxes: Selection[] = [];
 
   let prevX: number;
   let prevY: number;
 
   let deselectIntent: boolean;
-
-  createEffect(() => {
-    props.width;
-    props.height;
-    selectedBoxes = [];
-  });
 
   return (
     <>
@@ -199,7 +200,7 @@ export function RenderGrid(props: Props) {
           if (mode() === Mode.Select) {
             deselectIntent = false;
             if (!(e.shiftKey || e.ctrlKey)) {
-              deselectIntent = selectedBoxes.length > 0;
+              deselectIntent = selections().length > 0;
 
               if (deselectIntent) {
                 selectCtx.clearRect(
@@ -208,8 +209,8 @@ export function RenderGrid(props: Props) {
                   props.width * UNIT,
                   props.height * UNIT
                 );
-                selectedBoxes = [];
-                selection = null
+                setSelectionsInPlace([]);
+                selection = null;
               }
             }
 
