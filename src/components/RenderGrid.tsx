@@ -1,6 +1,6 @@
 import { createEffect, createSignal, onCleanup } from "solid-js";
 import { type SetStoreFunction } from "solid-js/store";
-import { usePaintContext, type BoxSelection } from "~/lib/PaintContext";
+import { useSvgContext, type BoxSelection } from "~/lib/SvgContext";
 
 type Props = {
   width: number;
@@ -28,7 +28,7 @@ function clamp(a: number, min: number, max: number) {
 }
 
 export function RenderGrid(props: Props) {
-  const { selections, setSelectionsInPlace } = usePaintContext();
+  const { selections, setSelectionsInPlace } = useSvgContext();
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -48,14 +48,13 @@ export function RenderGrid(props: Props) {
   };
 
   const setPixel = (x: number, y: number) => {
-  //   if (props.color === props.grid[y * props.width + x]) return;
-
-  //   props.setGrid(y * props.width + x, props.color!);
-  //   if (props.color) {
-  //     ctx.fillRect(x * UNIT, y * UNIT, UNIT, UNIT);
-  //   } else {
-  //     ctx.clearRect(x * UNIT, y * UNIT, UNIT, UNIT);
-  //   }
+    //   if (props.color === props.grid[y * props.width + x]) return;
+    //   props.setGrid(y * props.width + x, props.color!);
+    //   if (props.color) {
+    //     ctx.fillRect(x * UNIT, y * UNIT, UNIT, UNIT);
+    //   } else {
+    //     ctx.clearRect(x * UNIT, y * UNIT, UNIT, UNIT);
+    //   }
   };
 
   let selection: BoxSelection | null;

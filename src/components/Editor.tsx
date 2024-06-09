@@ -1,4 +1,4 @@
-import { For, Show, batch, createSignal, type JSX } from "solid-js";
+import { For, Show, batch, type JSX } from "solid-js";
 import { useQrContext } from "~/lib/QrContext";
 import {
   ECL_NAMES,
@@ -19,14 +19,18 @@ import { NumberInput } from "./NumberInput";
 import { Select } from "./Select";
 import { Switch } from "./Switch";
 import { useSvgContext } from "~/lib/SvgContext";
-import { usePaintContext } from "~/lib/PaintContext";
-import { qroptions_margin } from "../../fuqr/pkg/fuqr_bg.wasm";
 
 export function Editor(props: any) {
-  const { inputQr, setInputQr, outputQr } = useQrContext();
-  const { svgOptions, setSvgOptions } = useSvgContext();
-  const { selections, scaleX, scaleY, setScaleXInPlace, setScaleYInPlace } =
-    usePaintContext();
+  const { inputQr, setInputQr } = useQrContext();
+  const {
+    svgOptions,
+    setSvgOptions,
+    selections,
+    scaleX,
+    scaleY,
+    setScaleXInPlace,
+    setScaleYInPlace,
+  } = useSvgContext();
 
   // const [logoSize, setLogoSize] = createSignal(25);
 
@@ -150,7 +154,7 @@ export function Editor(props: any) {
                 : 100
             }
             setValue={(v) => {
-              if (!selections().length) return
+              if (!selections().length) return;
               setScaleXInPlace((prev) => {
                 let width = Math.sqrt(prev.length);
                 selections().forEach((sel) => {
@@ -179,7 +183,7 @@ export function Editor(props: any) {
                 : 100
             }
             setValue={(v) => {
-              if (!selections().length) return
+              if (!selections().length) return;
               setScaleYInPlace((prev) => {
                 let width = Math.sqrt(prev.length);
                 selections().forEach((sel) => {

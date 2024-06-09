@@ -3,7 +3,6 @@ import { clientOnly } from "@solidjs/start";
 import init from "fuqr";
 import { Editor } from "~/components/Editor";
 import SvgPreview from "~/components/qr/SvgPreview";
-import { PaintContextProvider } from "~/lib/PaintContext";
 import { SvgContextProvider } from "~/lib/SvgContext";
 
 const QrContextProvider = clientOnly(async () => {
@@ -31,21 +30,19 @@ export default function Home() {
   return (
     <QrContextProvider>
       <SvgContextProvider>
-        <PaintContextProvider>
-          <main class="max-w-screen-lg mx-auto">
-            <Switch>
-              <Match when={stage() == Stage.Create}>
-                <div class="flex gap-4 flex-wrap">
-                  <Editor />
-                  <div class="flex-1 min-w-200px sticky top-0 self-start p-4">
-                    <SvgPreview />
-                  </div>
+        <main class="max-w-screen-lg mx-auto">
+          <Switch>
+            <Match when={stage() == Stage.Create}>
+              <div class="flex gap-4 flex-wrap">
+                <Editor />
+                <div class="flex-1 min-w-200px sticky top-0 self-start p-4">
+                  <SvgPreview />
                 </div>
-              </Match>
-              {/* <Match when={stage() == Stage.Customize}></Match> */}
-            </Switch>
-          </main>
-        </PaintContextProvider>
+              </div>
+            </Match>
+            {/* <Match when={stage() == Stage.Customize}></Match> */}
+          </Switch>
+        </main>
       </SvgContextProvider>
     </QrContextProvider>
   );

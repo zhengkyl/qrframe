@@ -1,15 +1,10 @@
-import {
-  QrOptions,
-  SvgOptions,
-  get_svg,
-  QrError,
-  Version,
-  SvgResult,
-} from "fuqr";
+import { QrError } from "fuqr";
 
-import { FlatButton } from "~/components/Button";
 import Download from "lucide-solid/icons/download";
-import { Match, Show, Switch, createMemo, createSignal } from "solid-js";
+import { Match, Show, Switch, createSignal } from "solid-js";
+import { FlatButton } from "~/components/Button";
+import { useQrContext, type OutputQr } from "~/lib/QrContext";
+import { useSvgContext } from "~/lib/SvgContext";
 import {
   ECL_LABELS,
   ECL_NAMES,
@@ -18,43 +13,12 @@ import {
   MODE_NAMES,
 } from "~/lib/options";
 import { RenderGrid } from "../RenderGrid";
-import { useQrContext, type OutputQr } from "~/lib/QrContext";
-import { useSvgContext } from "~/lib/SvgContext";
-import { usePaintContext } from "~/lib/PaintContext";
 
 const PIXELS_PER_MODULE = 20;
 
 export default function SvgPreview() {
   const { inputQr, outputQr, setOutputQr } = useQrContext();
-
-  const { svgOptions } = useSvgContext();
-  const { scaleX, scaleY } = usePaintContext();
-
-  const svgResult = createMemo(() => {
-    // what if iterate func return list of coords
-    // combine with list of true/false for placement
-    //
-    let output = outputQr();
-    if (typeof output === "number") {
-      // See <Show> component
-      // svgResult() only called when outputQr() is successful
-      return null as unknown as SvgResult;
-    }
-    const qrOptions = new QrOptions()
-      .min_version(new Version(output.version))
-      .min_ecl(output.ecl)
-      .mask(output.mask!) // wasm-bindgen types None as `undefined`, but null works
-      .mode(output.mode!); // wasm-bindgen types None as `undefined`, but null works
-
-    let svgOpts = new SvgOptions()
-      .foreground(svgOptions.fgColor)
-      .background(svgOptions.bgColor)
-      .scale_x_matrix(new Uint8Array(scaleX()))
-      .scale_y_matrix(new Uint8Array(scaleY()));
-
-    // infallible b/c outputQr contains successful options
-    return get_svg(inputQr.text, qrOptions, svgOpts);
-  });
+  const { svgOptions, svgResult } = useSvgContext();
 
   function download(href: string, name: string) {
     const a = document.createElement("a");
@@ -85,7 +49,7 @@ export default function SvgPreview() {
   return (
     <>
       <Show
-        when={typeof outputQr() != "number"}
+        when={svgResult() != null}
         fallback={
           <div class="aspect-[1/1] border rounded-md flex justify-center items-center">
             <Switch>
@@ -125,7 +89,7 @@ export default function SvgPreview() {
               }}
             />
           </Show>
-          <div class="relative" innerHTML={svgResult().svg}></div>
+          <div class="relative" innerHTML={svgResult()!.svg}></div>
           <Show when={svgOptions.fgImgFile != null}>
             <img
               class="absolute top-0 bottom-0 left-0 right-0 m-auto"
@@ -150,26 +114,26 @@ export default function SvgPreview() {
           <div class="">
             Version{" "}
             <span class="font-bold text-base whitespace-pre">
-              {svgResult().version["0"]} ({svgResult().version["0"] * 4 + 17}x
-              {svgResult().version["0"] * 4 + 17} pixels)
+              {svgResult()!.version["0"]} ({svgResult()!.version["0"] * 4 + 17}x
+              {svgResult()!.version["0"] * 4 + 17} pixels)
             </span>
           </div>
           <div class="">
             Error tolerance{" "}
             <span class="font-bold text-base whitespace-pre">
-              {ECL_NAMES[svgResult().ecl]} ({ECL_LABELS[svgResult().ecl]})
+              {ECL_NAMES[svgResult()!.ecl]} ({ECL_LABELS[svgResult()!.ecl]})
             </span>
           </div>
           <div class="">
             Encoding{" "}
             <span class="font-bold text-base">
-              {MODE_KEY[svgResult().mode]}
+              {MODE_KEY[svgResult()!.mode]}
             </span>
           </div>
           <div class="">
             Mask{" "}
             <span class="font-bold text-base">
-              {MASK_KEY[svgResult().mask]}
+              {MASK_KEY[svgResult()!.mask]}
             </span>
           </div>
         </div>
@@ -193,7 +157,9 @@ export default function SvgPreview() {
               }
 
               const svgImg = new Image();
-              svgImg.src = `data:image/svg+xml;base64,${btoa(svgResult().svg)}`;
+              svgImg.src = `data:image/svg+xml;base64,${btoa(
+                svgResult()!.svg
+              )}`;
               await svgImg.decode();
               ctx!.drawImage(svgImg, 0, 0, width, height);
 
@@ -222,7 +188,7 @@ export default function SvgPreview() {
             onClick={() => {
               download(
                 URL.createObjectURL(
-                  new Blob([svgResult().svg], { type: "image/svg" })
+                  new Blob([svgResult()!.svg], { type: "image/svg" })
                 ),
                 `${inputQr.text.slice(0, 10).trim()}.svg`
               );
