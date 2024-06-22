@@ -18,7 +18,7 @@ const PIXELS_PER_MODULE = 20;
 
 export default function SvgPreview() {
   const { inputQr, outputQr, setOutputQr } = useQrContext();
-  const { svgOptions, svgResult } = useSvgContext();
+  const { svgOptions, svgResult, logoSize } = useSvgContext();
 
   function download(href: string, name: string) {
     const a = document.createElement("a");
@@ -96,8 +96,7 @@ export default function SvgPreview() {
               src={logoSrc()}
               ref={fgImg}
               style={{
-                // TODO
-                width: `${25}%`,
+                width: `${logoSize()}%`,
                 "image-rendering": svgOptions.pixelateFgImg
                   ? "pixelated"
                   : undefined,
@@ -168,11 +167,19 @@ export default function SvgPreview() {
                 const logoImg = new Image();
                 logoImg.src = logoSrc();
                 await logoImg.decode();
-                // TODO logoSize
-                const logoSize = (fullWidth() / 4) * PIXELS_PER_MODULE;
-                const xOffset = (width - logoSize) / 2;
-                const yOffset = (height - logoSize) / 2;
-                ctx!.drawImage(logoImg, xOffset, yOffset, logoSize, logoSize);
+                const logoWidth = (fullWidth() / 4) * PIXELS_PER_MODULE;
+                const logoHeight =
+                  (logoWidth * logoImg.naturalHeight) / logoImg.naturalWidth;
+                const xOffset = (width - logoWidth) / 2;
+                const yOffset = (height - logoHeight) / 2;
+
+                ctx!.drawImage(
+                  logoImg,
+                  xOffset,
+                  yOffset,
+                  logoWidth,
+                  logoHeight
+                );
               }
 
               download(

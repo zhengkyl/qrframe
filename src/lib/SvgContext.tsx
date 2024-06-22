@@ -18,6 +18,7 @@ import {
   get_svg,
   type QrError,
   type SvgResult,
+  Toggle,
 } from "fuqr";
 import { useQrContext } from "./QrContext";
 
@@ -48,6 +49,8 @@ export const SvgContext = createContext<{
   setScaleYInPlace: Setter<number[]>;
   svgResult: Accessor<SvgResult | null>;
   setSvgResult: Setter<SvgResult | null>;
+  logoSize: Accessor<number>;
+  setLogoSize: Setter<number>;
 }>();
 
 export function SvgContextProvider(props: { children: JSX.Element }) {
@@ -73,6 +76,7 @@ export function SvgContextProvider(props: { children: JSX.Element }) {
   });
 
   const [svgResult, setSvgResult] = createSignal<SvgResult | null>(null);
+  const [logoSize, setLogoSize] = createSignal(25);
 
   createEffect(() => {
     try {
@@ -125,6 +129,10 @@ export function SvgContextProvider(props: { children: JSX.Element }) {
         .scale_x_matrix(new Uint8Array(scaleX()))
         .scale_y_matrix(new Uint8Array(scaleY()));
 
+      if (svgOptions.bgImgFile != null) {
+        svgOpts = svgOpts.toggle(Toggle.Background)
+      }
+
       // infallible b/c outputQr contains successful options
       setSvgResult(get_svg(inputQr.text, qrOptions, svgOpts));
     } catch (e) {
@@ -146,6 +154,8 @@ export function SvgContextProvider(props: { children: JSX.Element }) {
         setScaleXInPlace,
         scaleY,
         setScaleYInPlace,
+        logoSize,
+        setLogoSize,
       }}
     >
       {props.children}

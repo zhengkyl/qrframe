@@ -30,6 +30,8 @@ export function Editor(props: any) {
     scaleY,
     setScaleXInPlace,
     setScaleYInPlace,
+    logoSize,
+    setLogoSize,
   } = useSvgContext();
 
   // const [logoSize, setLogoSize] = createSignal(25);
@@ -89,11 +91,6 @@ export function Editor(props: any) {
             color={svgOptions.fgColor}
             setColor={(v) => setSvgOptions("fgColor", v)}
           />
-          <Switch
-            value={svgOptions.pixelateFgImg}
-            setValue={(v) => setSvgOptions("pixelateFgImg", v)}
-            label="Disable smoothing"
-          />
           <FlatButton
             class="text-sm px-2 py-2"
             onMouseDown={() => {
@@ -130,16 +127,23 @@ export function Editor(props: any) {
               value={svgOptions.fgImgFile}
               setValue={(v) => setSvgOptions("fgImgFile", v)}
             />
-            {/* TODO need better img management than just size */}
-            {/* <NumberInput
-              min={0}
-              max={100}
-              step={0.1}
-              value={logoSize()}
-              setValue={setLogoSize}
-            /> */}
+            <Switch
+              value={svgOptions.pixelateFgImg}
+              setValue={(v) => setSvgOptions("pixelateFgImg", v)}
+              label="Disable smoothing"
+            />
           </div>
         </Row>
+        <Row title="Logo size">
+          <NumberInput
+            min={0}
+            max={100}
+            step={0.1}
+            value={logoSize()}
+            setValue={setLogoSize}
+          />
+        </Row>
+
         <Row title="Scale X">
           <NumberInput
             min={0}
