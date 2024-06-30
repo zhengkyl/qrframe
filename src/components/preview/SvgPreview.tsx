@@ -112,17 +112,17 @@ export default function SvgPreview() {
         </div>
         <div class="p-4 grid grid-cols-2 gap-y-2 text-sm text-left">
           <div class="">
-            Version{" "}
-            <span class="font-bold text-base whitespace-pre">
+            Symbol size{" "}
+            <div class="font-bold text-base whitespace-pre">
               {svgResult()!.version["0"]} ({svgResult()!.version["0"] * 4 + 17}x
               {svgResult()!.version["0"] * 4 + 17} pixels)
-            </span>
+            </div>
           </div>
           <div class="">
             Error tolerance{" "}
-            <span class="font-bold text-base whitespace-pre">
+            <div class="font-bold text-base whitespace-pre">
               {ECL_NAMES[svgResult()!.ecl]} ({ECL_LABELS[svgResult()!.ecl]})
-            </span>
+            </div>
           </div>
           <div class="">
             Encoding{" "}

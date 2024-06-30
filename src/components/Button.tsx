@@ -6,15 +6,21 @@ type Props = {
   onClick?: () => void;
   onMouseDown?: () => void;
   children: JSX.Element;
+  tooltip?: string;
+  disabled?: boolean;
 };
 export function FlatButton(props: Props) {
   return (
     <Button
-      class={`inline-flex justify-center items-center gap-1 border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) ${
-        props.class || "px-3 py-2"
-      }`}
+    title={props.tooltip}
+      classList={{
+        "inline-flex justify-center items-center gap-1 border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(pointer-events-none opacity-50)":
+          true,
+        [props.class ?? "px-3 py-2"]: true,
+      }}
       onMouseDown={props.onMouseDown}
       onClick={props.onClick}
+      disabled={props.disabled}
     >
       {props.children}
     </Button>

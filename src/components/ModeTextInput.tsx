@@ -3,7 +3,7 @@ type Props = {
 };
 
 /** No `value` prop b/c textarea cannot be controlled  */
-export function ModeTextInput(props: Props) {
+export function TextInput(props: Props) {
   const onInput = debounce(props.setValue, 300);
   return (
     <div class="flex flex-col gap-2">

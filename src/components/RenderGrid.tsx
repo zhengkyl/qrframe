@@ -59,7 +59,7 @@ export function RenderGrid(props: Props) {
 
   let selection: BoxSelection | null;
 
-  function onMouseMove(e: MouseEvent) {
+  function onPointerMove(e: MouseEvent) {
     const { x, y } = getPos(e);
 
     if (mode() === Mode.Select) {
@@ -142,7 +142,7 @@ export function RenderGrid(props: Props) {
     }
   }
 
-  const onMouseUp = () => {
+  const onPointerUp = () => {
     if (selection != null) {
       setSelectionsInPlace((prev) => {
         // @ts-expect-error i'm right unless somehow this isn't synchronous
@@ -150,13 +150,13 @@ export function RenderGrid(props: Props) {
         return prev;
       });
     }
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
   };
 
   onCleanup(() => {
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
   });
 
   const [mode, setMode] = createSignal(Mode.Select);
@@ -229,8 +229,8 @@ export function RenderGrid(props: Props) {
           prevX = x;
           prevY = y;
 
-          document.addEventListener("mouseup", onMouseUp);
-          document.addEventListener("mousemove", onMouseMove);
+          document.addEventListener("pointerup", onPointerUp);
+          document.addEventListener("pointermove", onPointerMove);
         }}
       ></canvas>
     </>

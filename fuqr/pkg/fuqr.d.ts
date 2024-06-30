@@ -15,27 +15,11 @@ export function get_matrix(input: string, qr_options: QrOptions): Matrix;
 export function get_svg(input: string, qr_options: QrOptions, svg_options: SvgOptions): SvgResult;
 /**
 */
-export enum Module {
-  DataOFF = 0,
-  DataON = 1,
-  FinderOFF = 2,
-  FinderON = 3,
-  AlignmentOFF = 4,
-  AlignmentON = 5,
-  TimingOFF = 6,
-  TimingON = 7,
-  FormatOFF = 8,
-  FormatON = 9,
-  VersionOFF = 10,
-  VersionON = 11,
-  Unset = 12,
-}
-/**
-*/
-export enum Toggle {
-  Background = 0,
-  BackgroundPixels = 1,
-  ForegroundPixels = 2,
+export enum ECL {
+  Low = 0,
+  Medium = 1,
+  Quartile = 2,
+  High = 3,
 }
 /**
 */
@@ -51,14 +35,6 @@ export enum Mask {
 }
 /**
 */
-export enum ECL {
-  Low = 0,
-  Medium = 1,
-  Quartile = 2,
-  High = 3,
-}
-/**
-*/
 export enum Mode {
   Numeric = 0,
   Alphanumeric = 1,
@@ -66,9 +42,33 @@ export enum Mode {
 }
 /**
 */
+export enum Toggle {
+  Background = 0,
+  BackgroundPixels = 1,
+  ForegroundPixels = 2,
+}
+/**
+*/
 export enum QrError {
   InvalidEncoding = 0,
   ExceedsMaxCapacity = 1,
+}
+/**
+*/
+export enum Module {
+  DataOFF = 0,
+  DataON = 1,
+  FinderOFF = 2,
+  FinderON = 3,
+  AlignmentOFF = 4,
+  AlignmentON = 5,
+  TimingOFF = 6,
+  TimingON = 7,
+  FormatOFF = 8,
+  FormatON = 9,
+  VersionOFF = 10,
+  VersionON = 11,
+  Unset = 12,
 }
 /**
 */
@@ -193,11 +193,6 @@ export class SvgOptions {
 */
   constructor();
 /**
-* @param {number} margin
-* @returns {SvgOptions}
-*/
-  margin(margin: number): SvgOptions;
-/**
 * @param {number} unit
 * @returns {SvgOptions}
 */
@@ -213,20 +208,20 @@ export class SvgOptions {
 */
   background(background: string): SvgOptions;
 /**
-* @param {Uint8Array} scale_matrix
+* @param {Uint8Array | undefined} [scale_x_matrix]
 * @returns {SvgOptions}
 */
-  scale_x_matrix(scale_matrix: Uint8Array): SvgOptions;
+  scale_x_matrix(scale_x_matrix?: Uint8Array): SvgOptions;
 /**
-* @param {Uint8Array} scale_matrix
+* @param {Uint8Array | undefined} [scale_y_matrix]
 * @returns {SvgOptions}
 */
-  scale_y_matrix(scale_matrix: Uint8Array): SvgOptions;
+  scale_y_matrix(scale_y_matrix?: Uint8Array): SvgOptions;
 /**
-* @param {Uint8Array} scale_matrix
+* @param {Uint8Array | undefined} [scale_matrix]
 * @returns {SvgOptions}
 */
-  scale_matrix(scale_matrix: Uint8Array): SvgOptions;
+  scale_matrix(scale_matrix?: Uint8Array): SvgOptions;
 /**
 * @param {Toggle} toggle
 * @returns {SvgOptions}
@@ -301,6 +296,10 @@ export interface InitOutput {
   readonly __wbg_set_matrix_mask: (a: number, b: number) => void;
   readonly matrix_width: (a: number) => number;
   readonly matrix_height: (a: number) => number;
+  readonly __wbg_version_free: (a: number) => void;
+  readonly __wbg_get_version_0: (a: number) => number;
+  readonly __wbg_set_version_0: (a: number, b: number) => void;
+  readonly version_new: (a: number) => number;
   readonly __wbg_qroptions_free: (a: number) => void;
   readonly qroptions_new: () => number;
   readonly qroptions_min_version: (a: number, b: number) => number;
@@ -310,7 +309,6 @@ export interface InitOutput {
   readonly qroptions_margin: (a: number, b: number) => number;
   readonly __wbg_svgoptions_free: (a: number) => void;
   readonly svgoptions_new: () => number;
-  readonly svgoptions_margin: (a: number, b: number) => number;
   readonly svgoptions_unit: (a: number, b: number) => number;
   readonly svgoptions_foreground: (a: number, b: number, c: number) => number;
   readonly svgoptions_background: (a: number, b: number, c: number) => number;
@@ -331,10 +329,6 @@ export interface InitOutput {
   readonly __wbg_set_svgresult_mask: (a: number, b: number) => void;
   readonly get_matrix: (a: number, b: number, c: number, d: number) => void;
   readonly get_svg: (a: number, b: number, c: number, d: number, e: number) => void;
-  readonly __wbg_version_free: (a: number) => void;
-  readonly __wbg_get_version_0: (a: number) => number;
-  readonly __wbg_set_version_0: (a: number, b: number) => void;
-  readonly version_new: (a: number) => number;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
