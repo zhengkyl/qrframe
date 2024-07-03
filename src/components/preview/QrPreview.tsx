@@ -1,6 +1,6 @@
 import { QrError } from "fuqr";
 
-import { Match, Show, Switch, createEffect } from "solid-js";
+import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 import { useQrContext, type OutputQr } from "~/lib/QrContext";
 import {
   ECL_LABELS,
@@ -9,12 +9,27 @@ import {
   MODE_KEY,
   MODE_NAMES,
 } from "~/lib/options";
+import { FlatButton } from "../Button";
+import Download from "lucide-solid/icons/download";
 
-export default function QrPreview() {
+function download(href: string, name: string) {
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+type Props = {
+  class?: string;
+};
+
+export default function QrPreview(props: Props) {
   const { inputQr, outputQr } = useQrContext();
 
   return (
-    <>
+    <div class={props.class}>
       <Show
         when={typeof outputQr() !== "number"}
         fallback={
@@ -35,12 +50,12 @@ export default function QrPreview() {
       >
         <RenderedQrCode />
       </Show>
-    </>
+    </div>
   );
 }
 
 /** This component assumes outputQr() is not QrError, this simplifies effects and types
- * 
+ *
  *  Original problem:
  *  When using Show, effects tracking the when signal run before refs inside Show become valid.
  *  The result was no effect running after initial mount, so no render.
@@ -48,7 +63,7 @@ export default function QrPreview() {
  */
 function RenderedQrCode() {
   const { outputQr: _outputQr, renderFunc } = useQrContext();
-  const outputQr = _outputQr as () => OutputQr
+  const outputQr = _outputQr as () => OutputQr;
 
   const fullWidth = () => {
     const output = outputQr();
@@ -61,10 +76,17 @@ function RenderedQrCode() {
 
   let qrCanvas: HTMLCanvasElement;
 
+  const [runtimeError, setRuntimeError] = createSignal<string | null>(null)
+
   createEffect(() => {
     const ctx = qrCanvas.getContext("2d")!;
     ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
-    renderFunc()(outputQr(), ctx);
+    try {
+      renderFunc()(outputQr(), ctx);
+      setRuntimeError(null)
+    } catch (e) {
+      setRuntimeError(e!.toString())
+    }
   });
 
   return (
@@ -80,12 +102,12 @@ function RenderedQrCode() {
           }%`,
         }}
       >
-        <canvas
-          class="w-full h-full"
-          ref={qrCanvas!}
-        ></canvas>
+        <canvas class="w-full h-full" ref={qrCanvas!}></canvas>
       </div>
-      <div class="p-4 grid grid-cols-2 gap-y-2 text-sm text-left">
+      <Show when={runtimeError() != null}>
+        <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md">{runtimeError()}</div>
+      </Show>
+      <div class="px-4 grid grid-cols-2 gap-y-2 text-sm text-left">
         <div class="">
           Symbol size{" "}
           <div class="font-bold text-base whitespace-pre">
@@ -107,6 +129,33 @@ function RenderedQrCode() {
           Mask{" "}
           <span class="font-bold text-base">{MASK_KEY[outputQr().mask]}</span>
         </div>
+      </div>
+      <div class="flex gap-2">
+        <FlatButton
+          class="flex-1 px-3 py-2"
+          onClick={async () => {
+            download(
+              qrCanvas.toDataURL("image/png"),
+              `${outputQr().text.slice(0, 15).trim()}.png`
+            );
+          }}
+        >
+          <Download size={20} />
+          Download PNG
+        </FlatButton>
+        {/* <FlatButton
+          onClick={() => {
+            download(
+              URL.createObjectURL(
+                new Blob([svgResult()!.svg], { type: "image/svg" })
+              ),
+              `${inputQr.text.slice(0, 10).trim()}.svg`
+            );
+          }}
+        >
+          <Download size={20} />
+          SVG
+        </FlatButton> */}
       </div>
     </>
   );

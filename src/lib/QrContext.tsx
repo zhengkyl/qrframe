@@ -94,7 +94,6 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         .min_ecl(inputQr.minEcl)
         .mask(inputQr.mask!) // null makes more sense than undefined
         .mode(inputQr.mode!) // null makes more sense than undefined
-        .margin(new Margin(10))
         .margin(
           new Margin(0)
             .setTop(inputQr.margin.top)
@@ -159,7 +158,7 @@ function defaultRender(qr: OutputQr, ctx: CanvasRenderingContext2D) {
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   
   ctx.fillStyle = "rgb(0, 0, 0)";
-  
+  // ctx.imageSmoothingEnabled
   for (let y = 0; y < qr.matrixHeight; y++) {
     for (let x = 0; x < qr.matrixWidth; x++) {
       const module = qr.matrix[y * qr.matrixWidth + x];
