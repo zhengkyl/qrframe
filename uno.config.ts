@@ -15,6 +15,26 @@ export default defineConfig({
         subtle: "#1a1b1c",
       },
     },
+    animation: {
+      "content-show": {
+        from: {
+          opacity: 0,
+          transform: "scale(0.96);",
+        },
+        to: {
+          opacity: 1,
+        },
+      },
+      "content-hide": {
+        from: {
+          opacity: 1,
+        },
+        to: {
+          opacity: 0,
+          transform: "scale(0.96);",
+        },
+      },
+    },
   },
   preflights: [
     {

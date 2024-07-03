@@ -7,11 +7,20 @@
     "start": "vinxi start"
   },
   "dependencies": {
-    "@kobalte/core": "^0.13.1",
+    "@codemirror/commands": "^6.6.0",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/language": "^6.10.2",
+    "@codemirror/state": "^6.4.1",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@codemirror/view": "^6.28.3",
+    "@kobalte/core": "^0.13.3",
+    "@replit/codemirror-vim": "^6.2.1",
     "@solidjs/router": "^0.13.3",
     "@solidjs/start": "^1.0.0",
     "@unocss/reset": "^0.59.4",
+    "codemirror": "^6.0.1",
     "lucide-solid": "^0.378.0",
+    "qr-scanner-wechat": "^0.1.3",
     "solid-js": "^1.8.17",
     "unocss": "^0.59.4",
     "vinxi": "^0.3.11"

@@ -1,9 +1,9 @@
-import { Switch, Match, createSignal } from "solid-js";
+import { createSignal } from "solid-js";
 import { clientOnly } from "@solidjs/start";
+import { Editor } from "~/components/editor/QrEditor";
+import { FlatButton } from "~/components/Button";
+import QrPreview from "~/components/preview/QrPreview";
 import init from "fuqr";
-import { Editor } from "~/components/Editor";
-import SvgPreview from "~/components/qr/SvgPreview";
-import { SvgContextProvider } from "~/lib/SvgContext";
 
 const QrContextProvider = clientOnly(async () => {
   await init();
@@ -12,38 +12,15 @@ const QrContextProvider = clientOnly(async () => {
   };
 });
 
-// const MODULE_NAMES = [
-//   "Data",
-//   "Finder",
-//   "Alignment",
-//   "Timing",
-//   "Format",
-//   "Version",
-// ] as const;
-
-enum Stage {
-  Create,
-  Customize,
-}
 export default function Home() {
-  const [stage, setStage] = createSignal(Stage.Create);
   return (
     <QrContextProvider>
-      <SvgContextProvider>
-        <main class="max-w-screen-lg mx-auto">
-          <Switch>
-            <Match when={stage() == Stage.Create}>
-              <div class="flex gap-4 flex-wrap">
-                <Editor />
-                <div class="flex-1 min-w-200px sticky top-0 self-start p-4">
-                  <SvgPreview />
-                </div>
-              </div>
-            </Match>
-            {/* <Match when={stage() == Stage.Customize}></Match> */}
-          </Switch>
-        </main>
-      </SvgContextProvider>
+      <main class="max-w-screen-2xl mx-auto p-4">
+        <div class="flex gap-4 flex-wrap">
+          <Editor class="flex-1 flex-grow-3 flex flex-col gap-2 p-4" />
+          <QrPreview class="flex-1 flex-grow-2 min-w-200px sticky top-0 self-start p-4 flex flex-col gap-4" />
+        </div>
+      </main>
     </QrContextProvider>
   );
 }

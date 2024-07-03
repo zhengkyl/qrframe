@@ -223,22 +223,22 @@ export function get_svg(input, qr_options, svg_options) {
 
 /**
 */
-export const Module = Object.freeze({ DataOFF:0,"0":"DataOFF",DataON:1,"1":"DataON",FinderOFF:2,"2":"FinderOFF",FinderON:3,"3":"FinderON",AlignmentOFF:4,"4":"AlignmentOFF",AlignmentON:5,"5":"AlignmentON",TimingOFF:6,"6":"TimingOFF",TimingON:7,"7":"TimingON",FormatOFF:8,"8":"FormatOFF",FormatON:9,"9":"FormatON",VersionOFF:10,"10":"VersionOFF",VersionON:11,"11":"VersionON",Unset:12,"12":"Unset", });
-/**
-*/
-export const Toggle = Object.freeze({ Background:0,"0":"Background",BackgroundPixels:1,"1":"BackgroundPixels",ForegroundPixels:2,"2":"ForegroundPixels", });
+export const ECL = Object.freeze({ Low:0,"0":"Low",Medium:1,"1":"Medium",Quartile:2,"2":"Quartile",High:3,"3":"High", });
 /**
 */
 export const Mask = Object.freeze({ M0:0,"0":"M0",M1:1,"1":"M1",M2:2,"2":"M2",M3:3,"3":"M3",M4:4,"4":"M4",M5:5,"5":"M5",M6:6,"6":"M6",M7:7,"7":"M7", });
 /**
 */
-export const ECL = Object.freeze({ Low:0,"0":"Low",Medium:1,"1":"Medium",Quartile:2,"2":"Quartile",High:3,"3":"High", });
-/**
-*/
 export const Mode = Object.freeze({ Numeric:0,"0":"Numeric",Alphanumeric:1,"1":"Alphanumeric",Byte:2,"2":"Byte", });
 /**
 */
+export const Toggle = Object.freeze({ Background:0,"0":"Background",BackgroundPixels:1,"1":"BackgroundPixels",ForegroundPixels:2,"2":"ForegroundPixels", });
+/**
+*/
 export const QrError = Object.freeze({ InvalidEncoding:0,"0":"InvalidEncoding",ExceedsMaxCapacity:1,"1":"ExceedsMaxCapacity", });
+/**
+*/
+export const Module = Object.freeze({ DataOFF:0,"0":"DataOFF",DataON:1,"1":"DataON",FinderOFF:2,"2":"FinderOFF",FinderON:3,"3":"FinderON",AlignmentOFF:4,"4":"AlignmentOFF",AlignmentON:5,"5":"AlignmentON",TimingOFF:6,"6":"TimingOFF",TimingON:7,"7":"TimingON",FormatOFF:8,"8":"FormatOFF",FormatON:9,"9":"FormatON",VersionOFF:10,"10":"VersionOFF",VersionON:11,"11":"VersionON",Unset:12,"12":"Unset", });
 
 const MarginFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
@@ -635,15 +635,6 @@ export class SvgOptions {
         return this;
     }
     /**
-    * @param {number} margin
-    * @returns {SvgOptions}
-    */
-    margin(margin) {
-        const ptr = this.__destroy_into_raw();
-        const ret = wasm.svgoptions_margin(ptr, margin);
-        return SvgOptions.__wrap(ret);
-    }
-    /**
     * @param {number} unit
     * @returns {SvgOptions}
     */
@@ -675,35 +666,35 @@ export class SvgOptions {
         return SvgOptions.__wrap(ret);
     }
     /**
-    * @param {Uint8Array} scale_matrix
+    * @param {Uint8Array | undefined} [scale_x_matrix]
     * @returns {SvgOptions}
     */
-    scale_x_matrix(scale_matrix) {
+    scale_x_matrix(scale_x_matrix) {
         const ptr = this.__destroy_into_raw();
-        const ptr0 = passArray8ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
+        var ptr0 = isLikeNone(scale_x_matrix) ? 0 : passArray8ToWasm0(scale_x_matrix, wasm.__wbindgen_malloc);
+        var len0 = WASM_VECTOR_LEN;
         const ret = wasm.svgoptions_scale_x_matrix(ptr, ptr0, len0);
         return SvgOptions.__wrap(ret);
     }
     /**
-    * @param {Uint8Array} scale_matrix
+    * @param {Uint8Array | undefined} [scale_y_matrix]
     * @returns {SvgOptions}
     */
-    scale_y_matrix(scale_matrix) {
+    scale_y_matrix(scale_y_matrix) {
         const ptr = this.__destroy_into_raw();
-        const ptr0 = passArray8ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
+        var ptr0 = isLikeNone(scale_y_matrix) ? 0 : passArray8ToWasm0(scale_y_matrix, wasm.__wbindgen_malloc);
+        var len0 = WASM_VECTOR_LEN;
         const ret = wasm.svgoptions_scale_y_matrix(ptr, ptr0, len0);
         return SvgOptions.__wrap(ret);
     }
     /**
-    * @param {Uint8Array} scale_matrix
+    * @param {Uint8Array | undefined} [scale_matrix]
     * @returns {SvgOptions}
     */
     scale_matrix(scale_matrix) {
         const ptr = this.__destroy_into_raw();
-        const ptr0 = passArray8ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
+        var ptr0 = isLikeNone(scale_matrix) ? 0 : passArray8ToWasm0(scale_matrix, wasm.__wbindgen_malloc);
+        var len0 = WASM_VECTOR_LEN;
         const ret = wasm.svgoptions_scale_matrix(ptr, ptr0, len0);
         return SvgOptions.__wrap(ret);
     }
