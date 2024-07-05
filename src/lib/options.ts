@@ -69,10 +69,3 @@ export const MASK_VALUE: Record<MaskName, Mask | null> = {
   "6": 6,
   "7": 7,
 };
-
-// export const FINDER_PATTERN_NAMES = ["Square", "Cross"] as const;
-// export type FinderPatternName = (typeof FINDER_PATTERN_NAMES)[number];
-// export const FINDER_PATTERN_VALUE: Record<FinderPatternName, FinderPattern> = {
-//   Square: FinderPattern.Square,
-//   Cross: FinderPattern.Cross,
-// };

@@ -132,7 +132,7 @@ function RenderedQrCode() {
       </div>
       <div class="flex gap-2">
         <FlatButton
-          class="flex-1 px-3 py-2"
+          class="inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
           onClick={async () => {
             download(
               qrCanvas.toDataURL("image/png"),

@@ -1,4 +1,4 @@
-import { For, createSignal, onCleanup, onMount, type JSX } from "solid-js";
+import { For, Show, createSignal, onMount, type JSX } from "solid-js";
 import { useQrContext, type RenderFunc } from "~/lib/QrContext";
 import {
   ECL_NAMES,
@@ -10,7 +10,6 @@ import {
   MODE_NAMES,
   MODE_VALUE,
 } from "~/lib/options";
-import { FlatButton } from "../Button";
 import { ButtonGroup, ButtonGroupItem } from "../ButtonGroup";
 import { TextInput, TextareaInput } from "../TextInput";
 import { NumberInput } from "../NumberInput";
@@ -18,8 +17,10 @@ import { GroupedSelect, Select } from "../Select";
 
 import { createStore } from "solid-js/store";
 import { CodeInput } from "../CodeInput";
-import { Switch } from "../Switch";
-import type { EditorView } from "codemirror";
+import Trash2 from "lucide-solid/icons/trash-2";
+import Pencil from "lucide-solid/icons/pencil";
+import { IconButtonDialog } from "../Dialog";
+import { FillButton, FlatButton } from "../Button";
 
 type Props = {
   class?: string;
@@ -29,19 +30,13 @@ const ADD_NEW_FUNC_KEY = "Add new function";
 const USER_FUNC_KEYS_KEY = "userFuncKeys";
 
 export function Editor(props: Props) {
-  let editorView: EditorView;
   const { inputQr, setInputQr, setRenderFunc } = useQrContext();
   const [code, setCode] = createSignal(PRESET_FUNCS.Square);
-  const [dirty, setDirty] = createSignal(false);
-  // const [savedCode, setSavedCode] = createSignal(code());
-  // const [codeKey, setCodeKey] = createSignal("render function 1");
 
   const [compileError, setCompileError] = createSignal<string | null>(null);
 
   const [userFuncKeys, setUserFuncKeys] = createStore<string[]>([]);
-  const [currFunc, setCurrFunc] = createSignal("Square");
-
-  const [vimMode, setVimMode] = createSignal(false);
+  const [funcKey, setFuncKey] = createSignal("Square");
 
   onMount(() => {
     const storedFuncKeys = localStorage.getItem(USER_FUNC_KEYS_KEY);
@@ -55,20 +50,15 @@ export function Editor(props: Props) {
     }
   });
 
-  // onCleanup(()=> {
-  //   localStorage.setItem("renderCodes", codes.join(","))
-  // })
-
   const trySaveCode = (newCode: string) => {
     try {
       const render = new Function("qr", "ctx", newCode) as RenderFunc;
       setCode(newCode);
       setRenderFunc(() => render);
       setCompileError(null);
-      setDirty(false)
 
-      if (!PRESET_FUNCS.hasOwnProperty(currFunc())) {
-        localStorage.setItem(currFunc(), newCode);
+      if (!PRESET_FUNCS.hasOwnProperty(funcKey())) {
+        localStorage.setItem(funcKey(), newCode);
       }
     } catch (e) {
       setCompileError(e!.toString());
@@ -146,7 +136,7 @@ export function Editor(props: Props) {
                 options: [...userFuncKeys, ADD_NEW_FUNC_KEY],
               },
             ]}
-            value={currFunc()}
+            value={funcKey()}
             setValue={(key) => {
               let storedCode;
               if (key === ADD_NEW_FUNC_KEY) {
@@ -173,33 +163,113 @@ export function Editor(props: Props) {
                   }
                 }
               }
-
-              setCurrFunc(key);
+              setFuncKey(key);
               setCode(storedCode);
               trySaveCode(storedCode);
             }}
           />
-          <FlatButton
-            class="px-3 py-1 min-w-150px"
-            disabled={!dirty()}
-            onMouseDown={() => trySaveCode(editorView.state.doc.toString())}
-          >
-            {dirty() ? "Save" : "No changes"}
-          </FlatButton>
-        </div>
-        <div class="flex py-2">
-          <Switch label="Vim mode" value={vimMode()} setValue={setVimMode} />
+          <Show when={userFuncKeys.includes(funcKey())}>
+            <IconButtonDialog
+              title={`Rename ${funcKey()}`}
+              triggerTitle="Rename"
+              triggerChildren={<Pencil class="w-5 h-5" />}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              {(close) => {
+                const [rename, setRename] = createSignal(funcKey());
+                const [duplicate, setDuplicate] = createSignal(false);
+
+                let ref: HTMLInputElement;
+                onMount(() => ref.focus());
+                return (
+                  <>
+                    <TextInput
+                      class="mt-2"
+                      ref={ref!}
+                      defaultValue={rename()}
+                      onChange={setRename}
+                      onInput={() => duplicate() && setDuplicate(false)}
+                      placeholder={funcKey()}
+                    />
+                    <div class="absolute p-1 text-sm text-red-600">
+                      <Show when={duplicate()}>{rename()} already exists.</Show>
+                    </div>
+                    <FillButton
+                      class="px-3 py-2 float-right mt-4"
+                      // input onChange runs after focus lost, so onMouseDown is too early
+                      onClick={() => {
+                        if (rename() === funcKey()) return close();
+
+                        if (
+                          Object.keys(PRESET_FUNCS).includes(rename()) ||
+                          userFuncKeys.includes(rename())
+                        ) {
+                          setDuplicate(true);
+                        } else {
+                          localStorage.removeItem(funcKey());
+                          localStorage.setItem(rename(), code());
+                          setUserFuncKeys(
+                            userFuncKeys.indexOf(funcKey()),
+                            rename()
+                          );
+                          localStorage.setItem(
+                            USER_FUNC_KEYS_KEY,
+                            userFuncKeys.join(",")
+                          );
+
+                          setFuncKey(rename());
+                          close();
+                        }
+                      }}
+                    >
+                      Confirm
+                    </FillButton>
+                  </>
+                );
+              }}
+            </IconButtonDialog>
+            <IconButtonDialog
+              title={`Delete ${funcKey()}`}
+              triggerTitle="Delete"
+              triggerChildren={<Trash2 class="w-5 h-5" />}
+            >
+              {(close) => (
+                <>
+                  <p class="mb-4 text-sm">
+                    Are you sure you want to delete this function?
+                  </p>
+                  <div class="flex justify-end gap-2">
+                    <FillButton
+                      onMouseDown={() => {
+                        setUserFuncKeys((keys) =>
+                          keys.filter((key) => key !== funcKey())
+                        );
+                        localStorage.removeItem(funcKey());
+                        setFuncKey("Square");
+
+                        localStorage.setItem(
+                          USER_FUNC_KEYS_KEY,
+                          userFuncKeys.join(",")
+                        );
+
+                        trySaveCode(PRESET_FUNCS.Square);
+
+                        close();
+                      }}
+                    >
+                      Confirm
+                    </FillButton>
+                    <FlatButton onMouseDown={close}>Cancel</FlatButton>
+                  </div>
+                </>
+              )}
+            </IconButtonDialog>
+          </Show>
         </div>
 
         <div>{compileError()}</div>
         <div class="py-2">
-          <CodeInput
-            editorView={(ref) => (editorView = ref)}
-            initialValue={code()}
-            onSave={trySaveCode}
-            vimMode={vimMode()}
-            onDirty={setDirty}
-          />
+          <CodeInput initialValue={code()} onSave={trySaveCode} />
         </div>
       </div>
     </div>

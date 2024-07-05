@@ -1,43 +1,58 @@
-import { createEffect, onCleanup, onMount } from "solid-js";
+import { createEffect, createSignal, onMount } from "solid-js";
 
-import { indentWithTab, history } from "@codemirror/commands";
-import { javascript } from "@codemirror/lang-javascript";
-import { Compartment, EditorState, Transaction } from "@codemirror/state";
-import { EditorView, keymap, type ViewUpdate } from "@codemirror/view";
-import { vim } from "@replit/codemirror-vim";
 import { basicSetup } from "codemirror";
+import { historyKeymap, indentWithTab } from "@codemirror/commands";
+import { javascript } from "@codemirror/lang-javascript";
 import { syntaxHighlighting } from "@codemirror/language";
+import { Compartment, Transaction } from "@codemirror/state";
+import { EditorView, keymap, type ViewUpdate } from "@codemirror/view";
 import {
-  oneDarkTheme,
   oneDarkHighlightStyle,
+  oneDarkTheme,
 } from "@codemirror/theme-one-dark";
+import { vim } from "@replit/codemirror-vim";
+
+import { Button } from "@kobalte/core/button";
 import { debounce } from "~/lib/util";
+import { Switch } from "./Switch";
 
 type Props = {
-  editorView: (e: EditorView) => void,
   onSave: (s: string) => void;
-  onDirty: (d: boolean) => void;
   initialValue: string;
-  vimMode: boolean;
 };
 
 export function CodeInput(props: Props) {
+  let parent: HTMLDivElement;
   let view: EditorView;
   let modeComp = new Compartment();
   // let undoComp = new Compartment();
 
-  let dirty = false;
+  const [vimMode, _setVimMode] = createSignal(false);
+  const setVimMode = (v: boolean) => {
+    _setVimMode(v);
+    view.dispatch({
+      effects: modeComp.reconfigure(v ? vim() : []),
+    });
+  };
+
+  const [dirty, setDirty] = createSignal(false);
 
   onMount(() => {
     view = new EditorView({
       extensions: [
-        modeComp.of(props.vimMode ? vim() : []),
+        modeComp.of(vimMode() ? vim() : []),
         basicSetup,
         // undoComp.of(history()),
         keymap.of([
           indentWithTab,
           {
+            win: "Mod-Shift-z",
+            // Dirty hack, but undo/redo commands are not exposed
+            run: historyKeymap[1].run,
+          },
+          {
             key: "Mod-s",
+            linux: "Ctrl-s", // untested, but might be necessary
             run: (view) => {
               props.onSave(view.state.doc.toString());
               return true;
@@ -52,16 +67,12 @@ export function CodeInput(props: Props) {
             // docChanged (aka changes.empty) doesn't work when debounced
             // if (!u.docChanged) return;
             const newDirty = u.state.doc.toString() !== props.initialValue;
-            if (newDirty !== dirty) {
-              dirty = newDirty;
-              props.onDirty(newDirty);
-            }
+            setDirty(newDirty);
           }, 300)
         ),
       ],
-      parent: ref,
+      parent,
     });
-    props.editorView(view)
   });
 
   createEffect(() => {
@@ -82,16 +93,19 @@ export function CodeInput(props: Props) {
     // });
   });
 
-  createEffect((prev) => {
-    if (props.vimMode === prev) return;
-    view.dispatch({
-      effects: modeComp.reconfigure(props.vimMode ? vim() : []),
-    });
-  }, props.vimMode);
-
-  // is view.destroy() needed?
-  // page is just being closed
-
-  let ref: HTMLDivElement;
-  return <div ref={ref!}></div>;
+  return (
+    <div>
+      <div class="flex justify-between py-2">
+        <Switch label="Vim mode" value={vimMode()} setValue={setVimMode} />
+        <Button
+          disabled={!dirty()}
+          onMouseDown={() => props.onSave(view.state.doc.toString())}
+          class="bg-green-700 border rounded-md hover:bg-green-700/90 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(bg-transparent text-fore-base pointer-events-none opacity-50) transition-colors px-3 py-1 min-w-150px"
+        >
+          {dirty() ? "Save" : "No changes"}
+        </Button>
+      </div>
+      <div ref={parent!}></div>
+    </div>
+  );
 }

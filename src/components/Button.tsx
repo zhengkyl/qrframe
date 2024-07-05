@@ -12,9 +12,27 @@ type Props = {
 export function FlatButton(props: Props) {
   return (
     <Button
-    title={props.tooltip}
+      title={props.tooltip}
       classList={{
-        "inline-flex justify-center items-center gap-1 border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(pointer-events-none opacity-50)":
+        "leading-tight border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(pointer-events-none opacity-50)":
+          true,
+        [props.class ?? "px-3 py-2"]: true,
+      }}
+      onMouseDown={props.onMouseDown}
+      onClick={props.onClick}
+      disabled={props.disabled}
+    >
+      {props.children}
+    </Button>
+  );
+}
+
+export function FillButton(props: Props) {
+  return (
+    <Button
+      title={props.tooltip}
+      classList={{
+        "leading-tight bg-fore-base text-back-base border rounded-md hover:bg-fore-base/90 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(pointer-events-none opacity-50)":
           true,
         [props.class ?? "px-3 py-2"]: true,
       }}

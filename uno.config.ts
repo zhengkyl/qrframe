@@ -16,7 +16,23 @@ export default defineConfig({
       },
     },
     animation: {
-      "content-show": {
+      "fade-in": {
+        from: {
+          opacity: 0,
+        },
+        to: {
+          opacity: 1,
+        },
+      },
+      "fade-out": {
+        from: {
+          opacity: 1,
+        },
+        to: {
+          opacity: 0,
+        },
+      },
+      "grow-in": {
         from: {
           opacity: 0,
           transform: "scale(0.96);",
@@ -25,7 +41,7 @@ export default defineConfig({
           opacity: 1,
         },
       },
-      "content-hide": {
+      "shrink-out": {
         from: {
           opacity: 1,
         },
