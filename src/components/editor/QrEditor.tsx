@@ -312,6 +312,22 @@ for (let y = 0; y < qr.matrixHeight; y++) {
 }
 `,
   Circle: `// qr, ctx are args
+const Module = {
+  DataOFF: 0,
+  DataON: 1,
+  FinderOFF: 2,
+  FinderON: 3,
+  AlignmentOFF: 4,
+  AlignmentON: 5,
+  TimingOFF: 6,
+  TimingON: 7,
+  FormatOFF: 8,
+  FormatON: 9,
+  VersionOFF: 10,
+  VersionON: 11,
+  Unset: 12,
+}
+
 const pixelSize = 10;
 ctx.canvas.width = qr.matrixWidth * pixelSize;
 ctx.canvas.height = qr.matrixHeight * pixelSize;
@@ -323,19 +339,41 @@ ctx.fillStyle = "rgb(0, 0, 0)";
 
 const radius = pixelSize / 2;
 
+const finderPos = [
+  [qr.margin.left, qr.margin.top],
+  [qr.matrixWidth - qr.margin.right - 7, qr.margin.top],
+  [qr.margin.left, qr.matrixHeight - qr.margin.bottom - 7],
+];
+
+for (const [x, y] of finderPos) {
+  ctx.beginPath();
+  ctx.arc((x + 3.5) * pixelSize, (y + 3.5) * pixelSize, 3.5 * pixelSize, 0, 2 * Math.PI);
+  ctx.fill();
+  
+  ctx.fillStyle = "rgb(255, 255, 255)";
+  ctx.beginPath();
+  ctx.arc((x + 3.5) * pixelSize, (y + 3.5) * pixelSize, 2.5 * pixelSize, 0, 2 * Math.PI);
+  ctx.fill();
+  
+  ctx.fillStyle = "rgb(0, 0, 0)";
+  ctx.beginPath();
+  ctx.arc((x + 3.5) * pixelSize, (y + 3.5) * pixelSize, 1.5 * pixelSize, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
 for (let y = 0; y < qr.matrixHeight; y++) {
   for (let x = 0; x < qr.matrixWidth; x++) {
     const module = qr.matrix[y * qr.matrixWidth + x];
 
     if (module & 1) {
+      if (module === Module.FinderON) continue;
+      
       const xCenter = x * pixelSize + radius;
       const yCenter = y * pixelSize + radius;
 
       ctx.beginPath();
       ctx.arc(xCenter, yCenter, radius, 0, 2 * Math.PI);
       ctx.fill();
-
-      // ctx.stroke(); 
     }
   }
 }
