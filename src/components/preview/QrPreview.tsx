@@ -76,17 +76,20 @@ function RenderedQrCode() {
 
   let qrCanvas: HTMLCanvasElement;
 
-  const [runtimeError, setRuntimeError] = createSignal<string | null>(null)
+  const [runtimeError, setRuntimeError] = createSignal<string | null>(null);
+
+  const [canvasDims, setCanvasDims] = createSignal({ width: 0, height: 0 });
 
   createEffect(() => {
     const ctx = qrCanvas.getContext("2d")!;
     ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
     try {
       renderFunc()(outputQr(), ctx);
-      setRuntimeError(null)
+      setRuntimeError(null);
     } catch (e) {
-      setRuntimeError(e!.toString())
+      setRuntimeError(e!.toString());
     }
+    setCanvasDims({ width: qrCanvas.width, height: qrCanvas.height });
   });
 
   return (
@@ -105,14 +108,35 @@ function RenderedQrCode() {
         <canvas class="w-full h-full" ref={qrCanvas!}></canvas>
       </div>
       <Show when={runtimeError() != null}>
-        <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md">{runtimeError()}</div>
+        <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md">
+          {runtimeError()}
+        </div>
       </Show>
-      <div class="px-4 grid grid-cols-2 gap-y-2 text-sm text-left">
+      <div class="text-center">
+        {canvasDims().width}x{canvasDims().height} px
+      </div>
+      <div class="px-2 grid grid-cols-3 gap-y-2 text-sm">
+        <div class="">
+          Version <span class="font-bold text-base">{outputQr().version}</span>
+        </div>
+        <div class="">
+          Mask{" "}
+          <span class="font-bold text-base">{MASK_KEY[outputQr().mask]}</span>
+        </div>
+        <div class="">
+          Encoding{" "}
+          <span class="font-bold text-base">{MODE_KEY[outputQr().mode]}</span>
+        </div>
         <div class="">
           Symbol size{" "}
           <div class="font-bold text-base whitespace-pre">
-            {outputQr().version} ({outputQr().version * 4 + 17}x
-            {outputQr().version * 4 + 17} pixels)
+            {outputQr().version * 4 + 17}x{outputQr().version * 4 + 17}
+          </div>
+        </div>
+        <div class="">
+          Size incl. margin{" "}
+          <div class="font-bold text-base whitespace-pre">
+            {outputQr().matrixWidth}x{outputQr().matrixHeight}
           </div>
         </div>
         <div class="">
@@ -120,14 +144,6 @@ function RenderedQrCode() {
           <div class="font-bold text-base whitespace-pre">
             {ECL_NAMES[outputQr().ecl]} ({ECL_LABELS[outputQr().ecl]})
           </div>
-        </div>
-        <div class="">
-          Encoding{" "}
-          <span class="font-bold text-base">{MODE_KEY[outputQr().mode]}</span>
-        </div>
-        <div class="">
-          Mask{" "}
-          <span class="font-bold text-base">{MASK_KEY[outputQr().mask]}</span>
         </div>
       </div>
       <div class="flex gap-2">
@@ -143,19 +159,6 @@ function RenderedQrCode() {
           <Download size={20} />
           Download PNG
         </FlatButton>
-        {/* <FlatButton
-          onClick={() => {
-            download(
-              URL.createObjectURL(
-                new Blob([svgResult()!.svg], { type: "image/svg" })
-              ),
-              `${inputQr.text.slice(0, 10).trim()}.svg`
-            );
-          }}
-        >
-          <Download size={20} />
-          SVG
-        </FlatButton> */}
       </div>
     </>
   );

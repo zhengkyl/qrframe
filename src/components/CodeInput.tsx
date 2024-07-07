@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onMount } from "solid-js";
+import { createEffect, createSignal, onMount, Show } from "solid-js";
 
 import { basicSetup } from "codemirror";
 import { historyKeymap, indentWithTab } from "@codemirror/commands";
@@ -19,6 +19,7 @@ import { Switch } from "./Switch";
 type Props = {
   onSave: (s: string) => void;
   initialValue: string;
+  error: string | null;
 };
 
 export function CodeInput(props: Props) {
@@ -105,6 +106,11 @@ export function CodeInput(props: Props) {
           {dirty() ? "Save" : "No changes"}
         </Button>
       </div>
+      <Show when={props.error}>
+        <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md mb-1">
+          {props.error}
+        </div>
+      </Show>
       <div ref={parent!}></div>
     </div>
   );

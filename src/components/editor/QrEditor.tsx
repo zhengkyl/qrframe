@@ -69,16 +69,14 @@ export function Editor(props: Props) {
     <div class={props.class}>
       <TextareaInput setValue={(s) => setInputQr("text", s)} />
       <div class="flex justify-between">
-        <div class="text-sm py-2" title="Also known as Mode">
-          Encoding
-        </div>
+        <div class="text-sm py-2">Encoding mode</div>
         <Select
           options={MODE_NAMES}
           value={MODE_KEY[inputQr.mode!]}
           setValue={(name) => setInputQr("mode", MODE_VALUE[name])}
         />
       </div>
-      <Row title="Min symbol size" tooltip="Also known as Version">
+      <Row title="Min version">
         <NumberInput
           min={1}
           max={40}
@@ -86,10 +84,7 @@ export function Editor(props: Props) {
           setValue={(v) => setInputQr("minVersion", v)}
         />
       </Row>
-      <Row
-        title="Min error tolerance"
-        tooltip="Also known as Error Correction Level"
-      >
+      <Row title="Min error tolerance">
         <ButtonGroup
           value={ECL_NAMES[inputQr.minEcl]}
           setValue={(v) => setInputQr("minEcl", ECL_VALUE[v])}
@@ -266,10 +261,8 @@ export function Editor(props: Props) {
             </IconButtonDialog>
           </Show>
         </div>
-
-        <div>{compileError()}</div>
         <div class="py-2">
-          <CodeInput initialValue={code()} onSave={trySaveCode} />
+          <CodeInput initialValue={code()} onSave={trySaveCode} error={compileError()} />
         </div>
       </div>
     </div>
@@ -283,8 +276,10 @@ function Row(props: {
 }) {
   // This should be <label/> but clicking selects first button in buttongroup
   return (
-    <div title={props.tooltip}>
-      <div class="text-sm py-2">{props.title}</div>
+    <div>
+      <div class="text-sm py-2" title={props.tooltip}>
+        {props.title}
+      </div>
       {props.children}
     </div>
   );

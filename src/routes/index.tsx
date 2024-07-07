@@ -18,7 +18,7 @@ export default function Home() {
       <main class="max-w-screen-2xl mx-auto p-4">
         <div class="flex gap-4 flex-wrap">
           <Editor class="flex-1 flex-grow-3 flex flex-col gap-2 p-4" />
-          <QrPreview class="flex-1 flex-grow-2 min-w-200px sticky top-0 self-start p-4 flex flex-col gap-4" />
+          <QrPreview class="flex-1 flex-grow-2 min-w-300px sticky top-0 self-start p-4 flex flex-col gap-4" />
         </div>
       </main>
     </QrContextProvider>
