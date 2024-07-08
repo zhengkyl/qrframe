@@ -2,6 +2,7 @@ import { debounce } from "~/lib/util";
 
 type TextareaProps = {
   setValue: (i: string) => void;
+  placeholder?: string
 };
 
 /** No `value` prop b/c textarea cannot be controlled  */
@@ -9,9 +10,10 @@ export function TextareaInput(props: TextareaProps) {
   const onInput = debounce(props.setValue, 300);
   return (
     <textarea
-      class="bg-back-subtle min-h-[80px] px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
+      class="bg-back-subtle min-h-[80px] px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) placeholder:text-fore-subtle"
       onInput={(e) => onInput(e.target.value)}
       onChange={(e) => props.setValue(e.target.value)}
+      placeholder={props.placeholder}
     ></textarea>
   );
 }

@@ -27,7 +27,6 @@ export function CodeInput(props: Props) {
   let parent: HTMLDivElement;
   let view: EditorView;
   let modeComp = new Compartment();
-  // let undoComp = new Compartment();
 
   const [vimMode, _setVimMode] = createSignal(false);
   const setVimMode = (v: boolean) => {
@@ -44,7 +43,7 @@ export function CodeInput(props: Props) {
       extensions: [
         modeComp.of(vimMode() ? vim() : []),
         basicSetup,
-        // undoComp.of(history()),
+        EditorView.lineWrapping,
         keymap.of([
           indentWithTab,
           {
@@ -88,20 +87,14 @@ export function CodeInput(props: Props) {
         to: view.state.doc.length,
         insert: props.initialValue,
       },
+      // This seems to prevent extra undos just fine, much simpler than toggling history extension
       annotations: Transaction.addToHistory.of(false),
     });
-
-    // view.dispatch({
-    //   effects: undoComp.reconfigure([]),
-    // });
-    // view.dispatch({
-    //   effects: undoComp.reconfigure(history()),
-    // });
   });
 
   return (
     <div>
-      <div class="flex justify-between py-2">
+      <div class="flex justify-between pb-2">
         <Switch label="Vim mode" value={vimMode()} setValue={setVimMode} />
         <Button
           disabled={!dirty()}

@@ -51,7 +51,7 @@ export function Editor(props: Props) {
     }
   });
 
-  const trySaveCode = (newCode: string) => {
+  const trySetCode = (newCode: string) => {
     try {
       const render = new Function("qr", "ctx", newCode) as RenderFunc;
       setCode(newCode);
@@ -66,10 +66,27 @@ export function Editor(props: Props) {
     }
   };
 
+  const createAndSelectFunc = (name: string, code: string) => {
+    let count = 1;
+    let key = `${name} ${count}`;
+    while (userFuncKeys.includes(key)) {
+      count++;
+      key = `${name} ${count}`;
+    }
+
+    setUserFuncKeys(userFuncKeys.length, key);
+    localStorage.setItem(USER_FUNC_KEYS_KEY, userFuncKeys.join(","));
+    setFuncKey(key);
+    trySetCode(code);
+  };
+
   return (
     <div class={props.class}>
-      <TextareaInput setValue={(s) => setInputQr("text", s)} />
-      <Collapsible trigger="Qr code settings">
+      <TextareaInput
+        placeholder="https://qrcode.kylezhe.ng"
+        setValue={(s) => setInputQr("text", s)}
+      />
+      <Collapsible trigger="Settings" defaultOpen>
         <div class="flex justify-between">
           <div class="text-sm py-2">Encoding mode</div>
           <Select
@@ -120,159 +137,154 @@ export function Editor(props: Props) {
           />
         </Row>
       </Collapsible>
-      <div>
-        <div class="text-sm py-2">Render function</div>
-        <div class="flex gap-2">
-          <GroupedSelect
-            options={[
-              {
-                label: "Presets",
-                options: Object.keys(PRESET_FUNCS),
-              },
-              {
-                label: "Custom",
-                options: [...userFuncKeys, ADD_NEW_FUNC_KEY],
-              },
-            ]}
-            value={funcKey()}
-            setValue={(key) => {
-              let storedCode;
-              if (key === ADD_NEW_FUNC_KEY) {
-                let count = userFuncKeys.length + 1;
-                key = `render function ${count}`;
-                while (userFuncKeys.includes(key)) {
-                  count++;
-                  key = `render function ${count}`;
-                }
-
-                setUserFuncKeys(userFuncKeys.length, key);
-                localStorage.setItem(
-                  USER_FUNC_KEYS_KEY,
-                  userFuncKeys.join(",")
-                );
-                storedCode = PRESET_FUNCS.Square;
-              } else {
-                if (PRESET_FUNCS.hasOwnProperty(key)) {
-                  storedCode = PRESET_FUNCS[key as keyof typeof PRESET_FUNCS];
+      <Collapsible trigger="Rendering">
+        <div class="mb-4">
+          <div class="text-sm py-2">Render function</div>
+          <div class="flex gap-2">
+            <GroupedSelect
+              options={[
+                {
+                  label: "Presets",
+                  options: Object.keys(PRESET_FUNCS),
+                },
+                {
+                  label: "Custom",
+                  options: [...userFuncKeys, ADD_NEW_FUNC_KEY],
+                },
+              ]}
+              value={funcKey()}
+              setValue={(key) => {
+                if (key === ADD_NEW_FUNC_KEY) {
+                  createAndSelectFunc("render function", PRESET_FUNCS.Square);
                 } else {
-                  storedCode = localStorage.getItem(key);
-                  if (storedCode == null) {
-                    storedCode = `Failed to load ${key}`;
+                  let storedCode;
+                  if (PRESET_FUNCS.hasOwnProperty(key)) {
+                    storedCode = PRESET_FUNCS[key as keyof typeof PRESET_FUNCS];
+                  } else {
+                    storedCode = localStorage.getItem(key);
+                    if (storedCode == null) {
+                      storedCode = `Failed to load ${key}`;
+                    }
                   }
+                  setFuncKey(key);
+                  trySetCode(storedCode);
                 }
-              }
-              setFuncKey(key);
-              setCode(storedCode);
-              trySaveCode(storedCode);
-            }}
-          />
-          <Show when={userFuncKeys.includes(funcKey())}>
-            <IconButtonDialog
-              title={`Rename ${funcKey()}`}
-              triggerTitle="Rename"
-              triggerChildren={<Pencil class="w-5 h-5" />}
-              onOpenAutoFocus={(e) => e.preventDefault()}
-            >
-              {(close) => {
-                const [rename, setRename] = createSignal(funcKey());
-                const [duplicate, setDuplicate] = createSignal(false);
+              }}
+            />
+            <Show when={userFuncKeys.includes(funcKey())}>
+              <IconButtonDialog
+                title={`Rename ${funcKey()}`}
+                triggerTitle="Rename"
+                triggerChildren={<Pencil class="w-5 h-5" />}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
+                {(close) => {
+                  const [rename, setRename] = createSignal(funcKey());
+                  const [duplicate, setDuplicate] = createSignal(false);
 
-                let ref: HTMLInputElement;
-                onMount(() => ref.focus());
-                return (
+                  let ref: HTMLInputElement;
+                  onMount(() => ref.focus());
+                  return (
+                    <>
+                      <TextInput
+                        class="mt-2"
+                        ref={ref!}
+                        defaultValue={rename()}
+                        onChange={setRename}
+                        onInput={() => duplicate() && setDuplicate(false)}
+                        placeholder={funcKey()}
+                      />
+                      <div class="absolute p-1 text-sm text-red-600">
+                        <Show when={duplicate()}>
+                          {rename()} already exists.
+                        </Show>
+                      </div>
+                      <FillButton
+                        class="px-3 py-2 float-right mt-4"
+                        // input onChange runs after focus lost, so onMouseDown is too early
+                        onClick={() => {
+                          if (rename() === funcKey()) return close();
+
+                          if (
+                            Object.keys(PRESET_FUNCS).includes(rename()) ||
+                            userFuncKeys.includes(rename())
+                          ) {
+                            setDuplicate(true);
+                          } else {
+                            localStorage.removeItem(funcKey());
+                            localStorage.setItem(rename(), code());
+                            setUserFuncKeys(
+                              userFuncKeys.indexOf(funcKey()),
+                              rename()
+                            );
+                            localStorage.setItem(
+                              USER_FUNC_KEYS_KEY,
+                              userFuncKeys.join(",")
+                            );
+
+                            setFuncKey(rename());
+                            close();
+                          }
+                        }}
+                      >
+                        Confirm
+                      </FillButton>
+                    </>
+                  );
+                }}
+              </IconButtonDialog>
+              <IconButtonDialog
+                title={`Delete ${funcKey()}`}
+                triggerTitle="Delete"
+                triggerChildren={<Trash2 class="w-5 h-5" />}
+              >
+                {(close) => (
                   <>
-                    <TextInput
-                      class="mt-2"
-                      ref={ref!}
-                      defaultValue={rename()}
-                      onChange={setRename}
-                      onInput={() => duplicate() && setDuplicate(false)}
-                      placeholder={funcKey()}
-                    />
-                    <div class="absolute p-1 text-sm text-red-600">
-                      <Show when={duplicate()}>{rename()} already exists.</Show>
-                    </div>
-                    <FillButton
-                      class="px-3 py-2 float-right mt-4"
-                      // input onChange runs after focus lost, so onMouseDown is too early
-                      onClick={() => {
-                        if (rename() === funcKey()) return close();
-
-                        if (
-                          Object.keys(PRESET_FUNCS).includes(rename()) ||
-                          userFuncKeys.includes(rename())
-                        ) {
-                          setDuplicate(true);
-                        } else {
-                          localStorage.removeItem(funcKey());
-                          localStorage.setItem(rename(), code());
-                          setUserFuncKeys(
-                            userFuncKeys.indexOf(funcKey()),
-                            rename()
+                    <p class="mb-4 text-sm">
+                      Are you sure you want to delete this function?
+                    </p>
+                    <div class="flex justify-end gap-2">
+                      <FillButton
+                        onMouseDown={() => {
+                          setUserFuncKeys((keys) =>
+                            keys.filter((key) => key !== funcKey())
                           );
+                          localStorage.removeItem(funcKey());
+                          setFuncKey("Square");
+
                           localStorage.setItem(
                             USER_FUNC_KEYS_KEY,
                             userFuncKeys.join(",")
                           );
 
-                          setFuncKey(rename());
+                          trySetCode(PRESET_FUNCS.Square);
+
                           close();
-                        }
-                      }}
-                    >
-                      Confirm
-                    </FillButton>
+                        }}
+                      >
+                        Confirm
+                      </FillButton>
+                      <FlatButton onMouseDown={close}>Cancel</FlatButton>
+                    </div>
                   </>
-                );
-              }}
-            </IconButtonDialog>
-            <IconButtonDialog
-              title={`Delete ${funcKey()}`}
-              triggerTitle="Delete"
-              triggerChildren={<Trash2 class="w-5 h-5" />}
-            >
-              {(close) => (
-                <>
-                  <p class="mb-4 text-sm">
-                    Are you sure you want to delete this function?
-                  </p>
-                  <div class="flex justify-end gap-2">
-                    <FillButton
-                      onMouseDown={() => {
-                        setUserFuncKeys((keys) =>
-                          keys.filter((key) => key !== funcKey())
-                        );
-                        localStorage.removeItem(funcKey());
-                        setFuncKey("Square");
-
-                        localStorage.setItem(
-                          USER_FUNC_KEYS_KEY,
-                          userFuncKeys.join(",")
-                        );
-
-                        trySaveCode(PRESET_FUNCS.Square);
-
-                        close();
-                      }}
-                    >
-                      Confirm
-                    </FillButton>
-                    <FlatButton onMouseDown={close}>Cancel</FlatButton>
-                  </div>
-                </>
-              )}
-            </IconButtonDialog>
-          </Show>
+                )}
+              </IconButtonDialog>
+            </Show>
+          </div>
         </div>
-        <div class="py-2">
-          <CodeInput
-            initialValue={code()}
-            onSave={trySaveCode}
-            error={compileError()}
-            clearError={() => setCompileError(null)}
-          />
-        </div>
-      </div>
+        <CodeInput
+          initialValue={code()}
+          onSave={(code) => {
+            if (Object.keys(PRESET_FUNCS).includes(funcKey())){
+              createAndSelectFunc(funcKey(), code)
+            } else {
+              trySetCode(code)
+            }
+          }}
+          error={compileError()}
+          clearError={() => setCompileError(null)}
+        />
+      </Collapsible>
     </div>
   );
 }

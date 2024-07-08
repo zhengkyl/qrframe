@@ -67,7 +67,7 @@ export type RenderFunc = (qr: OutputQr, ctx: CanvasRenderingContext2D) => void;
 
 export function QrContextProvider(props: { children: JSX.Element }) {
   const [inputQr, setInputQr] = createStore<InputQr>({
-    text: "Greetings traveler",
+    text: "https://qrcode.kylezhe.ng",
     minVersion: 1,
     minEcl: ECL.Low,
     mode: null,
