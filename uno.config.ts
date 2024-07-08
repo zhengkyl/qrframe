@@ -1,4 +1,3 @@
-// uno.config.ts
 import { defineConfig } from "unocss";
 import transformerVariantGroup from "@unocss/transformer-variant-group";
 export default defineConfig({
@@ -16,39 +15,53 @@ export default defineConfig({
       },
     },
     animation: {
-      "fade-in": {
-        from: {
-          opacity: 0,
-        },
-        to: {
-          opacity: 1,
-        },
+      keyframes: {
+        // "fade-in": {
+        //   from: {
+        //     opacity: 0,
+        //   },
+        //   to: {
+        //     opacity: 1,
+        //   },
+        // },
+        // "fade-out": {
+        //   from: {
+        //     opacity: 1,
+        //   },
+        //   to: {
+        //     opacity: 0,
+        //   },
+        // },
+        // "zoom-in": {
+        //   from: {
+        //     opacity: 0,
+        //     transform: "scale(0.96);",
+        //   },
+        //   to: {
+        //     opacity: 1,
+        //   },
+        // },
+        // "zoom-out": {
+        //   from: {
+        //     opacity: 1,
+        //   },
+        //   to: {
+        //     opacity: 0,
+        //     transform: "scale(0.96);",
+        //   },
+        // },
+        "collapsible-exit":
+          "{ from { height: var(--kb-collapsible-content-height); } to { height: 0; } }",
+        "collapsible-enter":
+          "{ from { height: 0; } to { height: var(--kb-collapsible-content-height); } }",
       },
-      "fade-out": {
-        from: {
-          opacity: 1,
-        },
-        to: {
-          opacity: 0,
-        },
+      durations: {
+        "collapsible-exit": "300ms",
+        "collapsible-enter": "300ms",
       },
-      "grow-in": {
-        from: {
-          opacity: 0,
-          transform: "scale(0.96);",
-        },
-        to: {
-          opacity: 1,
-        },
-      },
-      "shrink-out": {
-        from: {
-          opacity: 1,
-        },
-        to: {
-          opacity: 0,
-          transform: "scale(0.96);",
-        },
+      timingFns: {
+        "collapsible-exit": "ease-out",
+        "collapsible-enter": "ease-out",
       },
     },
   },

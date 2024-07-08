@@ -20,6 +20,7 @@ type Props = {
   onSave: (s: string) => void;
   initialValue: string;
   error: string | null;
+  clearError: ()=>void;
 };
 
 export function CodeInput(props: Props) {
@@ -69,6 +70,10 @@ export function CodeInput(props: Props) {
             // if (!u.docChanged) return;
             const newDirty = u.state.doc.toString() !== props.initialValue;
             setDirty(newDirty);
+
+            if (!newDirty && props.error) {
+              props.clearError()
+            }
           }, 300)
         ),
       ],

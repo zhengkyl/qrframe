@@ -21,6 +21,7 @@ import Trash2 from "lucide-solid/icons/trash-2";
 import Pencil from "lucide-solid/icons/pencil";
 import { IconButtonDialog } from "../Dialog";
 import { FillButton, FlatButton } from "../Button";
+import { Collapsible } from "../Collapsible";
 
 type Props = {
   class?: string;
@@ -68,55 +69,57 @@ export function Editor(props: Props) {
   return (
     <div class={props.class}>
       <TextareaInput setValue={(s) => setInputQr("text", s)} />
-      <div class="flex justify-between">
-        <div class="text-sm py-2">Encoding mode</div>
-        <Select
-          options={MODE_NAMES}
-          value={MODE_KEY[inputQr.mode!]}
-          setValue={(name) => setInputQr("mode", MODE_VALUE[name])}
-        />
-      </div>
-      <Row title="Min version">
-        <NumberInput
-          min={1}
-          max={40}
-          value={inputQr.minVersion}
-          setValue={(v) => setInputQr("minVersion", v)}
-        />
-      </Row>
-      <Row title="Min error tolerance">
-        <ButtonGroup
-          value={ECL_NAMES[inputQr.minEcl]}
-          setValue={(v) => setInputQr("minEcl", ECL_VALUE[v])}
-        >
-          <For each={ECL_NAMES}>
-            {(name) => <ButtonGroupItem value={name}>{name}</ButtonGroupItem>}
-          </For>
-        </ButtonGroup>
-      </Row>
-      <Row title="Mask pattern">
-        <ButtonGroup
-          value={MASK_KEY[inputQr.mask!]}
-          setValue={(name) => setInputQr("mask", MASK_VALUE[name])}
-        >
-          <For each={MASK_NAMES}>
-            {(value) => (
-              <ButtonGroupItem value={value}>{value}</ButtonGroupItem>
-            )}
-          </For>
-        </ButtonGroup>
-      </Row>
-      <Row title="Margin">
-        <NumberInput
-          min={0}
-          max={10}
-          step={1}
-          value={inputQr.margin.top}
-          setValue={(v) =>
-            setInputQr("margin", { top: v, bottom: v, left: v, right: v })
-          }
-        />
-      </Row>
+      <Collapsible trigger="Qr code settings">
+        <div class="flex justify-between">
+          <div class="text-sm py-2">Encoding mode</div>
+          <Select
+            options={MODE_NAMES}
+            value={MODE_KEY[inputQr.mode!]}
+            setValue={(name) => setInputQr("mode", MODE_VALUE[name])}
+          />
+        </div>
+        <Row title="Min version">
+          <NumberInput
+            min={1}
+            max={40}
+            value={inputQr.minVersion}
+            setValue={(v) => setInputQr("minVersion", v)}
+          />
+        </Row>
+        <Row title="Min error tolerance">
+          <ButtonGroup
+            value={ECL_NAMES[inputQr.minEcl]}
+            setValue={(v) => setInputQr("minEcl", ECL_VALUE[v])}
+          >
+            <For each={ECL_NAMES}>
+              {(name) => <ButtonGroupItem value={name}>{name}</ButtonGroupItem>}
+            </For>
+          </ButtonGroup>
+        </Row>
+        <Row title="Mask pattern">
+          <ButtonGroup
+            value={MASK_KEY[inputQr.mask!]}
+            setValue={(name) => setInputQr("mask", MASK_VALUE[name])}
+          >
+            <For each={MASK_NAMES}>
+              {(value) => (
+                <ButtonGroupItem value={value}>{value}</ButtonGroupItem>
+              )}
+            </For>
+          </ButtonGroup>
+        </Row>
+        <Row title="Margin">
+          <NumberInput
+            min={0}
+            max={10}
+            step={1}
+            value={inputQr.margin.top}
+            setValue={(v) =>
+              setInputQr("margin", { top: v, bottom: v, left: v, right: v })
+            }
+          />
+        </Row>
+      </Collapsible>
       <div>
         <div class="text-sm py-2">Render function</div>
         <div class="flex gap-2">
@@ -262,7 +265,12 @@ export function Editor(props: Props) {
           </Show>
         </div>
         <div class="py-2">
-          <CodeInput initialValue={code()} onSave={trySaveCode} error={compileError()} />
+          <CodeInput
+            initialValue={code()}
+            onSave={trySaveCode}
+            error={compileError()}
+            clearError={() => setCompileError(null)}
+          />
         </div>
       </div>
     </div>
