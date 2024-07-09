@@ -11,7 +11,7 @@ export default function App() {
       <Router root={(props) => <Suspense>{props.children}</Suspense>}>
         <FileRoutes />
       </Router>
-      <footer class="text-sm text-center p-4">
+      <footer class="text-sm text-center px-4 py-8">
         made with ⬛⬜ by{" "}
         <a
           class="font-semibold hover:text-fore-base/80 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"

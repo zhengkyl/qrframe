@@ -31,13 +31,19 @@ const ADD_NEW_FUNC_KEY = "Add new function";
 const USER_FUNC_KEYS_KEY = "userFuncKeys";
 
 export function Editor(props: Props) {
-  const { inputQr, setInputQr, setRenderFunc } = useQrContext();
+  const {
+    inputQr,
+    setInputQr,
+    setRenderFunc,
+    renderFuncKey,
+    setRenderFuncKey,
+  } = useQrContext();
+
   const [code, setCode] = createSignal(PRESET_FUNCS.Square);
 
   const [compileError, setCompileError] = createSignal<string | null>(null);
 
   const [userFuncKeys, setUserFuncKeys] = createStore<string[]>([]);
-  const [funcKey, setFuncKey] = createSignal("Square");
 
   onMount(() => {
     const storedFuncKeys = localStorage.getItem(USER_FUNC_KEYS_KEY);
@@ -58,8 +64,8 @@ export function Editor(props: Props) {
       setRenderFunc(() => render);
       setCompileError(null);
 
-      if (!PRESET_FUNCS.hasOwnProperty(funcKey())) {
-        localStorage.setItem(funcKey(), newCode);
+      if (!PRESET_FUNCS.hasOwnProperty(renderFuncKey())) {
+        localStorage.setItem(renderFuncKey(), newCode);
       }
     } catch (e) {
       setCompileError(e!.toString());
@@ -76,7 +82,7 @@ export function Editor(props: Props) {
 
     setUserFuncKeys(userFuncKeys.length, key);
     localStorage.setItem(USER_FUNC_KEYS_KEY, userFuncKeys.join(","));
-    setFuncKey(key);
+    setRenderFuncKey(key);
     trySetCode(code);
   };
 
@@ -86,7 +92,7 @@ export function Editor(props: Props) {
         placeholder="https://qrcode.kylezhe.ng"
         setValue={(s) => setInputQr("text", s)}
       />
-      <Collapsible trigger="Settings" defaultOpen>
+      <Collapsible trigger="Settings">
         <div class="flex justify-between">
           <div class="text-sm py-2">Encoding mode</div>
           <Select
@@ -137,7 +143,7 @@ export function Editor(props: Props) {
           />
         </Row>
       </Collapsible>
-      <Collapsible trigger="Rendering">
+      <Collapsible trigger="Rendering" defaultOpen>
         <div class="mb-4">
           <div class="text-sm py-2">Render function</div>
           <div class="flex gap-2">
@@ -152,7 +158,7 @@ export function Editor(props: Props) {
                   options: [...userFuncKeys, ADD_NEW_FUNC_KEY],
                 },
               ]}
-              value={funcKey()}
+              value={renderFuncKey()}
               setValue={(key) => {
                 if (key === ADD_NEW_FUNC_KEY) {
                   createAndSelectFunc("render function", PRESET_FUNCS.Square);
@@ -166,20 +172,20 @@ export function Editor(props: Props) {
                       storedCode = `Failed to load ${key}`;
                     }
                   }
-                  setFuncKey(key);
+                  setRenderFuncKey(key);
                   trySetCode(storedCode);
                 }
               }}
             />
-            <Show when={userFuncKeys.includes(funcKey())}>
+            <Show when={userFuncKeys.includes(renderFuncKey())}>
               <IconButtonDialog
-                title={`Rename ${funcKey()}`}
+                title={`Rename ${renderFuncKey()}`}
                 triggerTitle="Rename"
                 triggerChildren={<Pencil class="w-5 h-5" />}
                 onOpenAutoFocus={(e) => e.preventDefault()}
               >
                 {(close) => {
-                  const [rename, setRename] = createSignal(funcKey());
+                  const [rename, setRename] = createSignal(renderFuncKey());
                   const [duplicate, setDuplicate] = createSignal(false);
 
                   let ref: HTMLInputElement;
@@ -192,7 +198,7 @@ export function Editor(props: Props) {
                         defaultValue={rename()}
                         onChange={setRename}
                         onInput={() => duplicate() && setDuplicate(false)}
-                        placeholder={funcKey()}
+                        placeholder={renderFuncKey()}
                       />
                       <div class="absolute p-1 text-sm text-red-600">
                         <Show when={duplicate()}>
@@ -203,7 +209,7 @@ export function Editor(props: Props) {
                         class="px-3 py-2 float-right mt-4"
                         // input onChange runs after focus lost, so onMouseDown is too early
                         onClick={() => {
-                          if (rename() === funcKey()) return close();
+                          if (rename() === renderFuncKey()) return close();
 
                           if (
                             Object.keys(PRESET_FUNCS).includes(rename()) ||
@@ -211,10 +217,10 @@ export function Editor(props: Props) {
                           ) {
                             setDuplicate(true);
                           } else {
-                            localStorage.removeItem(funcKey());
+                            localStorage.removeItem(renderFuncKey());
                             localStorage.setItem(rename(), code());
                             setUserFuncKeys(
-                              userFuncKeys.indexOf(funcKey()),
+                              userFuncKeys.indexOf(renderFuncKey()),
                               rename()
                             );
                             localStorage.setItem(
@@ -222,7 +228,7 @@ export function Editor(props: Props) {
                               userFuncKeys.join(",")
                             );
 
-                            setFuncKey(rename());
+                            setRenderFuncKey(rename());
                             close();
                           }
                         }}
@@ -234,7 +240,7 @@ export function Editor(props: Props) {
                 }}
               </IconButtonDialog>
               <IconButtonDialog
-                title={`Delete ${funcKey()}`}
+                title={`Delete ${renderFuncKey()}`}
                 triggerTitle="Delete"
                 triggerChildren={<Trash2 class="w-5 h-5" />}
               >
@@ -247,10 +253,10 @@ export function Editor(props: Props) {
                       <FillButton
                         onMouseDown={() => {
                           setUserFuncKeys((keys) =>
-                            keys.filter((key) => key !== funcKey())
+                            keys.filter((key) => key !== renderFuncKey())
                           );
-                          localStorage.removeItem(funcKey());
-                          setFuncKey("Square");
+                          localStorage.removeItem(renderFuncKey());
+                          setRenderFuncKey("Square");
 
                           localStorage.setItem(
                             USER_FUNC_KEYS_KEY,
@@ -275,10 +281,10 @@ export function Editor(props: Props) {
         <CodeInput
           initialValue={code()}
           onSave={(code) => {
-            if (Object.keys(PRESET_FUNCS).includes(funcKey())){
-              createAndSelectFunc(funcKey(), code)
+            if (Object.keys(PRESET_FUNCS).includes(renderFuncKey())) {
+              createAndSelectFunc(renderFuncKey(), code);
             } else {
-              trySetCode(code)
+              trySetCode(code);
             }
           }}
           error={compileError()}
@@ -294,7 +300,6 @@ function Row(props: {
   title: string;
   children: JSX.Element;
 }) {
-  // This should be <label/> but clicking selects first button in buttongroup
   return (
     <div>
       <div class="text-sm py-2" title={props.tooltip}>
@@ -393,4 +398,113 @@ for (let y = 0; y < qr.matrixHeight; y++) {
   }
 }
 `,
+  Minimal: `// qr, ctx are args
+const Module = {
+  DataOFF: 0,
+  DataON: 1,
+  FinderOFF: 2,
+  FinderON: 3,
+  AlignmentOFF: 4,
+  AlignmentON: 5,
+  TimingOFF: 6,
+  TimingON: 7,
+  FormatOFF: 8,
+  FormatON: 9,
+  VersionOFF: 10,
+  VersionON: 11,
+  Unset: 12,
+}
+
+const pixelSize = 12;
+ctx.canvas.width = qr.matrixWidth * pixelSize;
+ctx.canvas.height = qr.matrixHeight * pixelSize;
+
+ctx.fillStyle = "rgb(255, 255, 255)";
+ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+ctx.fillStyle = "rgb(0, 0, 0)";
+
+const finderPos = [
+  [qr.margin.left, qr.margin.top],
+  [qr.matrixWidth - qr.margin.right - 7, qr.margin.top],
+  [qr.margin.left, qr.matrixHeight - qr.margin.bottom - 7],
+];
+
+for (const [x, y] of finderPos) {
+  ctx.fillRect((x + 3) * pixelSize, y * pixelSize, pixelSize, pixelSize);
+  ctx.fillRect((x + 3) * pixelSize, (y + 6) * pixelSize, pixelSize, pixelSize);
+  ctx.fillRect(x * pixelSize, (y + 3) * pixelSize, pixelSize, pixelSize);
+  ctx.fillRect((x + 6) * pixelSize, (y + 3) * pixelSize, pixelSize, pixelSize);
+  
+  ctx.fillRect((x + 2) * pixelSize, (y + 2) * pixelSize, 3 * pixelSize, 3 * pixelSize);
+}
+
+const minSize = pixelSize / 2;
+const offset = (pixelSize - minSize) / 2;
+
+for (let y = 0; y < qr.matrixHeight; y++) {
+  for (let x = 0; x < qr.matrixWidth; x++) {
+    const module = qr.matrix[y * qr.matrixWidth + x];
+    if ((module | 1) === Module.FinderON) {
+      continue;
+    }
+    
+    if (module & 1) {
+      ctx.fillRect(x * pixelSize + offset, y * pixelSize + offset, minSize, minSize);
+    }
+  }
+}
+`,
+"Lover (Animated)": `// qr, ctx are args
+const pixelSize = 10;
+ctx.canvas.width = qr.matrixWidth * pixelSize;
+ctx.canvas.height = qr.matrixHeight * pixelSize;
+
+const period = 3000; // ms
+const amplitude = 0.8; // maxSize - minSize
+const minSize = 0.6;
+
+let counter = 0; 
+let prevTimestamp;
+
+let req;
+function frame(timestamp) {
+  // performance.now() and requestAnimationFrame's timestamp are not consistent together
+  if (prevTimestamp != null) {
+    counter += timestamp - prevTimestamp;
+  }
+  
+  prevTimestamp = timestamp;
+  
+  if (counter >= period) {
+    counter -= period;
+  }
+  
+  ctx.fillStyle = "rgb(0, 0, 0)";
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  
+  for (let y = 0; y < qr.matrixHeight; y++) {
+    for (let x = 0; x < qr.matrixWidth; x++) {
+      const module = qr.matrix[y * qr.matrixWidth + x];
+      if ((module & 1) === 0) continue;
+
+      const xBias = Math.abs(5 - (x % 10));
+      const biasCounter = counter + (x + y) * (period / 20) + xBias * (period / 10);
+      
+      const ratio = Math.abs((period / 2) - (biasCounter % period)) / (period / 2);
+      
+      const size = (ratio * amplitude + minSize) * pixelSize;
+      
+      const offset = (pixelSize - size) / 2;
+      
+      ctx.fillStyle = \`rgb(\${100 + ratio * 150}, \${200 + xBias * 10}, 255)\`;
+      ctx.fillRect(x * pixelSize + offset, y * pixelSize + offset, size, size);
+    }
+  }
+  req = requestAnimationFrame(frame);
+}
+
+req = requestAnimationFrame(frame);
+
+return () => cancelAnimationFrame(req);`
 };

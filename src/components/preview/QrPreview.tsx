@@ -1,6 +1,6 @@
 import { QrError } from "fuqr";
 
-import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
+import { Match, Show, Switch, createEffect, createSignal, untrack } from "solid-js";
 import { useQrContext, type OutputQr } from "~/lib/QrContext";
 import {
   ECL_LABELS,
@@ -26,7 +26,7 @@ type Props = {
 };
 
 export default function QrPreview(props: Props) {
-  const { inputQr, outputQr } = useQrContext();
+  const { inputQr, outputQr, renderFuncKey } = useQrContext();
 
   return (
     <div class={props.class}>
@@ -62,7 +62,7 @@ export default function QrPreview(props: Props) {
  *  Running the effect in the ref function caused double rendering for future mounts.
  */
 function RenderedQrCode() {
-  const { outputQr: _outputQr, renderFunc } = useQrContext();
+  const { outputQr: _outputQr, renderFunc, renderFuncKey } = useQrContext();
   const outputQr = _outputQr as () => OutputQr;
 
   const fullWidth = () => {
@@ -77,18 +77,38 @@ function RenderedQrCode() {
   let qrCanvas: HTMLCanvasElement;
 
   const [runtimeError, setRuntimeError] = createSignal<string | null>(null);
+  const [cleanupError, setCleanupError] = createSignal<string | null>(null);
 
   const [canvasDims, setCanvasDims] = createSignal({ width: 0, height: 0 });
 
+  let cleanupFunc: void | (() => void);
+  let cleanupFuncKey = ""
+  let prevFuncKey = ""
+
   createEffect(() => {
+    try {
+      if (typeof cleanupFunc === "function") {
+        cleanupFunc();
+      }
+      setCleanupError(null);
+    } catch (e) {
+      setCleanupError(e!.toString());
+      cleanupFuncKey = prevFuncKey
+      console.error(`${cleanupFuncKey} cleanup:`, e)
+    }
+
     const ctx = qrCanvas.getContext("2d")!;
     ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+
+    prevFuncKey = untrack(renderFuncKey)
     try {
-      renderFunc()(outputQr(), ctx);
+      cleanupFunc = renderFunc()(outputQr(), ctx);
       setRuntimeError(null);
     } catch (e) {
       setRuntimeError(e!.toString());
+      console.error(`${prevFuncKey} render:`, e)
     }
+
     setCanvasDims({ width: qrCanvas.width, height: qrCanvas.height });
   });
 
@@ -107,6 +127,12 @@ function RenderedQrCode() {
       >
         <canvas class="w-full h-full" ref={qrCanvas!}></canvas>
       </div>
+      <Show when={cleanupError() != null}>
+        <div class="text-purple-100 bg-purple-950 px-2 py-1 rounded-md">
+          <div class="font-bold">{cleanupFuncKey} cleanup</div>
+          {cleanupError()}
+        </div>
+      </Show>
       <Show when={runtimeError() != null}>
         <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md">
           {runtimeError()}

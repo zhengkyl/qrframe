@@ -1,10 +1,10 @@
-import { createEffect, createSignal, onMount, Show } from "solid-js";
+import { createEffect, createSignal, onMount, Show, untrack } from "solid-js";
 
 import { basicSetup } from "codemirror";
 import { historyKeymap, indentWithTab } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
 import { syntaxHighlighting } from "@codemirror/language";
-import { Compartment, Transaction } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView, keymap, type ViewUpdate } from "@codemirror/view";
 import {
   oneDarkHighlightStyle,
@@ -20,15 +20,17 @@ type Props = {
   onSave: (s: string) => void;
   initialValue: string;
   error: string | null;
-  clearError: ()=>void;
+  clearError: () => void;
 };
+
+const INITIAL_VIM_MODE = false;
 
 export function CodeInput(props: Props) {
   let parent: HTMLDivElement;
   let view: EditorView;
   let modeComp = new Compartment();
 
-  const [vimMode, _setVimMode] = createSignal(false);
+  const [vimMode, _setVimMode] = createSignal(INITIAL_VIM_MODE);
   const setVimMode = (v: boolean) => {
     _setVimMode(v);
     view.dispatch({
@@ -38,58 +40,65 @@ export function CodeInput(props: Props) {
 
   const [dirty, setDirty] = createSignal(false);
 
+  const extensions = [
+    modeComp.of(vimMode() ? vim() : []),
+    basicSetup,
+    EditorView.lineWrapping,
+    keymap.of([
+      indentWithTab,
+      {
+        win: "Mod-Shift-z",
+        // Dirty hack, but undo/redo commands are not exposed
+        run: historyKeymap[1].run,
+      },
+      {
+        key: "Mod-s",
+        linux: "Ctrl-s", // untested, but might be necessary
+        run: (view) => {
+          props.onSave(view.state.doc.toString());
+          return true;
+        },
+      },
+    ]),
+    javascript(),
+    oneDarkTheme,
+    syntaxHighlighting(oneDarkHighlightStyle),
+    EditorView.updateListener.of(
+      debounce((u: ViewUpdate) => {
+        // docChanged (aka changes.empty) doesn't work when debounced
+        // if (!u.docChanged) return;
+        const newDirty = u.state.doc.toString() !== props.initialValue;
+        setDirty(newDirty);
+
+        if (!newDirty && props.error) {
+          props.clearError();
+        }
+      }, 300)
+    ),
+  ];
+
   onMount(() => {
     view = new EditorView({
-      extensions: [
-        modeComp.of(vimMode() ? vim() : []),
-        basicSetup,
-        EditorView.lineWrapping,
-        keymap.of([
-          indentWithTab,
-          {
-            win: "Mod-Shift-z",
-            // Dirty hack, but undo/redo commands are not exposed
-            run: historyKeymap[1].run,
-          },
-          {
-            key: "Mod-s",
-            linux: "Ctrl-s", // untested, but might be necessary
-            run: (view) => {
-              props.onSave(view.state.doc.toString());
-              return true;
-            },
-          },
-        ]),
-        javascript(),
-        oneDarkTheme,
-        syntaxHighlighting(oneDarkHighlightStyle),
-        EditorView.updateListener.of(
-          debounce((u: ViewUpdate) => {
-            // docChanged (aka changes.empty) doesn't work when debounced
-            // if (!u.docChanged) return;
-            const newDirty = u.state.doc.toString() !== props.initialValue;
-            setDirty(newDirty);
-
-            if (!newDirty && props.error) {
-              props.clearError()
-            }
-          }, 300)
-        ),
-      ],
+      extensions,
       parent,
     });
   });
 
+  // Track props.initialValue
   createEffect(() => {
-    view.dispatch({
-      changes: {
-        from: 0,
-        to: view.state.doc.length,
-        insert: props.initialValue,
-      },
-      // This seems to prevent extra undos just fine, much simpler than toggling history extension
-      annotations: Transaction.addToHistory.of(false),
-    });
+    setDirty(false);
+
+    // Saving should not reset editor state (cursor pos etc)
+    if (view.state.doc.toString() === props.initialValue) return;
+
+    view.setState(EditorState.create({ doc: props.initialValue, extensions }));
+
+    const currVimMode = untrack(vimMode);
+    if (currVimMode !== INITIAL_VIM_MODE) {
+      view.dispatch({
+        effects: modeComp.reconfigure(currVimMode ? vim() : []),
+      });
+    }
   });
 
   return (

@@ -11,7 +11,7 @@ export default createHandler(() => (
           <link rel="icon" href="/favicon.svg" />
           {assets}
         </head>
-        <body class="bg-back-base text-fore-base my-8 [--un-default-border-color:fg-subtle]">
+        <body class="bg-back-base text-fore-base [--un-default-border-color:fg-subtle]">
           <div id="app">{children}</div>
           {scripts}
         </body>

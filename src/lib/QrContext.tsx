@@ -61,9 +61,14 @@ export const QrContext = createContext<{
   setOutputQr: Setter<OutputQr | QrError>;
   renderFunc: Accessor<RenderFunc>;
   setRenderFunc: Setter<RenderFunc>;
+  renderFuncKey: Accessor<string>;
+  setRenderFuncKey: Setter<string>;
 }>();
 
-export type RenderFunc = (qr: OutputQr, ctx: CanvasRenderingContext2D) => void;
+export type RenderFunc = (
+  qr: OutputQr,
+  ctx: CanvasRenderingContext2D
+) => void | (() => void);
 
 export function QrContextProvider(props: { children: JSX.Element }) {
   const [inputQr, setInputQr] = createStore<InputQr>({
@@ -85,6 +90,7 @@ export function QrContextProvider(props: { children: JSX.Element }) {
   );
 
   const [renderFunc, setRenderFunc] = createSignal<RenderFunc>(defaultRender);
+  const [renderFuncKey, setRenderFuncKey] = createSignal("Square");
 
   createEffect(() => {
     try {
@@ -134,6 +140,8 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         setOutputQr,
         renderFunc,
         setRenderFunc,
+        renderFuncKey,
+        setRenderFuncKey
       }}
     >
       {props.children}
@@ -156,7 +164,7 @@ function defaultRender(qr: OutputQr, ctx: CanvasRenderingContext2D) {
 
   ctx.fillStyle = "rgb(255, 255, 255)";
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  
+
   ctx.fillStyle = "rgb(0, 0, 0)";
   // ctx.imageSmoothingEnabled
   for (let y = 0; y < qr.matrixHeight; y++) {
