@@ -14,7 +14,7 @@ export function Collapsible(props: Props) {
         {props.trigger}
         <ChevronDown class="w-5 h-5 group-data-[expanded]:rotate-180 transition-transform duration-300" />
       </KCollapsible.Trigger>
-      <KCollapsible.Content class="overflow-hidden animate-collapsible-exit data-[expanded]:animate-collapsible-enter p-2">
+      <KCollapsible.Content class="overflow-hidden animate-collapsible-exit data-[expanded]:animate-collapsible-enter px-2">
         {props.children}
       </KCollapsible.Content>
     </KCollapsible>

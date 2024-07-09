@@ -455,7 +455,7 @@ for (let y = 0; y < qr.matrixHeight; y++) {
   }
 }
 `,
-"Lover (Animated)": `// qr, ctx are args
+  "Lover (Animated)": `// qr, ctx are args
 const pixelSize = 10;
 ctx.canvas.width = qr.matrixWidth * pixelSize;
 ctx.canvas.height = qr.matrixHeight * pixelSize;
@@ -506,5 +506,5 @@ function frame(timestamp) {
 
 req = requestAnimationFrame(frame);
 
-return () => cancelAnimationFrame(req);`
+return () => cancelAnimationFrame(req);`,
 };
