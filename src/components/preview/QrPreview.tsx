@@ -1,6 +1,13 @@
 import { QrError } from "fuqr";
 
-import { Match, Show, Switch, createEffect, createSignal, untrack } from "solid-js";
+import {
+  Match,
+  Show,
+  Switch,
+  createEffect,
+  createSignal,
+  untrack,
+} from "solid-js";
 import { useQrContext, type OutputQr } from "~/lib/QrContext";
 import {
   ECL_LABELS,
@@ -82,8 +89,8 @@ function RenderedQrCode() {
   const [canvasDims, setCanvasDims] = createSignal({ width: 0, height: 0 });
 
   let cleanupFunc: void | (() => void);
-  let cleanupFuncKey = ""
-  let prevFuncKey = ""
+  let cleanupFuncKey = "";
+  let prevFuncKey = "";
 
   createEffect(() => {
     try {
@@ -93,20 +100,25 @@ function RenderedQrCode() {
       setCleanupError(null);
     } catch (e) {
       setCleanupError(e!.toString());
-      cleanupFuncKey = prevFuncKey
-      console.error(`${cleanupFuncKey} cleanup:`, e)
+      cleanupFuncKey = prevFuncKey;
+      console.error(`${cleanupFuncKey} cleanup:`, e);
     }
 
     const ctx = qrCanvas.getContext("2d")!;
     ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
 
-    prevFuncKey = untrack(renderFuncKey)
+    prevFuncKey = untrack(renderFuncKey);
     try {
-      cleanupFunc = renderFunc()(outputQr(), ctx);
+      // matrix isn't cloned without this line... this disables some optimization i think
+      const output = {...outputQr()};
+      // Allow renderFunc to modify matrix with reset between renders
+      output.matrix = [...output.matrix]
+
+      cleanupFunc = renderFunc()(output, ctx);
       setRuntimeError(null);
     } catch (e) {
       setRuntimeError(e!.toString());
-      console.error(`${prevFuncKey} render:`, e)
+      console.error(`${prevFuncKey} render:`, e);
     }
 
     setCanvasDims({ width: qrCanvas.width, height: qrCanvas.height });
