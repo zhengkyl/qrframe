@@ -14,7 +14,7 @@ import { vim } from "@replit/codemirror-vim";
 
 import { Button } from "@kobalte/core/button";
 import { debounce } from "~/lib/util";
-import { Switch } from "./Switch";
+import { Switch } from "../Switch";
 
 type Props = {
   onSave: (s: string) => void;
@@ -25,7 +25,7 @@ type Props = {
 
 const INITIAL_VIM_MODE = false;
 
-export function CodeInput(props: Props) {
+export function CodeEditor(props: Props) {
   let parent: HTMLDivElement;
   let view: EditorView;
   let modeComp = new Compartment();

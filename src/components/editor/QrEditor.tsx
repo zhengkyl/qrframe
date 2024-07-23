@@ -1,27 +1,24 @@
-import { For, Show, createSignal, onMount, type JSX } from "solid-js";
-import { useQrContext, type RenderFunc } from "~/lib/QrContext";
-import {
-  ECL_NAMES,
-  ECL_VALUE,
-  MASK_KEY,
-  MASK_NAMES,
-  MASK_VALUE,
-  MODE_KEY,
-  MODE_NAMES,
-  MODE_VALUE,
-} from "~/lib/options";
-import { ButtonGroup, ButtonGroupItem } from "../ButtonGroup";
-import { TextInput, TextareaInput } from "../TextInput";
-import { NumberInput } from "../NumberInput";
-import { GroupedSelect, Select } from "../Select";
-
-import { createStore } from "solid-js/store";
-import { CodeInput } from "../CodeInput";
-import Trash2 from "lucide-solid/icons/trash-2";
 import Pencil from "lucide-solid/icons/pencil";
-import { IconButtonDialog } from "../Dialog";
+import Trash2 from "lucide-solid/icons/trash-2";
+import { For, Show, batch, createSignal, onMount } from "solid-js";
+import { createStore } from "solid-js/store";
+import { Dynamic } from "solid-js/web";
+import {
+  PARAM_COMPONENTS,
+  PARAM_DEFAULTS,
+  PARAM_TYPES,
+  type Params,
+  type ParamsSchema,
+} from "~/lib/params";
+import { PRESET_FUNCS } from "~/lib/presetFuncs";
+import { useQrContext } from "~/lib/QrContext";
 import { FillButton, FlatButton } from "../Button";
 import { Collapsible } from "../Collapsible";
+import { IconButtonDialog } from "../Dialog";
+import { GroupedSelect } from "../Select";
+import { TextInput, TextareaInput } from "../TextInput";
+import { CodeEditor } from "./CodeEditor";
+import { Settings } from "./Settings";
 
 type Props = {
   class?: string;
@@ -32,11 +29,14 @@ const USER_FUNC_KEYS_KEY = "userFuncKeys";
 
 export function Editor(props: Props) {
   const {
-    inputQr,
     setInputQr,
     setRenderFunc,
     renderFuncKey,
     setRenderFuncKey,
+    paramsSchema,
+    setParamsSchema,
+    params,
+    setParams,
   } = useQrContext();
 
   const [code, setCode] = createSignal(PRESET_FUNCS.Square);
@@ -55,21 +55,88 @@ export function Editor(props: Props) {
       if (funcCode == null) continue;
       setUserFuncKeys(userFuncKeys.length, key);
     }
+
+    trySetCode(PRESET_FUNCS.Square)
   });
 
-  const trySetCode = (newCode: string) => {
+  const trySetCode = async (newCode: string) => {
+    let url;
     try {
-      const render = new Function("qr", "ctx", newCode) as RenderFunc;
+      const blob = new Blob([newCode], { type: "text/javascript" });
+      url = URL.createObjectURL(blob);
+
+      const {
+        renderCanvas,
+        renderSVG,
+        paramsSchema: rawParamsSchema,
+      } = await import(/* @vite-ignore */ url);
+
+      if (renderCanvas == null && renderSVG == null) {
+        throw new Error("One of renderCanvas and renderSVG must be exported");
+      } else if (renderCanvas != null && renderSVG != null) {
+        throw new Error("renderCanvas and renderSVG cannot both be exported");
+      }
+
+      // TODO
+      // refactor to parsing instead of validating...
+      // maybe use zod?
+      // for now this is easier and prevents obvious accidental crashing
+      let parsedParamsSchema: ParamsSchema = {};
+      if (typeof rawParamsSchema === "object") {
+        for (const [key, value] of Object.entries(rawParamsSchema)) {
+          if (
+            value == null ||
+            typeof value !== "object" ||
+            !("type" in value) ||
+            typeof value.type !== "string" ||
+            !PARAM_TYPES.includes(value.type)
+          ) {
+            continue;
+          } else if (value.type === "Select") {
+            if (
+              !("options" in value) ||
+              !Array.isArray(value.options) ||
+              value.options.length === 0
+            ) {
+              continue;
+            }
+          }
+
+          // @ts-expect-error prop types aren't validated yet, see above TODO
+          parsedParamsSchema[key] = value;
+        }
+      }
+
       setCode(newCode);
-      setRenderFunc(() => render);
-      setCompileError(null);
+      setParamsSchema(parsedParamsSchema);
+
+      batch(() => {
+        const defaultParams: Params = {};
+        Object.entries(parsedParamsSchema).forEach(([label, props]) => {
+          // null is a valid default value for ImageInput
+          if (props.default !== undefined) {
+            defaultParams[label] = props.default;
+          } else if (props.type === "Select") {
+            defaultParams[label] = props.options[0];
+          } else {
+            defaultParams[label] = PARAM_DEFAULTS[props.type];
+          }
+        });
+        // todo we shouldn't override if paramSchema doesn't change
+        setParams(defaultParams); // todo init with default values from schema
+        setRenderFunc(() => renderCanvas);
+      });
 
       if (!PRESET_FUNCS.hasOwnProperty(renderFuncKey())) {
         localStorage.setItem(renderFuncKey(), newCode);
       }
+
+      setCompileError(null);
     } catch (e) {
+      console.log("e", e!.toString());
       setCompileError(e!.toString());
     }
+    URL.revokeObjectURL(url!);
   };
 
   const createAndSelectFunc = (name: string, code: string) => {
@@ -93,55 +160,7 @@ export function Editor(props: Props) {
         setValue={(s) => setInputQr("text", s)}
       />
       <Collapsible trigger="Settings">
-        <div class="flex justify-between">
-          <div class="text-sm py-2">Encoding mode</div>
-          <Select
-            options={MODE_NAMES}
-            value={MODE_KEY[inputQr.mode!]}
-            setValue={(name) => setInputQr("mode", MODE_VALUE[name])}
-          />
-        </div>
-        <Row title="Min version">
-          <NumberInput
-            min={1}
-            max={40}
-            value={inputQr.minVersion}
-            setValue={(v) => setInputQr("minVersion", v)}
-          />
-        </Row>
-        <Row title="Min error tolerance">
-          <ButtonGroup
-            value={ECL_NAMES[inputQr.minEcl]}
-            setValue={(v) => setInputQr("minEcl", ECL_VALUE[v])}
-          >
-            <For each={ECL_NAMES}>
-              {(name) => <ButtonGroupItem value={name}>{name}</ButtonGroupItem>}
-            </For>
-          </ButtonGroup>
-        </Row>
-        <Row title="Mask pattern">
-          <ButtonGroup
-            value={MASK_KEY[inputQr.mask!]}
-            setValue={(name) => setInputQr("mask", MASK_VALUE[name])}
-          >
-            <For each={MASK_NAMES}>
-              {(value) => (
-                <ButtonGroupItem value={value}>{value}</ButtonGroupItem>
-              )}
-            </For>
-          </ButtonGroup>
-        </Row>
-        <Row title="Margin">
-          <NumberInput
-            min={0}
-            max={10}
-            step={1}
-            value={inputQr.margin.top}
-            setValue={(v) =>
-              setInputQr("margin", { top: v, bottom: v, left: v, right: v })
-            }
-          />
-        </Row>
+        <Settings />
       </Collapsible>
       <Collapsible trigger="Rendering" defaultOpen>
         <div class="mb-4">
@@ -278,7 +297,27 @@ export function Editor(props: Props) {
             </Show>
           </div>
         </div>
-        <CodeInput
+        <div class="flex flex-col gap-2 mb-4">
+          <For each={Object.entries(paramsSchema())}>
+            {([label, { type, ...props }]) => {
+              return (
+                <>
+                  <div class="flex justify-between">
+                    <div class="text-sm py-2 w-48">{label}</div>
+                    {/* @ts-expect-error lose type b/c type and props destructured */}
+                    <Dynamic
+                      component={PARAM_COMPONENTS[type]}
+                      {...props}
+                      value={params[label]}
+                      setValue={(v: any) => setParams(label, v)}
+                    />
+                  </div>
+                </>
+              );
+            }}
+          </For>
+        </div>
+        <CodeEditor
           initialValue={code()}
           onSave={(code) => {
             if (Object.keys(PRESET_FUNCS).includes(renderFuncKey())) {
@@ -294,368 +333,3 @@ export function Editor(props: Props) {
     </div>
   );
 }
-
-function Row(props: {
-  tooltip?: string;
-  title: string;
-  children: JSX.Element;
-}) {
-  return (
-    <div>
-      <div class="text-sm py-2" title={props.tooltip}>
-        {props.title}
-      </div>
-      {props.children}
-    </div>
-  );
-}
-
-const PRESET_FUNCS = {
-  Square: `// qr, ctx are args
-const pixelSize = 10;
-ctx.canvas.width = qr.matrixWidth * pixelSize;
-ctx.canvas.height = qr.matrixHeight * pixelSize;
-
-ctx.fillStyle = "rgb(255, 255, 255)";
-ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-ctx.fillStyle = "rgb(0, 0, 0)";
-
-for (let y = 0; y < qr.matrixHeight; y++) {
-  for (let x = 0; x < qr.matrixWidth; x++) {
-    const module = qr.matrix[y * qr.matrixWidth + x];
-
-    if (module & 1) {
-      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-    }
-  }
-}
-`,
-  Circle: `// qr, ctx are args
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  Unset: 12,
-}
-
-const pixelSize = 10;
-ctx.canvas.width = qr.matrixWidth * pixelSize;
-ctx.canvas.height = qr.matrixHeight * pixelSize;
-
-ctx.fillStyle = "rgb(255, 255, 255)";
-ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-const gradient = ctx.createRadialGradient(
-  ctx.canvas.width / 2,
-  ctx.canvas.height / 2,
-  2 * pixelSize,
-  ctx.canvas.width / 2,
-  ctx.canvas.height / 2,
-  20 * pixelSize,
-);
-
-gradient.addColorStop(0, "red");
-gradient.addColorStop(1, "blue");
-
-ctx.fillStyle = gradient;
-
-const radius = pixelSize / 2;
-
-const finderPos = [
-  [qr.margin.left, qr.margin.top],
-  [qr.matrixWidth - qr.margin.right - 7, qr.margin.top],
-  [qr.margin.left, qr.matrixHeight - qr.margin.bottom - 7],
-];
-
-for (const [x, y] of finderPos) {
-  ctx.beginPath();
-  ctx.arc((x + 3.5) * pixelSize, (y + 3.5) * pixelSize, 3.5 * pixelSize, 0, 2 * Math.PI);
-  ctx.fill();
-  
-  ctx.fillStyle = "rgb(255, 255, 255)";
-  ctx.beginPath();
-  ctx.arc((x + 3.5) * pixelSize, (y + 3.5) * pixelSize, 2.5 * pixelSize, 0, 2 * Math.PI);
-  ctx.fill();
-  
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc((x + 3.5) * pixelSize, (y + 3.5) * pixelSize, 1.5 * pixelSize, 0, 2 * Math.PI);
-  ctx.fill();
-}
-
-const xMid = qr.matrixWidth / 2;
-const yMid = qr.matrixHeight / 2;
-const maxDist = Math.sqrt(xMid * xMid + yMid + yMid);
-        
-for (let y = 0; y < qr.matrixHeight; y++) {
-  for (let x = 0; x < qr.matrixWidth; x++) {
-    const module = qr.matrix[y * qr.matrixWidth + x];
-
-    if (module & 1) {
-      if (module === Module.FinderON) continue;
-      if (module === Module.AlignmentON) {
-        // Find top left corner of alignment square
-        if (qr.matrix[(y - 1) * qr.matrixWidth + x] !== Module.AlignmentON &&
-            qr.matrix[y * qr.matrixWidth + x - 1] !== Module.AlignmentON && 
-            qr.matrix[y * qr.matrixWidth + x + 1] === Module.AlignmentON
-           ) {
-          ctx.beginPath();
-          ctx.arc((x + 2.5) * pixelSize, (y + 2.5) * pixelSize, 2.5 * pixelSize, 0, 2 * Math.PI);
-          ctx.fill();
-          
-          ctx.fillStyle = "rgb(255, 255, 255)";
-          ctx.beginPath();
-          ctx.arc((x + 2.5) * pixelSize, (y + 2.5) * pixelSize, 1.5 * pixelSize, 0, 2 * Math.PI);
-          ctx.fill();
-          
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc((x + 2.5) * pixelSize, (y + 2.5) * pixelSize, 0.5 * pixelSize, 0, 2 * Math.PI);
-          ctx.fill();
-        }
-        continue; 
-      };
-
-      const xCenter = x * pixelSize + radius;
-      const yCenter = y * pixelSize + radius;
-
-      const xDist = Math.abs(xMid - x);
-      const yDist = Math.abs(yMid - y);
-      const scale = Math.sqrt(xDist * xDist + yDist * yDist) / maxDist * 0.7 + 0.5;
-      
-      ctx.beginPath();
-      ctx.arc(xCenter, yCenter, radius * scale, 0, 2 * Math.PI);
-      ctx.fill();
-    }
-  }
-}
-`,
-  "Camouflage": `// qr, ctx are args
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  Unset: 12,
-}
-
-function splitmix32(a) {
- return function() {
-   a |= 0;
-   a = a + 0x9e3779b9 | 0;
-   let t = a ^ a >>> 16;
-   t = Math.imul(t, 0x21f0aaad);
-   t = t ^ t >>> 15;
-   t = Math.imul(t, 0x735a2d97);
-   return ((t = t ^ t >>> 15) >>> 0) / 4294967296;
-  }
-}
-
-const seededRand = splitmix32(1 /* change seed to change pattern */);
-
-// Randomly set pixels in margin
-for (let y = 0; y < qr.matrixHeight; y++) {
-  for (let x = 0; x < qr.matrixWidth; x++) {
-    if (y > qr.margin.top - 2 &&
-        y < qr.matrixHeight - qr.margin.bottom + 1 &&
-        x > qr.margin.left - 2 &&
-        x < qr.matrixWidth - qr.margin.right + 1) {
-       continue; 
-    }
-
-    if (seededRand() > 0.5) qr.matrix[y * qr.matrixWidth + x] = Module.DataON;
-  }
-}
-
-const pixelSize = 20;
-const radius = pixelSize / 2;
-ctx.canvas.width = qr.matrixWidth * pixelSize;
-ctx.canvas.height = qr.matrixHeight * pixelSize;
-
-const fg = "rgb(40, 70, 10)";
-const bg = "rgb(200, 200, 100)";
-
-ctx.fillStyle = bg;
-ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-const xMax = qr.matrixWidth - 1;
-const yMax = qr.matrixHeight - 1;
-
-for (let y = 0; y < qr.matrixHeight; y++) {
-  for (let x = 0; x < qr.matrixWidth; x++) {
-    const module = qr.matrix[y * qr.matrixWidth + x];
-
-    const top = y > 0 && (qr.matrix[(y - 1) * qr.matrixWidth + x] & 1);
-    const bottom = y < yMax && (qr.matrix[(y + 1) * qr.matrixWidth + x] & 1);
-    const left = x > 0 && (qr.matrix[y * qr.matrixWidth + x - 1] & 1);
-    const right = x < xMax && (qr.matrix[y * qr.matrixWidth + x + 1] & 1);
-
-    ctx.fillStyle = fg;
-    
-    if (module & 1) {
-      ctx.beginPath();
-      ctx.roundRect(
-        x * pixelSize,
-        y * pixelSize,
-        pixelSize,
-        pixelSize,
-        [
-          !left && !top && radius,
-          !top && !right && radius,
-          !right && !bottom && radius,
-          !bottom && !left && radius,
-        ]
-      );
-      ctx.fill();
-    } else {
-      // Draw rounded concave corners
-      const topLeft = y > 0 && x > 0 && (qr.matrix[(y - 1) * qr.matrixWidth + x - 1] & 1);
-      const topRight = y > 0 && x < xMax && (qr.matrix[(y - 1) * qr.matrixWidth + x + 1] & 1);
-      const bottomRight = y < yMax && x < xMax && (qr.matrix[(y + 1) * qr.matrixWidth + x + 1] & 1);
-      const bottomLeft = y < yMax && x > 0 && (qr.matrix[(y + 1) * qr.matrixWidth + x - 1] & 1);
-      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-      
-      ctx.beginPath();
-      ctx.fillStyle = bg;
-      ctx.roundRect(
-        x * pixelSize,
-        y * pixelSize,
-        pixelSize,
-        pixelSize,
-        [
-          left && top && topLeft && radius,
-          top && right && topRight && radius,
-          right && bottom && bottomRight && radius,
-          bottom && left && bottomLeft && radius,
-        ]
-      );
-      ctx.fill();
-    }
-  }
-}
-`,
-  Minimal: `// qr, ctx are args
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  Unset: 12,
-}
-
-const pixelSize = 12;
-ctx.canvas.width = qr.matrixWidth * pixelSize;
-ctx.canvas.height = qr.matrixHeight * pixelSize;
-
-const finderPos = [
-  [qr.margin.left, qr.margin.top],
-  [qr.matrixWidth - qr.margin.right - 7, qr.margin.top],
-  [qr.margin.left, qr.matrixHeight - qr.margin.bottom - 7],
-];
-
-ctx.fillStyle = "rgb(0, 0, 0)";
-
-for (const [x, y] of finderPos) {
-  ctx.fillRect((x + 3) * pixelSize, y * pixelSize, pixelSize, pixelSize);
-  ctx.fillRect((x + 3) * pixelSize, (y + 6) * pixelSize, pixelSize, pixelSize);
-  ctx.fillRect(x * pixelSize, (y + 3) * pixelSize, pixelSize, pixelSize);
-  ctx.fillRect((x + 6) * pixelSize, (y + 3) * pixelSize, pixelSize, pixelSize);
-  
-  ctx.fillRect((x + 2) * pixelSize, (y + 2) * pixelSize, 3 * pixelSize, 3 * pixelSize);
-}
-
-const minSize = pixelSize / 2;
-const offset = (pixelSize - minSize) / 2;
-
-for (let y = 0; y < qr.matrixHeight; y++) {
-  for (let x = 0; x < qr.matrixWidth; x++) {
-    const module = qr.matrix[y * qr.matrixWidth + x];
-    if ((module | 1) === Module.FinderON) {
-      continue;
-    }
-    
-    if (module & 1) {
-      ctx.fillRect(x * pixelSize + offset, y * pixelSize + offset, minSize, minSize);
-    }
-  }
-}
-`,
-  "Lover (Animated)": `// qr, ctx are args
-const pixelSize = 10;
-ctx.canvas.width = qr.matrixWidth * pixelSize;
-ctx.canvas.height = qr.matrixHeight * pixelSize;
-
-const period = 3000; // ms
-const amplitude = 0.8; // maxSize - minSize
-const minSize = 0.6;
-
-let counter = 0; 
-let prevTimestamp;
-
-let req;
-function frame(timestamp) {
-  // performance.now() and requestAnimationFrame's timestamp are not consistent together
-  if (prevTimestamp != null) {
-    counter += timestamp - prevTimestamp;
-  }
-  
-  prevTimestamp = timestamp;
-  
-  if (counter >= period) {
-    counter -= period;
-  }
-  
-  ctx.fillStyle = "rgb(0, 0, 0)";
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  
-  for (let y = 0; y < qr.matrixHeight; y++) {
-    for (let x = 0; x < qr.matrixWidth; x++) {
-      const module = qr.matrix[y * qr.matrixWidth + x];
-      if ((module & 1) === 0) continue;
-
-      const xBias = Math.abs(5 - (x % 10));
-      const biasCounter = counter + (x + y) * (period / 20) + xBias * (period / 10);
-      
-      const ratio = Math.abs((period / 2) - (biasCounter % period)) / (period / 2);
-      
-      const size = (ratio * amplitude + minSize) * pixelSize;
-      
-      const offset = (pixelSize - size) / 2;
-      
-      ctx.fillStyle = \`rgb(\${100 + ratio * 150}, \${200 + xBias * 10}, 255)\`;
-      ctx.fillRect(x * pixelSize + offset, y * pixelSize + offset, size, size);
-    }
-  }
-  req = requestAnimationFrame(frame);
-}
-
-req = requestAnimationFrame(frame);
-
-return () => cancelAnimationFrame(req);`,
-};

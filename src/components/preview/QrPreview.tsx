@@ -33,7 +33,7 @@ type Props = {
 };
 
 export default function QrPreview(props: Props) {
-  const { inputQr, outputQr, renderFuncKey } = useQrContext();
+  const { inputQr, outputQr } = useQrContext();
 
   return (
     <div class={props.class}>
@@ -69,7 +69,7 @@ export default function QrPreview(props: Props) {
  *  Running the effect in the ref function caused double rendering for future mounts.
  */
 function RenderedQrCode() {
-  const { outputQr: _outputQr, renderFunc, renderFuncKey } = useQrContext();
+  const { outputQr: _outputQr, renderFunc, renderFuncKey, params } = useQrContext();
   const outputQr = _outputQr as () => OutputQr;
 
   const fullWidth = () => {
@@ -110,11 +110,11 @@ function RenderedQrCode() {
     prevFuncKey = untrack(renderFuncKey);
     try {
       // matrix isn't cloned without this line... this disables some optimization i think
-      const output = {...outputQr()};
+      const output = { ...outputQr() };
       // Allow renderFunc to modify matrix with reset between renders
-      output.matrix = [...output.matrix]
+      output.matrix = [...output.matrix];
 
-      cleanupFunc = renderFunc()(output, ctx);
+      cleanupFunc = renderFunc()(output, params, ctx);
       setRuntimeError(null);
     } catch (e) {
       setRuntimeError(e!.toString());

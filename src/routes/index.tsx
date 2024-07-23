@@ -1,7 +1,5 @@
-import { createSignal } from "solid-js";
 import { clientOnly } from "@solidjs/start";
 import { Editor } from "~/components/editor/QrEditor";
-import { FlatButton } from "~/components/Button";
 import QrPreview from "~/components/preview/QrPreview";
 import init from "fuqr";
 

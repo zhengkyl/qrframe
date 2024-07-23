@@ -13,8 +13,7 @@ export function ImageInput(props: Props) {
     <div class="inline-flex items-center gap-1">
       <input
         class="border rounded-md text-sm px-1 py-2 file:(bg-transparent border-none text-fore-base) hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
-        // @ts-expect-error idk why this is angry
-        ref={input}
+        ref={input!}
         type="file"
         accept=".jpeg, .jpg, .png"
         onChange={(e) => {

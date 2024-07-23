@@ -19,6 +19,7 @@ import {
   get_matrix,
 } from "fuqr";
 import { createStore, type SetStoreFunction } from "solid-js/store";
+import type { Params, ParamsSchema } from "./params";
 
 type InputQr = {
   text: string;
@@ -63,10 +64,15 @@ export const QrContext = createContext<{
   setRenderFunc: Setter<RenderFunc>;
   renderFuncKey: Accessor<string>;
   setRenderFuncKey: Setter<string>;
+  params: Params;
+  setParams: SetStoreFunction<Params>;
+  paramsSchema: Accessor<ParamsSchema>;
+  setParamsSchema: Setter<ParamsSchema>;
 }>();
 
 export type RenderFunc = (
   qr: OutputQr,
+  params: {},
   ctx: CanvasRenderingContext2D
 ) => void | (() => void);
 
@@ -89,8 +95,11 @@ export function QrContextProvider(props: { children: JSX.Element }) {
     QrError.InvalidEncoding
   );
 
-  const [renderFunc, setRenderFunc] = createSignal<RenderFunc>(defaultRender);
+  const [renderFunc, setRenderFunc] = createSignal<RenderFunc>(()=>{});
   const [renderFuncKey, setRenderFuncKey] = createSignal("Square");
+
+  const [paramsSchema, setParamsSchema] = createSignal<ParamsSchema>({});
+  const [params, setParams] = createStore({});
 
   createEffect(() => {
     try {
@@ -141,7 +150,11 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         renderFunc,
         setRenderFunc,
         renderFuncKey,
-        setRenderFuncKey
+        setRenderFuncKey,
+        params,
+        setParams,
+        paramsSchema,
+        setParamsSchema,
       }}
     >
       {props.children}
@@ -155,25 +168,4 @@ export function useQrContext() {
     throw new Error("useQrContext: used outside QrContextProvider");
   }
   return context;
-}
-
-function defaultRender(qr: OutputQr, ctx: CanvasRenderingContext2D) {
-  const pixelSize = 10;
-  ctx.canvas.width = qr.matrixWidth * pixelSize;
-  ctx.canvas.height = qr.matrixHeight * pixelSize;
-
-  ctx.fillStyle = "rgb(255, 255, 255)";
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-  ctx.fillStyle = "rgb(0, 0, 0)";
-  // ctx.imageSmoothingEnabled
-  for (let y = 0; y < qr.matrixHeight; y++) {
-    for (let x = 0; x < qr.matrixWidth; x++) {
-      const module = qr.matrix[y * qr.matrixWidth + x];
-
-      if (module & 1) {
-        ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-      }
-    }
-  }
 }
