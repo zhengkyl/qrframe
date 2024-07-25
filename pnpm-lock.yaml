@@ -49,8 +49,8 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1(@lezer/common@1.2.1)
       fuqr:
-        specifier: ^0.0.5
-        version: 0.0.5
+        specifier: ^0.0.6
+        version: 0.0.6
       lucide-solid:
         specifier: ^0.378.0
         version: 0.378.0(solid-js@1.8.17)
@@ -1781,8 +1781,8 @@ packages:
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
-  fuqr@0.0.5:
-    resolution: {integrity: sha512-KxIKlDZ4HQFTouhH8VuDuA6EdPZbLy2GklevRP2KRJ7FiBlh/fET+26IizsWIpkwfpNWb0QkDs9rdL8Nn6PbkA==}
+  fuqr@0.0.6:
+    resolution: {integrity: sha512-pYq22vaBSzVEJJ9lkh11kFMdDtv++saB09I/dGSB5gL3GUTVrV0M1l5FDiSIjLisylrUOKsBXuSfH70a3desjg==}
 
   gauge@3.0.2:
     resolution: {integrity: sha512-+5J6MS/5XksCuXq++uFRsnUd7Ovu1XenbeuIuNRJxYWjgQbPuFhT14lAvsWfqfAmnwluf1OwMjz39HjfLPci0Q==}
@@ -4790,7 +4790,7 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  fuqr@0.0.5: {}
+  fuqr@0.0.6: {}
 
   gauge@3.0.2:
     dependencies:

@@ -15,7 +15,6 @@ import {
   Module,
   QrOptions,
   Version,
-  Margin,
   get_matrix,
 } from "fuqr";
 import { createStore, type SetStoreFunction } from "solid-js/store";
@@ -27,12 +26,6 @@ type InputQr = {
   minEcl: ECL;
   mode: Mode | null;
   mask: Mask | null;
-  margin: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
 };
 
 export type OutputQr = {
@@ -42,17 +35,8 @@ export type OutputQr = {
   ecl: ECL;
   mode: Mode;
   mask: Mask;
-  /** Stored as value b/c Margin is a ptr which becomes null after use */
-  margin: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
   /** Stored as value b/c Matrix is a ptr which becomes null after use */
   matrix: Module[];
-  matrixWidth: number;
-  matrixHeight: number;
 };
 
 export const QrContext = createContext<{
@@ -83,12 +67,6 @@ export function QrContextProvider(props: { children: JSX.Element }) {
     minEcl: ECL.Low,
     mode: null,
     mask: null,
-    margin: {
-      top: 2,
-      right: 2,
-      bottom: 2,
-      left: 2,
-    },
   });
 
   const [outputQr, setOutputQr] = createSignal<OutputQr | QrError>(
@@ -109,31 +87,16 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         .min_ecl(inputQr.minEcl)
         .mask(inputQr.mask!) // null makes more sense than undefined
         .mode(inputQr.mode!) // null makes more sense than undefined
-        .margin(
-          new Margin(0)
-            .setTop(inputQr.margin.top)
-            .setRight(inputQr.margin.right)
-            .setBottom(inputQr.margin.bottom)
-            .setLeft(inputQr.margin.left)
-        );
 
       let m = get_matrix(inputQr.text, qrOptions);
 
       setOutputQr({
         text: inputQr.text,
         matrix: m.value,
-        matrixWidth: m.version["0"] * 4 + 17 + m.margin.left + m.margin.right,
-        matrixHeight: m.version["0"] * 4 + 17 + m.margin.top + m.margin.bottom,
         version: m.version["0"],
         ecl: m.ecl,
         mode: m.mode,
         mask: m.mask,
-        margin: {
-          top: m.margin.top,
-          right: m.margin.right,
-          bottom: m.margin.bottom,
-          left: m.margin.left,
-        },
       });
     } catch (e) {
       setOutputQr(e as QrError);

@@ -159,7 +159,7 @@ export function Editor(props: Props) {
         placeholder="https://qrcode.kylezhe.ng"
         setValue={(s) => setInputQr("text", s)}
       />
-      <Collapsible trigger="Settings">
+      <Collapsible trigger="QR Code">
         <Settings />
       </Collapsible>
       <Collapsible trigger="Rendering" defaultOpen>

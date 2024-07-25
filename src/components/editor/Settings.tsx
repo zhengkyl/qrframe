@@ -1,4 +1,4 @@
-import { For, type JSX } from "solid-js";
+import { For } from "solid-js";
 import { useQrContext } from "~/lib/QrContext";
 import {
   ECL_NAMES,
@@ -18,7 +18,7 @@ export function Settings() {
   const { inputQr, setInputQr } = useQrContext();
 
   return (
-    <>
+    <div class="flex flex-col gap-2 py-2">
       <div class="flex justify-between">
         <div class="text-sm py-2">Encoding mode</div>
         <Select
@@ -27,15 +27,17 @@ export function Settings() {
           setValue={(name) => setInputQr("mode", MODE_VALUE[name])}
         />
       </div>
-      <Row title="Min version">
+      <div class="flex justify-between">
+        <div class="text-sm py-2 w-48">Min version</div>
         <NumberInput
           min={1}
           max={40}
           value={inputQr.minVersion}
           setValue={(v) => setInputQr("minVersion", v)}
         />
-      </Row>
-      <Row title="Min error tolerance">
+      </div>
+      <div>
+        <div class="text-sm py-2">Min error tolerance</div>
         <ButtonGroup
           value={ECL_NAMES[inputQr.minEcl]}
           setValue={(v) => setInputQr("minEcl", ECL_VALUE[v])}
@@ -44,8 +46,9 @@ export function Settings() {
             {(name) => <ButtonGroupItem value={name}>{name}</ButtonGroupItem>}
           </For>
         </ButtonGroup>
-      </Row>
-      <Row title="Mask pattern">
+      </div>
+      <div>
+        <div class="text-sm py-2">Mask pattern</div>
         <ButtonGroup
           value={MASK_KEY[inputQr.mask!]}
           setValue={(name) => setInputQr("mask", MASK_VALUE[name])}
@@ -56,32 +59,7 @@ export function Settings() {
             )}
           </For>
         </ButtonGroup>
-      </Row>
-      <Row title="Margin">
-        <NumberInput
-          min={0}
-          max={10}
-          step={1}
-          value={inputQr.margin.top}
-          setValue={(v) =>
-            setInputQr("margin", { top: v, bottom: v, left: v, right: v })
-          }
-        />
-      </Row>
-    </>
-  );
-}
-
-function Row(props: {
-  title: string;
-  children: JSX.Element;
-}) {
-  return (
-    <div>
-      <div class="text-sm py-2">
-        {props.title}
       </div>
-      {props.children}
     </div>
   );
 }

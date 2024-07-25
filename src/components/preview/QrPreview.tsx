@@ -69,17 +69,13 @@ export default function QrPreview(props: Props) {
  *  Running the effect in the ref function caused double rendering for future mounts.
  */
 function RenderedQrCode() {
-  const { outputQr: _outputQr, renderFunc, renderFuncKey, params } = useQrContext();
+  const {
+    outputQr: _outputQr,
+    renderFunc,
+    renderFuncKey,
+    params,
+  } = useQrContext();
   const outputQr = _outputQr as () => OutputQr;
-
-  const fullWidth = () => {
-    const output = outputQr();
-    return output.version * 4 + 17 + output.margin.left + output.margin.right;
-  };
-  const fullHeight = () => {
-    const output = outputQr();
-    return output.version * 4 + 17 + output.margin.top + output.margin.bottom;
-  };
 
   let qrCanvas: HTMLCanvasElement;
 
@@ -132,9 +128,10 @@ function RenderedQrCode() {
           "background-image":
             "repeating-conic-gradient(#ddd 0% 25%, #aaa 25% 50%)",
           "background-position": "50%",
-          "background-size": `${(1 / fullWidth()) * 100}% ${
-            (1 / fullHeight()) * 100
-          }%`,
+          "background-size": `${
+            (1 / (outputQr().version * 4 + 17 + 4)) * 100
+          }% ${(1 / (outputQr().version * 4 + 17 + 4)) * 100}%
+          `,
         }}
       >
         <canvas class="w-full h-full" ref={qrCanvas!}></canvas>
@@ -153,9 +150,19 @@ function RenderedQrCode() {
       <div class="text-center">
         {canvasDims().width}x{canvasDims().height} px
       </div>
-      <div class="px-2 grid grid-cols-3 gap-y-2 text-sm">
+      <div class="px-2 grid grid-cols-2 gap-y-2 text-sm">
         <div class="">
-          Version <span class="font-bold text-base">{outputQr().version}</span>
+          Version
+          <div class="font-bold text-base">
+            {outputQr().version} ({outputQr().version * 4 + 17}x
+            {outputQr().version * 4 + 17} matrix)
+          </div>
+        </div>
+        <div class="">
+          Error tolerance{" "}
+          <div class="font-bold text-base whitespace-pre">
+            {ECL_NAMES[outputQr().ecl]} ({ECL_LABELS[outputQr().ecl]})
+          </div>
         </div>
         <div class="">
           Mask{" "}
@@ -164,24 +171,6 @@ function RenderedQrCode() {
         <div class="">
           Encoding{" "}
           <span class="font-bold text-base">{MODE_KEY[outputQr().mode]}</span>
-        </div>
-        <div class="">
-          Symbol size{" "}
-          <div class="font-bold text-base whitespace-pre">
-            {outputQr().version * 4 + 17}x{outputQr().version * 4 + 17}
-          </div>
-        </div>
-        <div class="">
-          Size incl. margin{" "}
-          <div class="font-bold text-base whitespace-pre">
-            {outputQr().matrixWidth}x{outputQr().matrixHeight}
-          </div>
-        </div>
-        <div class="">
-          Error tolerance{" "}
-          <div class="font-bold text-base whitespace-pre">
-            {ECL_NAMES[outputQr().ecl]} ({ECL_LABELS[outputQr().ecl]})
-          </div>
         </div>
       </div>
       <div class="flex gap-2">
