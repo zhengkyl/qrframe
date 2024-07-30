@@ -126,6 +126,8 @@ function RenderedQrCode() {
         // race condition is unrealistic (maybe with http requests)
         // and can't be solved without double buffering
         await fallbackRender!(outputQr(), paramsCopy, ctx);
+
+        setCanvasDims({ width: ctx.canvas.width, height: ctx.canvas.height });
       }
 
       setRuntimeError(null);
@@ -153,9 +155,11 @@ function RenderedQrCode() {
           {runtimeError()}
         </div>
       </Show>
-      <div class="text-center">
-        {canvasDims().width}x{canvasDims().height} px
-      </div>
+      <Show when={getRenderCanvas() != null}>
+        <div class="text-center">
+          {canvasDims().width}x{canvasDims().height} px
+        </div>
+      </Show>
       <div class="px-2 grid grid-cols-2 gap-y-2 text-sm">
         <div class="">
           Version

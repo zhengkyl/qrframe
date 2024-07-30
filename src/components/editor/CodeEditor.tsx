@@ -101,24 +101,37 @@ export function CodeEditor(props: Props) {
     }
   });
 
+  const [showCode, setShowCode] = createSignal(false);
+
   return (
     <div>
-      <div class="flex justify-between pb-2">
-        <Switch label="Vim mode" value={vimMode()} setValue={setVimMode} />
-        <Button
-          disabled={!dirty()}
-          onMouseDown={() => props.onSave(view.state.doc.toString())}
-          class="bg-green-700 border rounded-md hover:bg-green-700/90 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(bg-transparent text-fore-base pointer-events-none opacity-50) transition-colors px-3 py-1 min-w-150px"
-        >
-          {dirty() ? "Save" : "No changes"}
-        </Button>
+      <div class="flex justify-between pb-2 h-11">
+        <Switch label="Show code" value={showCode()} setValue={setShowCode} />
+        <Show when={showCode()}>
+          <label class="flex items-center gap-1 text-sm">
+            Vim mode
+            <input
+              class="h-4 w-4"
+              type="checkbox"
+              checked={vimMode()}
+              onChange={(e) => setVimMode(e.target.checked)}
+            />
+          </label>
+          <Button
+            disabled={!dirty()}
+            onMouseDown={() => props.onSave(view.state.doc.toString())}
+            class="bg-green-700 border rounded-md hover:bg-green-700/90 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(bg-transparent text-fore-base pointer-events-none opacity-50) transition-colors px-3 min-w-150px"
+          >
+            {dirty() ? "Save" : "No changes"}
+          </Button>
+        </Show>
       </div>
       <Show when={props.error}>
         <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md mb-1">
           {props.error}
         </div>
       </Show>
-      <div ref={parent!}></div>
+      <div ref={parent!} classList={{ hidden: !showCode() }}></div>
     </div>
   );
 }

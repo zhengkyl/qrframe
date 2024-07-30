@@ -18,7 +18,7 @@ export function Settings() {
   const { inputQr, setInputQr } = useQrContext();
 
   return (
-    <div class="flex flex-col gap-2 py-2">
+    <div class="flex flex-col gap-2 py-4">
       <div class="flex justify-between">
         <div class="text-sm py-2">Encoding mode</div>
         <Select
