@@ -5,20 +5,26 @@ import { createStore } from "solid-js/store";
 import { Dynamic } from "solid-js/web";
 import {
   PARAM_COMPONENTS,
-  PARAM_DEFAULTS,
-  PARAM_TYPES,
+  paramsEqual,
+  parseParamsSchema,
+  type RawParamsSchema,
   type Params,
   type ParamsSchema,
+  defaultParams,
 } from "~/lib/params";
-import { PRESET_FUNCS } from "~/lib/presetFuncs";
-import { useQrContext } from "~/lib/QrContext";
+import {
+  PREVIEW_OUTPUTQR,
+  useQrContext,
+  type RenderCanvas,
+  type RenderSVG,
+} from "~/lib/QrContext";
 import { FillButton, FlatButton } from "../Button";
 import { Collapsible } from "../Collapsible";
 import { IconButtonDialog } from "../Dialog";
-import { GroupedSelect } from "../Select";
 import { TextInput, TextareaInput } from "../TextInput";
 import { CodeEditor } from "./CodeEditor";
 import { Settings } from "./Settings";
+import { PRESET_MODULES } from "~/lib/presets";
 
 type Props = {
   class?: string;
@@ -27,10 +33,17 @@ type Props = {
 const ADD_NEW_FUNC_KEY = "Add new function";
 const USER_FUNC_KEYS_KEY = "userFuncKeys";
 
+// TODO temp fallback thumb
+const FALLBACK_THUMB =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>";
+
+type PresetThumbs = { [T in keyof typeof PRESET_MODULES]: string };
+
 export function Editor(props: Props) {
   const {
     setInputQr,
-    setRenderFunc,
+    setRenderSVG,
+    setRenderCanvas,
     renderFuncKey,
     setRenderFuncKey,
     paramsSchema,
@@ -39,13 +52,23 @@ export function Editor(props: Props) {
     setParams,
   } = useQrContext();
 
-  const [code, setCode] = createSignal(PRESET_FUNCS.Square);
+  const [code, setCode] = createSignal(PRESET_MODULES.Square.code);
 
   const [compileError, setCompileError] = createSignal<string | null>(null);
 
-  const [userFuncKeys, setUserFuncKeys] = createStore<string[]>([]);
+  const [userFuncs, setUserFuncs] = createStore<
+    { key: string; thumb: string }[]
+  >([]);
 
-  onMount(() => {
+  const [presetThumbs, setPresetThumbs] = createSignal<PresetThumbs>({
+    Square: "",
+    Circle: "",
+    Camo: "",
+    Halftone: "",
+    Minimal: "",
+  });
+
+  onMount(async () => {
     const storedFuncKeys = localStorage.getItem(USER_FUNC_KEYS_KEY);
     if (storedFuncKeys == null) return;
 
@@ -53,85 +76,101 @@ export function Editor(props: Props) {
     for (const key of keys) {
       const funcCode = localStorage.getItem(key);
       if (funcCode == null) continue;
-      setUserFuncKeys(userFuncKeys.length, key);
+
+      const thumb = localStorage.getItem(`${key}_thumb`) ?? FALLBACK_THUMB;
+      setUserFuncs(userFuncs.length, { key, thumb });
     }
 
-    trySetCode(PRESET_FUNCS.Square)
+    // @ts-expect-error adding keys below
+    const thumbs: PresetThumbs = {};
+    for (const key of Object.keys(PRESET_MODULES)) {
+      const tryThumb = localStorage.getItem(`${key}_thumb`);
+      if (tryThumb == null) {
+        const preset = PRESET_MODULES[key as keyof typeof PRESET_MODULES];
+        await updateThumbnail(
+          key,
+          // @ts-expect-error ts might stop if more than one renderSVG
+          preset.renderSVG,
+          preset.renderCanvas,
+          parseParamsSchema(preset.paramsSchema) // TODO ts not erroring when passing raw
+        );
+      }
+      const thumb = localStorage.getItem(`${key}_thumb`) ?? FALLBACK_THUMB;
+      console.log(key, thumb.length);
+      thumbs[key as keyof typeof PRESET_MODULES] = thumb;
+    }
+    setPresetThumbs(thumbs);
   });
 
-  const trySetCode = async (newCode: string) => {
+  const internalSetCode = ({
+    renderSVG,
+    renderCanvas,
+    paramsSchema: rawParamsSchema,
+    code,
+  }: {
+    renderSVG: RenderSVG | undefined;
+    renderCanvas: RenderCanvas | undefined;
+    paramsSchema: RawParamsSchema;
+    code: string;
+  }) => {
+    setCode(code);
+
+    // TODO see impl, user set default and props might be wrong
+    const parsedParamsSchema = parseParamsSchema(rawParamsSchema);
+
+    // batched b/c trigger rendering effect
+    batch(() => {
+      if (!paramsEqual(parsedParamsSchema, paramsSchema())) {
+        setParams(defaultParams(parsedParamsSchema));
+      }
+      setParamsSchema(parsedParamsSchema); // always update in case different property order
+
+      setRenderSVG(() => renderSVG ?? null);
+      setRenderCanvas(() => renderCanvas ?? null);
+    });
+
+    return parsedParamsSchema;
+  };
+
+  const userSetCode = async (code: string, changed: boolean) => {
     let url;
     try {
-      const blob = new Blob([newCode], { type: "text/javascript" });
+      const blob = new Blob([code], { type: "text/javascript" });
       url = URL.createObjectURL(blob);
 
-      const {
-        renderCanvas,
+      const { renderSVG, renderCanvas, paramsSchema } = await import(
+        /* @vite-ignore */ url
+      );
+
+      if (
+        typeof renderCanvas !== "function" &&
+        typeof renderSVG !== "function"
+      ) {
+        throw new Error("renderSVG or renderCanvas must be exported");
+      } else if (
+        typeof renderCanvas === "function" &&
+        typeof renderSVG === "function"
+      ) {
+        throw new Error("renderSVG and renderCanvas cannot both be exported");
+      }
+      setCompileError(null);
+
+      const parsedParamsSchema = internalSetCode({
         renderSVG,
-        paramsSchema: rawParamsSchema,
-      } = await import(/* @vite-ignore */ url);
-
-      if (renderCanvas == null && renderSVG == null) {
-        throw new Error("One of renderCanvas and renderSVG must be exported");
-      } else if (renderCanvas != null && renderSVG != null) {
-        throw new Error("renderCanvas and renderSVG cannot both be exported");
-      }
-
-      // TODO
-      // refactor to parsing instead of validating...
-      // maybe use zod?
-      // for now this is easier and prevents obvious accidental crashing
-      let parsedParamsSchema: ParamsSchema = {};
-      if (typeof rawParamsSchema === "object") {
-        for (const [key, value] of Object.entries(rawParamsSchema)) {
-          if (
-            value == null ||
-            typeof value !== "object" ||
-            !("type" in value) ||
-            typeof value.type !== "string" ||
-            !PARAM_TYPES.includes(value.type)
-          ) {
-            continue;
-          } else if (value.type === "Select") {
-            if (
-              !("options" in value) ||
-              !Array.isArray(value.options) ||
-              value.options.length === 0
-            ) {
-              continue;
-            }
-          }
-
-          // @ts-expect-error prop types aren't validated yet, see above TODO
-          parsedParamsSchema[key] = value;
-        }
-      }
-
-      setCode(newCode);
-      setParamsSchema(parsedParamsSchema);
-
-      batch(() => {
-        const defaultParams: Params = {};
-        Object.entries(parsedParamsSchema).forEach(([label, props]) => {
-          // null is a valid default value for ImageInput
-          if (props.default !== undefined) {
-            defaultParams[label] = props.default;
-          } else if (props.type === "Select") {
-            defaultParams[label] = props.options[0];
-          } else {
-            defaultParams[label] = PARAM_DEFAULTS[props.type];
-          }
-        });
-        // todo we shouldn't override if paramSchema doesn't change
-        setParams(defaultParams); // todo init with default values from schema
-        setRenderFunc(() => renderCanvas);
+        renderCanvas,
+        paramsSchema,
+        code,
       });
 
-      if (!PRESET_FUNCS.hasOwnProperty(renderFuncKey())) {
-        localStorage.setItem(renderFuncKey(), newCode);
+      if (changed) {
+        localStorage.setItem(renderFuncKey(), code);
+        updateThumbnail(
+          renderFuncKey(),
+          renderSVG,
+          renderCanvas,
+          parsedParamsSchema
+        );
       }
-
-      setCompileError(null);
     } catch (e) {
       console.log("e", e!.toString());
       setCompileError(e!.toString());
@@ -139,18 +178,68 @@ export function Editor(props: Props) {
     URL.revokeObjectURL(url!);
   };
 
+  const updateThumbnail = async (
+    renderKey: string,
+    renderSVG: RenderSVG | undefined,
+    renderCanvas: RenderCanvas | undefined,
+    parsedParamsSchema: ParamsSchema
+  ) => {
+    try {
+      const defaultParams: Params = {};
+      Object.entries(parsedParamsSchema).forEach(([label, props]) => {
+        defaultParams[label] = props.default;
+      });
+
+      let thumbnail;
+      if (renderSVG != null) {
+        // https://www.phpied.com/truth-encoding-svg-data-uris/
+        // Only need to encode #
+        thumbnail =
+          "data:image/svg+xml," +
+          (await renderSVG(PREVIEW_OUTPUTQR, defaultParams).replaceAll(
+            "#",
+            "%23"
+          ));
+      } else {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d")!;
+        await renderCanvas!(PREVIEW_OUTPUTQR, defaultParams, ctx);
+
+        const smallCanvas = document.createElement("canvas");
+        const size = 96;
+        smallCanvas.width = size;
+        smallCanvas.height = size;
+        const smallCtx = smallCanvas.getContext("2d")!;
+        smallCtx.drawImage(canvas, 0, 0, size, size);
+        thumbnail = smallCanvas.toDataURL("image/jpeg", 0.5);
+      }
+
+      localStorage.setItem(`${renderKey}_thumb`, thumbnail);
+
+      const funcIndex = userFuncs.findIndex((func) => func.key === renderKey);
+      if (funcIndex !== -1) {
+        setUserFuncs(funcIndex, "thumb", thumbnail);
+      }
+    } catch (e) {
+      console.error(`${renderKey} thumbnail render:`, e);
+    }
+  };
+
   const createAndSelectFunc = (name: string, code: string) => {
     let count = 1;
     let key = `${name} ${count}`;
-    while (userFuncKeys.includes(key)) {
+    const keys = userFuncs.map((func) => func.key);
+    while (keys.includes(key)) {
       count++;
       key = `${name} ${count}`;
     }
+    keys.push(key);
 
-    setUserFuncKeys(userFuncKeys.length, key);
-    localStorage.setItem(USER_FUNC_KEYS_KEY, userFuncKeys.join(","));
+    // TODO double setting thumbs
+    setUserFuncs(userFuncs.length, { key, thumb: FALLBACK_THUMB });
+    localStorage.setItem(USER_FUNC_KEYS_KEY, keys.join(","));
     setRenderFuncKey(key);
-    trySetCode(code);
+    userSetCode(code, false);
   };
 
   return (
@@ -165,8 +254,46 @@ export function Editor(props: Props) {
       <Collapsible trigger="Rendering" defaultOpen>
         <div class="mb-4">
           <div class="text-sm py-2">Render function</div>
-          <div class="flex gap-2">
-            <GroupedSelect
+          <div class="flex sm:flex-wrap gap-2">
+            <For each={Object.entries(PRESET_MODULES)}>
+              {([key, preset]) => (
+                <div
+                  onMouseDown={() => {
+                    setRenderFuncKey(key);
+                    // @ts-expect-error assigning narrow to wider is ok b/c params validated
+                    internalSetCode(preset);
+                  }}
+                >
+                  <div class="h-24 w-24 checkboard">
+                    <img
+                      class="w-full"
+                      src={presetThumbs()[key as keyof typeof PRESET_MODULES]}
+                    />
+                  </div>
+                  <div class="text-center text-sm">{key}</div>
+                </div>
+              )}
+            </For>
+            <For each={userFuncs}>
+              {(func) => (
+                <div
+                  onMouseDown={() => {
+                    let storedCode = localStorage.getItem(func.key);
+                    if (storedCode == null) {
+                      storedCode = `Failed to load ${func.key}`;
+                    }
+                    setRenderFuncKey(func.key);
+                    userSetCode(storedCode, false);
+                  }}
+                >
+                  <div class="h-24 w-24 checkboard">
+                    <img src={func.thumb} />
+                  </div>
+                  <div class="text-center text-sm">{func.key}</div>
+                </div>
+              )}
+            </For>
+            {/* <GroupedSelect
               options={[
                 {
                   label: "Presets",
@@ -195,8 +322,8 @@ export function Editor(props: Props) {
                   trySetCode(storedCode);
                 }
               }}
-            />
-            <Show when={userFuncKeys.includes(renderFuncKey())}>
+            /> */}
+            <Show when={!Object.keys(PRESET_MODULES).includes(renderFuncKey())}>
               <IconButtonDialog
                 title={`Rename ${renderFuncKey()}`}
                 triggerTitle="Rename"
@@ -230,16 +357,21 @@ export function Editor(props: Props) {
                         onClick={() => {
                           if (rename() === renderFuncKey()) return close();
 
+                          const userFuncKeys = Object.values(userFuncs).map(
+                            (func) => func.key
+                          );
+
                           if (
-                            Object.keys(PRESET_FUNCS).includes(rename()) ||
+                            Object.keys(PRESET_MODULES).includes(rename()) ||
                             userFuncKeys.includes(rename())
                           ) {
                             setDuplicate(true);
                           } else {
                             localStorage.removeItem(renderFuncKey());
                             localStorage.setItem(rename(), code());
-                            setUserFuncKeys(
+                            setUserFuncs(
                               userFuncKeys.indexOf(renderFuncKey()),
+                              "key",
                               rename()
                             );
                             localStorage.setItem(
@@ -271,18 +403,23 @@ export function Editor(props: Props) {
                     <div class="flex justify-end gap-2">
                       <FillButton
                         onMouseDown={() => {
-                          setUserFuncKeys((keys) =>
-                            keys.filter((key) => key !== renderFuncKey())
+                          const userFuncKeys = Object.values(userFuncs).map(
+                            (func) => func.key
+                          );
+
+                          setUserFuncs((funcs) =>
+                            funcs.filter((func) => func.key !== renderFuncKey())
                           );
                           localStorage.removeItem(renderFuncKey());
-                          setRenderFuncKey("Square");
 
                           localStorage.setItem(
                             USER_FUNC_KEYS_KEY,
                             userFuncKeys.join(",")
                           );
 
-                          trySetCode(PRESET_FUNCS.Square);
+                          setRenderFuncKey("Square");
+                          // @ts-expect-error renderSVG narrow to wider is fine b/c valid params
+                          internalSetCode(PRESET_MODULES.Square);
 
                           close();
                         }}
@@ -320,10 +457,10 @@ export function Editor(props: Props) {
         <CodeEditor
           initialValue={code()}
           onSave={(code) => {
-            if (Object.keys(PRESET_FUNCS).includes(renderFuncKey())) {
+            if (Object.keys(PRESET_MODULES).includes(renderFuncKey())) {
               createAndSelectFunc(renderFuncKey(), code);
             } else {
-              trySetCode(code);
+              userSetCode(code, true);
             }
           }}
           error={compileError()}

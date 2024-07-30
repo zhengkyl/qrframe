@@ -1,5 +1,5 @@
 import { QrError } from "fuqr";
-
+import Download from "lucide-solid/icons/download";
 import {
   Match,
   Show,
@@ -16,8 +16,8 @@ import {
   MODE_KEY,
   MODE_NAMES,
 } from "~/lib/options";
+import type { Params } from "~/lib/params";
 import { FlatButton } from "../Button";
-import Download from "lucide-solid/icons/download";
 
 function download(href: string, name: string) {
   const a = document.createElement("a");
@@ -71,77 +71,83 @@ export default function QrPreview(props: Props) {
 function RenderedQrCode() {
   const {
     outputQr: _outputQr,
-    renderFunc,
+    getRenderSVG,
+    getRenderCanvas,
     renderFuncKey,
     params,
+    paramsSchema,
   } = useQrContext();
   const outputQr = _outputQr as () => OutputQr;
 
-  let qrCanvas: HTMLCanvasElement;
+  let svgParent: HTMLDivElement;
+  let canvas: HTMLCanvasElement;
 
   const [runtimeError, setRuntimeError] = createSignal<string | null>(null);
-  const [cleanupError, setCleanupError] = createSignal<string | null>(null);
 
   const [canvasDims, setCanvasDims] = createSignal({ width: 0, height: 0 });
 
-  let cleanupFunc: void | (() => void);
-  let cleanupFuncKey = "";
   let prevFuncKey = "";
 
-  createEffect(() => {
-    try {
-      if (typeof cleanupFunc === "function") {
-        cleanupFunc();
-      }
-      setCleanupError(null);
-    } catch (e) {
-      setCleanupError(e!.toString());
-      cleanupFuncKey = prevFuncKey;
-      console.error(`${cleanupFuncKey} cleanup:`, e);
-    }
+  let renderCount = 0;
+  createEffect(async () => {
+    const render = getRenderSVG();
+    const fallbackRender = getRenderCanvas();
 
-    const ctx = qrCanvas.getContext("2d")!;
-    ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+    // Track store without passing store into function and leaking extra params
+    const paramsCopy: Params = {};
+    Object.keys(paramsSchema()).forEach((key) => {
+      paramsCopy[key] = params[key];
+    });
+
+    if (render == null && fallbackRender == null) return; // only true on page load
+    const currentRender = ++renderCount;
+
+    console.log("render run", currentRender);
 
     prevFuncKey = untrack(renderFuncKey);
     try {
-      // matrix isn't cloned without this line... this disables some optimization i think
-      const output = { ...outputQr() };
-      // Allow renderFunc to modify matrix with reset between renders
-      output.matrix = [...output.matrix];
+      // users can arbitrarily manipulate function args
+      // outputQr (big) is frozen, and params (small) is copied
 
-      cleanupFunc = renderFunc()(output, params, ctx);
+      if (render != null) {
+        const svgString = await render(outputQr(), paramsCopy);
+        if (currentRender !== renderCount) {
+          // unrealistic, but easy to prevent race conditions
+          return;
+        }
+
+        // alternative if need to manipulate nodes
+        // const frag = document.createRange().createContextualFragment(svgString)
+        svgParent.innerHTML = svgString;
+      } else {
+        const ctx = canvas.getContext("2d")!;
+        ctx.reset();
+
+        // race condition is unrealistic (maybe with http requests)
+        // and can't be solved without double buffering
+        await fallbackRender!(outputQr(), paramsCopy, ctx);
+      }
+
       setRuntimeError(null);
     } catch (e) {
       setRuntimeError(e!.toString());
       console.error(`${prevFuncKey} render:`, e);
     }
-
-    setCanvasDims({ width: qrCanvas.width, height: qrCanvas.height });
   });
 
   return (
     <>
-      <div
-        class="aspect-[1/1] border rounded-md relative overflow-hidden"
-        style={{
-          "background-image":
-            "repeating-conic-gradient(#ddd 0% 25%, #aaa 25% 50%)",
-          "background-position": "50%",
-          "background-size": `${
-            (1 / (outputQr().version * 4 + 17 + 4)) * 100
-          }% ${(1 / (outputQr().version * 4 + 17 + 4)) * 100}%
-          `,
-        }}
-      >
-        <canvas class="w-full h-full" ref={qrCanvas!}></canvas>
+      <div class="checkboard aspect-[1/1] border rounded-md relative overflow-hidden">
+        <Show when={getRenderSVG() != null}>
+          <div ref={svgParent!}></div>
+        </Show>
+        <Show when={getRenderCanvas() != null}>
+          <canvas
+            class="w-full h-full image-render-pixel"
+            ref={canvas!}
+          ></canvas>
+        </Show>
       </div>
-      <Show when={cleanupError() != null}>
-        <div class="text-purple-100 bg-purple-950 px-2 py-1 rounded-md">
-          <div class="font-bold">{cleanupFuncKey} cleanup</div>
-          {cleanupError()}
-        </div>
-      </Show>
       <Show when={runtimeError() != null}>
         <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md">
           {runtimeError()}
@@ -178,7 +184,7 @@ function RenderedQrCode() {
           class="inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
           onClick={async () => {
             download(
-              qrCanvas.toDataURL("image/png"),
+              canvas.toDataURL("image/png"),
               `${outputQr().text.slice(0, 15).trim()}.png`
             );
           }}
@@ -186,6 +192,22 @@ function RenderedQrCode() {
           <Download size={20} />
           Download PNG
         </FlatButton>
+        <Show when={getRenderSVG() != null}>
+          <FlatButton
+            class="inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
+            onClick={async () => {
+              download(
+                URL.createObjectURL(
+                  new Blob([svgParent.innerHTML], { type: "image/svg" })
+                ),
+                `${outputQr().text.slice(0, 15).trim()}.svg`
+              );
+            }}
+          >
+            <Download size={20} />
+            Download SVG
+          </FlatButton>
+        </Show>
       </div>
     </>
   );

@@ -1,6 +1,6 @@
 import {
   createContext,
-  createEffect,
+  createMemo,
   createSignal,
   useContext,
   type Accessor,
@@ -18,7 +18,8 @@ import {
   get_matrix,
 } from "fuqr";
 import { createStore, type SetStoreFunction } from "solid-js/store";
-import type { Params, ParamsSchema } from "./params";
+import { defaultParams, type Params, type ParamsSchema } from "./params";
+import { PRESET_MODULES } from "./presets";
 
 type InputQr = {
   text: string;
@@ -28,24 +29,25 @@ type InputQr = {
   mask: Mask | null;
 };
 
-export type OutputQr = {
+export type OutputQr = Readonly<{
   text: string;
-  /** Stored as value b/c Version is a ptr which becomes null after use */
   version: number;
   ecl: ECL;
   mode: Mode;
   mask: Mask;
-  /** Stored as value b/c Matrix is a ptr which becomes null after use */
-  matrix: Module[];
-};
+  matrix: ReadonlyArray<Module>;
+}>;
 
 export const QrContext = createContext<{
   inputQr: InputQr;
   setInputQr: SetStoreFunction<InputQr>;
   outputQr: Accessor<OutputQr | QrError>;
-  setOutputQr: Setter<OutputQr | QrError>;
-  renderFunc: Accessor<RenderFunc>;
-  setRenderFunc: Setter<RenderFunc>;
+
+  getRenderSVG: Accessor<RenderSVG | null>;
+  setRenderSVG: Setter<RenderSVG | null>;
+  getRenderCanvas: Accessor<RenderCanvas | null>;
+  setRenderCanvas: Setter<RenderCanvas | null>;
+
   renderFuncKey: Accessor<string>;
   setRenderFuncKey: Setter<string>;
   params: Params;
@@ -54,52 +56,64 @@ export const QrContext = createContext<{
   setParamsSchema: Setter<ParamsSchema>;
 }>();
 
-export type RenderFunc = (
+export type RenderCanvas = (
   qr: OutputQr,
-  params: {},
+  params: Params,
   ctx: CanvasRenderingContext2D
-) => void | (() => void);
+) => void;
+
+export type RenderSVG = (qr: OutputQr, params: Params) => string;
 
 export function QrContextProvider(props: { children: JSX.Element }) {
   const [inputQr, setInputQr] = createStore<InputQr>({
-    text: "https://qrcode.kylezhe.ng",
+    text: "https://qrframe.kylezhe.ng",
     minVersion: 1,
     minEcl: ECL.Low,
     mode: null,
     mask: null,
   });
 
-  const [outputQr, setOutputQr] = createSignal<OutputQr | QrError>(
-    QrError.InvalidEncoding
+  const [renderCanvas, setRenderCanvas] = createSignal<RenderCanvas | null>(
+    null
   );
 
-  const [renderFunc, setRenderFunc] = createSignal<RenderFunc>(()=>{});
+  const [renderSVG, setRenderSVG] = createSignal<RenderSVG | null>(
+    // @ts-ignore narrow to wider is fine b/c we pass valid params
+    PRESET_MODULES.Square.renderSVG
+  );
   const [renderFuncKey, setRenderFuncKey] = createSignal("Square");
 
-  const [paramsSchema, setParamsSchema] = createSignal<ParamsSchema>({});
-  const [params, setParams] = createStore({});
+  const [paramsSchema, setParamsSchema] = createSignal<ParamsSchema>(
+    PRESET_MODULES.Square.paramsSchema
+  );
+  const [params, setParams] = createStore(defaultParams(PRESET_MODULES.Square.paramsSchema));
 
-  createEffect(() => {
+  const outputQr = createMemo(() => {
+    // can't skip first render, b/c need to track deps
     try {
-      // NOTE: Version and Margin cannot be reused, so must be created each time
+      // NOTE: WASM ptrs (QrOptions, Version, Matrix) become null after leaving scope
+      // They can't be reused or stored
+
       let qrOptions = new QrOptions()
         .min_version(new Version(inputQr.minVersion))
         .min_ecl(inputQr.minEcl)
-        .mask(inputQr.mask!) // null makes more sense than undefined
-        .mode(inputQr.mode!) // null makes more sense than undefined
+        .mask(inputQr.mask!) // null instead of undefined (wasm-pack type)
+        .mode(inputQr.mode!); // null instead of undefined (wasm-pack type)
 
       let m = get_matrix(inputQr.text, qrOptions);
 
-      setOutputQr({
+      // outputQr is passed as param to renderFunc
+      // must either freeze or pass new copy for each render
+      return Object.freeze({
         text: inputQr.text,
-        matrix: m.value,
+        matrix: Object.freeze(m.value),
         version: m.version["0"],
         ecl: m.ecl,
         mode: m.mode,
         mask: m.mask,
       });
     } catch (e) {
-      setOutputQr(e as QrError);
+      return e as QrError;
     }
   });
 
@@ -109,9 +123,10 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         inputQr,
         setInputQr,
         outputQr,
-        setOutputQr,
-        renderFunc,
-        setRenderFunc,
+        getRenderSVG: renderSVG,
+        setRenderSVG,
+        getRenderCanvas: renderCanvas,
+        setRenderCanvas,
         renderFuncKey,
         setRenderFuncKey,
         params,
@@ -132,3 +147,14 @@ export function useQrContext() {
   }
   return context;
 }
+
+// pre generated b/c needed often for thumbnails (generated on every save/load)
+export const PREVIEW_OUTPUTQR = {
+  text: "https://qrfra.me",
+  // prettier-ignore
+  matrix: [3,3,3,3,3,3,3,12,8,0,0,0,0,12,3,3,3,3,3,3,3,3,2,2,2,2,2,3,12,9,0,0,1,1,12,3,2,2,2,2,2,3,3,2,3,3,3,2,3,12,8,1,0,1,1,12,3,2,3,3,3,2,3,3,2,3,3,3,2,3,12,9,1,0,1,0,12,3,2,3,3,3,2,3,3,2,3,3,3,2,3,12,8,0,1,0,0,12,3,2,3,3,3,2,3,3,2,2,2,2,2,3,12,9,1,1,1,1,12,3,2,2,2,2,2,3,3,3,3,3,3,3,3,12,7,6,7,6,7,12,3,3,3,3,3,3,3,12,12,12,12,12,12,12,12,8,0,1,0,0,12,12,12,12,12,12,12,12,9,9,9,9,9,8,7,9,9,1,0,1,0,9,8,9,8,9,8,9,8,0,0,0,1,0,0,6,1,0,0,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,1,0,7,1,0,0,1,0,1,1,1,1,0,0,1,1,0,0,1,1,0,0,0,6,0,0,1,1,1,1,1,0,0,1,1,1,0,0,1,0,0,1,0,0,7,1,1,0,0,0,1,1,1,0,1,1,0,0,1,12,12,12,12,12,12,12,12,9,1,0,0,0,0,0,1,1,1,1,0,1,3,3,3,3,3,3,3,12,9,1,1,1,1,1,0,1,0,0,1,1,0,3,2,2,2,2,2,3,12,8,1,0,0,0,1,0,1,1,1,1,0,0,3,2,3,3,3,2,3,12,9,0,0,0,1,1,1,1,1,1,0,0,0,3,2,3,3,3,2,3,12,9,0,1,1,0,0,0,0,1,0,1,1,0,3,2,3,3,3,2,3,12,9,1,1,1,1,0,1,1,0,0,1,0,0,3,2,2,2,2,2,3,12,9,0,0,0,0,1,0,0,1,1,1,0,0,3,3,3,3,3,3,3,12,9,1,0,1,1,0,1,1,0,1,0,1,0],
+  version: 1,
+  ecl: ECL.Low,
+  mode: Mode.Byte,
+  mask: Mask.M2,
+};

@@ -13,9 +13,9 @@ const QrContextProvider = clientOnly(async () => {
 export default function Home() {
   return (
     <QrContextProvider>
-      <main class="max-w-screen-2xl mx-auto px-2">
-        <div class="flex gap-4 flex-wrap">
-          <Editor class="flex-1 flex-grow-3 flex flex-col gap-2 px-2 py-8" />
+      <main class="max-w-screen-2xl mx-auto">
+        <div class="flex flex-wrap">
+          <Editor class="flex-1 flex-grow-3 flex flex-col gap-2 px-4 py-8" />
           <QrPreview class="flex-1 flex-grow-2 min-w-300px sticky top-0 self-start px-4 py-8 flex flex-col gap-4" />
         </div>
       </main>

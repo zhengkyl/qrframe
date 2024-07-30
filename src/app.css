@@ -1,0 +1,5 @@
+.checkboard {
+  background-image: repeating-conic-gradient(#ddd 0% 25%, #aaa 25% 50%);
+  background-position: 50%;
+  background-size: 10% 10%;
+}

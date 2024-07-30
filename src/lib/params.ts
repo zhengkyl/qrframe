@@ -4,8 +4,7 @@ import { NumberInput } from "~/components/NumberInput";
 import { Select } from "~/components/Select";
 import { Switch } from "~/components/Switch";
 
-
-export const PARAM_TYPES = ["boolean", "number", "Color", "Select", "File"]
+const PARAM_TYPES = ["boolean", "number", "Color", "Select", "File"];
 
 export const PARAM_COMPONENTS = {
   boolean: Switch,
@@ -19,15 +18,116 @@ export const PARAM_DEFAULTS = {
   boolean: false,
   number: 0,
   Color: "rgb(0,0,0)",
-  // Select: default is first option
+  // Select: //default is first option
   File: null,
 };
 
-export type Params = {
-  [label: string]: Exclude<ParamsSchema[string]["default"], undefined>;
+export function paramsEqual(
+  paramsSchemaA: ParamsSchema,
+  paramsSchemaB: ParamsSchema
+) {
+  const labelsA = Object.keys(paramsSchemaA);
+  if (labelsA.length !== Object.keys(paramsSchemaB).length) return false;
+
+  for (const label of labelsA) {
+    if (!paramsSchemaB.hasOwnProperty(label)) return false;
+
+    const propsA = Object.keys(paramsSchemaA[label]);
+    if (propsA.length != Object.keys(paramsSchemaB[label]).length) return false;
+
+    for (const prop of propsA) {
+      if (prop === "options") {
+        // @ts-expect-error Object.keys() returns keys
+        const optionsA = paramsSchemaA[label][prop] as string[];
+        // @ts-expect-error Object.keys() returns keys
+        const optionsB = paramsSchemaA[label][prop] as string[];
+
+        if (optionsA.length !== optionsB.length) return false;
+        if (optionsA.some((option) => !optionsB.includes(option))) return false;
+      } else {
+        // @ts-expect-error Object.keys() returns keys
+        if (paramsSchemaA[label][prop] !== paramsSchemaB[label][prop])
+          return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+// TODO
+// refactor to parsing instead of validating...
+// maybe use zod?
+// for now this is easier and prevents obvious accidental crashing
+export function parseParamsSchema(rawParamsSchema: any) {
+  let parsedParamsSchema: ParamsSchema = {};
+  if (typeof rawParamsSchema === "object") {
+    for (const [key, value] of Object.entries(rawParamsSchema)) {
+      if (
+        value == null ||
+        typeof value !== "object" ||
+        !("type" in value) ||
+        typeof value.type !== "string" ||
+        !PARAM_TYPES.includes(value.type)
+      ) {
+        continue;
+      } else if (value.type === "Select") {
+        if (
+          !("options" in value) ||
+          !Array.isArray(value.options) ||
+          value.options.length === 0
+        ) {
+          continue;
+        }
+      }
+
+      // === undefined b/c null is a valid default value for ImageInput
+      // @ts-expect-error yes .default might be undefined thanks typescript
+      if (value.default === undefined) {
+        if (value.type === "Select") {
+          // @ts-expect-error adding default, options validated above
+          value.default = value.options[0];
+        } else {
+          // @ts-expect-error adding default, type validated above
+          value.default = PARAM_DEFAULTS[value.type];
+        }
+      }
+      // TODO so user set default could be wrong type
+      // @ts-expect-error prop types not validated
+      parsedParamsSchema[key] = value;
+    }
+  }
+
+  return parsedParamsSchema;
+}
+
+export function defaultParams(paramsSchema: ParamsSchema) {
+  const defaultParams: Params = {};
+  Object.entries(paramsSchema).forEach(([label, props]) => {
+    defaultParams[label] = props.default;
+  });
+  return defaultParams;
+}
+
+type PARAM_VALUE_TYPES = {
+  boolean: boolean;
+  number: number;
+  Color: string;
+  Select: never; // see Params, uses options field instead of this mapping
+  File: File | null;
 };
 
-export type ParamsSchema = SchemaFromMapping<typeof PARAM_COMPONENTS>;
+export type Params<T extends RawParamsSchema = ParamsSchema> = {
+  [K in keyof T]: T[K] extends { type: "Select" }
+    ? T[K]["options"][number]
+    : PARAM_VALUE_TYPES[T[K]["type"]];
+};
+
+export type ParamsSchema = {
+  [label: string]: Required<RawParamsSchema[string]>;
+};
+
+export type RawParamsSchema = SchemaFromMapping<typeof PARAM_COMPONENTS>;
 
 /**
  * Given object mapping keys to components, returns union of [key, props]
