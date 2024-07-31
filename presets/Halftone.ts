@@ -1,4 +1,7 @@
-export const Halftone = `export const paramsSchema = {
+import type { RawParamsSchema, Params } from "../src/lib/params";
+import type { OutputQr } from "../src/lib/QrContext";
+
+export const paramsSchema = {
   Image: {
     type: "File",
   },
@@ -40,7 +43,7 @@ export const Halftone = `export const paramsSchema = {
     type: "Color",
     default: "#ffffff",
   },
-};
+} satisfies RawParamsSchema;
 
 const Module = {
   DataOFF: 0,
@@ -58,7 +61,11 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-export async function renderCanvas(qr, params, ctx) {
+export async function renderCanvas(
+  qr: OutputQr,
+  params: Params<typeof paramsSchema>,
+  ctx: CanvasRenderingContext2D
+) {
   const moduleSize = 3;
   const pixelSize = 1;
 
@@ -107,7 +114,7 @@ export async function renderCanvas(qr, params, ctx) {
   }
   await image.decode();
 
-  ctx.filter = \`brightness(\${params["Brightness"]}) contrast(\${params["Contrast"]})\`;
+  ctx.filter = `brightness(${params["Brightness"]}) contrast(${params["Contrast"]})`;
   ctx.drawImage(image, 0, 0, canvasSize, canvasSize);
   ctx.filter = "none";
 
@@ -190,4 +197,3 @@ export async function renderCanvas(qr, params, ctx) {
     }
   }
 }
-`

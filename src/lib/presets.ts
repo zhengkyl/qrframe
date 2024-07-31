@@ -1,7 +1,7 @@
-import Camo from "./presets/Camo";
-import Circle from "./presets/Circle";
-import Halftone from "./presets/Halftone";
-import Minimal from "./presets/Minimal";
-import Square from "./presets/Square";
+import { Camo } from "./presets/Camo";
+import { Circle } from "./presets/Circle";
+import { Halftone } from "./presets/Halftone";
+import { Minimal } from "./presets/Minimal";
+import { Square } from "./presets/Square";
 
-export const PRESET_MODULES = { Square, Circle, Camo, Halftone, Minimal };
+export const PRESET_CODE = { Square, Circle, Camo, Halftone, Minimal };

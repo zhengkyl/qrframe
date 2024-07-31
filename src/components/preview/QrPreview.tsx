@@ -102,8 +102,6 @@ function RenderedQrCode() {
     if (render == null && fallbackRender == null) return; // only true on page load
     const currentRender = ++renderCount;
 
-    console.log("render run", currentRender);
-
     prevFuncKey = untrack(renderFuncKey);
     try {
       // users can arbitrarily manipulate function args
@@ -112,19 +110,16 @@ function RenderedQrCode() {
       if (render != null) {
         const svgString = await render(outputQr(), paramsCopy);
         if (currentRender !== renderCount) {
-          // unrealistic, but easy to prevent race conditions
+          // race condition
           return;
         }
 
-        // alternative if need to manipulate nodes
-        // const frag = document.createRange().createContextualFragment(svgString)
         svgParent.innerHTML = svgString;
       } else {
         const ctx = canvas.getContext("2d")!;
         ctx.reset();
 
-        // race condition is unrealistic (maybe with http requests)
-        // and can't be solved without double buffering
+        // race condition can't be solved without double buffering
         await fallbackRender!(outputQr(), paramsCopy, ctx);
 
         setCanvasDims({ width: ctx.canvas.width, height: ctx.canvas.height });

@@ -1,4 +1,7 @@
-export const Camo = `export const paramsSchema = {
+import type { RawParamsSchema, Params } from "../src/lib/params";
+import type { OutputQr } from "../src/lib/QrContext";
+
+export const paramsSchema = {
   Margin: {
     type: "number",
     min: 0,
@@ -17,7 +20,7 @@ export const Camo = `export const paramsSchema = {
     max: 100,
     default: 1,
   },
-};
+} satisfies RawParamsSchema;
 
 const Module = {
   DataOFF: 0,
@@ -35,7 +38,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-function splitmix32(a) {
+function splitmix32(a: number) {
   return function () {
     a |= 0;
     a = (a + 0x9e3779b9) | 0;
@@ -47,7 +50,11 @@ function splitmix32(a) {
   };
 }
 
-export function renderCanvas(qr, params, ctx) {
+export function renderCanvas(
+  qr: OutputQr,
+  params: Params<typeof paramsSchema>,
+  ctx: CanvasRenderingContext2D
+) {
   const seededRand = splitmix32(params["Seed"]);
   const margin = params["Margin"];
   const quietZone = params["Quiet zone"];
@@ -143,4 +150,3 @@ export function renderCanvas(qr, params, ctx) {
     }
   }
 }
-`

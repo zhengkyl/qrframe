@@ -1,4 +1,7 @@
-export const Circle = `export const paramsSchema = {
+import type { RawParamsSchema, Params } from "../src/lib/params";
+import type { OutputQr } from "../src/lib/QrContext";
+
+export const paramsSchema = {
   "Circular finder pattern": {
     type: "boolean",
     default: true,
@@ -7,7 +10,7 @@ export const Circle = `export const paramsSchema = {
     type: "boolean",
     default: true,
   },
-};
+} satisfies RawParamsSchema;
 
 const Module = {
   DataOFF: 0,
@@ -25,7 +28,11 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-export function renderCanvas(qr, params, ctx) {
+export function renderCanvas(
+  qr: OutputQr,
+  params: Params<typeof paramsSchema>,
+  ctx: CanvasRenderingContext2D
+) {
   const pixelSize = 10;
   const margin = 2;
   const matrixWidth = qr.version * 4 + 17;
@@ -168,4 +175,3 @@ export function renderCanvas(qr, params, ctx) {
     }
   }
 }
-`

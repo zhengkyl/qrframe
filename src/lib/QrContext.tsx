@@ -18,8 +18,7 @@ import {
   get_matrix,
 } from "fuqr";
 import { createStore, type SetStoreFunction } from "solid-js/store";
-import { defaultParams, type Params, type ParamsSchema } from "./params";
-import { PRESET_MODULES } from "./presets";
+import { type Params, type ParamsSchema } from "./params";
 
 type InputQr = {
   text: string;
@@ -76,17 +75,11 @@ export function QrContextProvider(props: { children: JSX.Element }) {
   const [renderCanvas, setRenderCanvas] = createSignal<RenderCanvas | null>(
     null
   );
+  const [renderSVG, setRenderSVG] = createSignal<RenderSVG | null>(null);
+  const [renderFuncKey, setRenderFuncKey] = createSignal("");
 
-  const [renderSVG, setRenderSVG] = createSignal<RenderSVG | null>(
-    // @ts-ignore narrow to wider is fine b/c we pass valid params
-    PRESET_MODULES.Square.renderSVG
-  );
-  const [renderFuncKey, setRenderFuncKey] = createSignal("Square");
-
-  const [paramsSchema, setParamsSchema] = createSignal<ParamsSchema>(
-    PRESET_MODULES.Square.paramsSchema
-  );
-  const [params, setParams] = createStore(defaultParams(PRESET_MODULES.Square.paramsSchema));
+  const [paramsSchema, setParamsSchema] = createSignal<ParamsSchema>({});
+  const [params, setParams] = createStore({});
 
   const outputQr = createMemo(() => {
     // can't skip first render, b/c need to track deps
