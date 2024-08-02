@@ -13,6 +13,7 @@ import {
 import { ButtonGroup, ButtonGroupItem } from "../ButtonGroup";
 import { NumberInput } from "../NumberInput";
 import { Select } from "../Select";
+import { Switch } from "../Switch";
 
 export function Settings() {
   const { inputQr, setInputQr } = useQrContext();
@@ -27,8 +28,17 @@ export function Settings() {
           setValue={(name) => setInputQr("mode", MODE_VALUE[name])}
         />
       </div>
-      <div class="flex justify-between">
-        <div class="text-sm py-2 w-48">Min version</div>
+      <div class="">
+        <div class="flex justify-between">
+          <div class="text-sm py-2">
+            {inputQr.strictVersion ? "Version" : "Min version"}
+          </div>
+          <Switch
+            label="Strict"
+            value={inputQr.strictVersion}
+            setValue={(v) => setInputQr("strictVersion", v)}
+          />
+        </div>
         <NumberInput
           min={1}
           max={40}
@@ -37,7 +47,16 @@ export function Settings() {
         />
       </div>
       <div>
-        <div class="text-sm py-2">Min error tolerance</div>
+        <div class="flex justify-between">
+          <div class="text-sm py-2">
+            {inputQr.strictEcl ? "Error tolerance" : "Min error tolerance"}
+          </div>
+          <Switch
+            label="Strict"
+            value={inputQr.strictEcl}
+            setValue={(v) => setInputQr("strictEcl", v)}
+          />
+        </div>
         <ButtonGroup
           value={ECL_NAMES[inputQr.minEcl]}
           setValue={(v) => setInputQr("minEcl", ECL_VALUE[v])}

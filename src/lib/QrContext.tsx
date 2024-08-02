@@ -23,7 +23,9 @@ import { type Params, type ParamsSchema } from "./params";
 type InputQr = {
   text: string;
   minVersion: number;
+  strictVersion: boolean;
   minEcl: ECL;
+  strictEcl: boolean;
   mode: Mode | null;
   mask: Mask | null;
 };
@@ -67,7 +69,9 @@ export function QrContextProvider(props: { children: JSX.Element }) {
   const [inputQr, setInputQr] = createStore<InputQr>({
     text: "https://qrframe.kylezhe.ng",
     minVersion: 1,
+    strictVersion: false,
     minEcl: ECL.Low,
+    strictEcl: false,
     mode: null,
     mask: null,
   });
@@ -89,7 +93,9 @@ export function QrContextProvider(props: { children: JSX.Element }) {
 
       let qrOptions = new QrOptions()
         .min_version(new Version(inputQr.minVersion))
+        .strict_version(inputQr.strictVersion)
         .min_ecl(inputQr.minEcl)
+        .strict_ecl(inputQr.strictEcl)
         .mask(inputQr.mask!) // null instead of undefined (wasm-pack type)
         .mode(inputQr.mode!); // null instead of undefined (wasm-pack type)
 
