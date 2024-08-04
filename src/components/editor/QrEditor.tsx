@@ -29,7 +29,7 @@ type Props = {
   class?: string;
 };
 
-const FUNC_KEYS_KEY = "funcKeys";
+const CUSTOM_FUNCS = "funcKeys";
 
 // TODO temp fallback thumb
 const FALLBACK_THUMB =
@@ -63,31 +63,28 @@ export function Editor(props: Props) {
   } = useQrContext();
 
   const [code, setCode] = createSignal(PRESET_CODE.Square);
-
   const [compileError, setCompileError] = createSignal<string | null>(null);
-
-  const [funcKeys, setFuncKeys] = createStore<string[]>([]);
-
+  const [funcKeys, _setFuncKeys] = createStore<string[]>([]);
   const [thumbs, setThumbs] = createStore<Thumbs>({
     Square: "",
     Circle: "",
     Camo: "",
+    Blocks: "",
     Halftone: "",
     Minimal: "",
   });
 
   onMount(async () => {
-    const storedFuncKeys = localStorage.getItem(FUNC_KEYS_KEY);
+    const storedFuncKeys = localStorage.getItem(CUSTOM_FUNCS);
     let keys;
     if (storedFuncKeys == null || storedFuncKeys === "") {
-      localStorage.setItem(FUNC_KEYS_KEY, presetKeys.join(","));
       keys = presetKeys;
     } else {
-      keys = storedFuncKeys.split(",");
+      keys = presetKeys.concat(storedFuncKeys.split(","));
     }
+    setFuncKeys(keys);
     setExistingKey(keys[0]);
 
-    setFuncKeys(keys);
     for (const key of keys) {
       if (isPreset(key)) {
         const tryThumb = localStorage.getItem(`${key}_thumb`);
@@ -111,6 +108,15 @@ export function Editor(props: Props) {
       setThumbs(key, thumb);
     }
   });
+
+  const setFuncKeys: typeof _setFuncKeys = (...args: any[]) => {
+    // @ts-expect-error this is fine
+    _setFuncKeys(...args);
+    localStorage.setItem(
+      CUSTOM_FUNCS,
+      funcKeys.filter((key) => !presetKeys.includes(key)).join(",")
+    );
+  };
 
   const setExistingKey = (key: string) => {
     setRenderFuncKey(key);
@@ -252,7 +258,6 @@ export function Editor(props: Props) {
       key = `${name} ${count}`;
     }
     setFuncKeys(funcKeys.length, key);
-    localStorage.setItem(FUNC_KEYS_KEY, funcKeys.join(","));
 
     // TODO double setting thumbs
     setThumbs(key, FALLBACK_THUMB);
@@ -332,10 +337,6 @@ export function Editor(props: Props) {
                                 funcKeys.indexOf(renderFuncKey()),
                                 rename()
                               );
-                              localStorage.setItem(
-                                FUNC_KEYS_KEY,
-                                funcKeys.join(",")
-                              );
 
                               setRenderFuncKey(rename());
                               close();
@@ -361,7 +362,6 @@ export function Editor(props: Props) {
                           <FillButton
                             onMouseDown={() => {
                               localStorage.removeItem(renderFuncKey());
-
                               localStorage.removeItem(
                                 `${renderFuncKey()}_thumb`
                               );
@@ -369,10 +369,6 @@ export function Editor(props: Props) {
 
                               setFuncKeys((keys) =>
                                 keys.filter((key) => key !== renderFuncKey())
-                              );
-                              localStorage.setItem(
-                                FUNC_KEYS_KEY,
-                                funcKeys.join(",")
                               );
 
                               setExistingKey(funcKeys[0]);

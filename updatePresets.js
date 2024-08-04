@@ -24,7 +24,7 @@ async function stringifyPresets(src, dst) {
       // This preserves spacing + comments which other methods don't
 
       // Remove imports (identical for all files)
-      fileString = fileString.slice(121);
+      fileString = fileString.slice(111);
 
       // Strip types from simple function args
       fileString = fileString.replace(

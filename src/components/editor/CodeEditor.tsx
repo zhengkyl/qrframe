@@ -23,19 +23,20 @@ type Props = {
   clearError: () => void;
 };
 
-const INITIAL_VIM_MODE = false;
+const VIM_MODE_KEY = "vimMode";
 
 export function CodeEditor(props: Props) {
   let parent: HTMLDivElement;
   let view: EditorView;
   let modeComp = new Compartment();
 
-  const [vimMode, _setVimMode] = createSignal(INITIAL_VIM_MODE);
+  const [vimMode, _setVimMode] = createSignal(false);
   const setVimMode = (v: boolean) => {
     _setVimMode(v);
     view.dispatch({
       effects: modeComp.reconfigure(v ? vim() : []),
     });
+    localStorage.setItem(VIM_MODE_KEY, v ? "true" : "false");
   };
 
   const [dirty, setDirty] = createSignal(false);
@@ -82,6 +83,14 @@ export function CodeEditor(props: Props) {
       extensions,
       parent,
     });
+
+    const saved = localStorage.getItem(VIM_MODE_KEY);
+    if (saved === "true") {
+      _setVimMode(true);
+      view.dispatch({
+        effects: modeComp.reconfigure(vim()),
+      });
+    }
   });
 
   // Track props.initialValue
@@ -94,9 +103,9 @@ export function CodeEditor(props: Props) {
     view.setState(EditorState.create({ doc: props.initialValue, extensions }));
 
     const currVimMode = untrack(vimMode);
-    if (currVimMode !== INITIAL_VIM_MODE) {
+    if (currVimMode) {
       view.dispatch({
-        effects: modeComp.reconfigure(currVimMode ? vim() : []),
+        effects: modeComp.reconfigure(vim()),
       });
     }
   });

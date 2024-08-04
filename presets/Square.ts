@@ -1,5 +1,5 @@
-import type { Params, RawParamsSchema } from "../src/lib/params";
-import type { OutputQr } from "../src/lib/QrContext";
+import type { Params, RawParamsSchema } from "~/lib/params";
+import type { OutputQr } from "~/lib/QrContext";
 
 export const paramsSchema = {
   Margin: {
