@@ -28,7 +28,7 @@ async function stringifyPresets(src, dst) {
 
       // Strip types from simple function args
       fileString = fileString.replace(
-        /\((?:\s*.+: .+,\s)*\s*.+: .+\s*\)/g,
+        /\((?:\s*.+: .+,\s)*\s*.+: [^)]+\s*\)/g,
         (match) =>
           "(" +
           match

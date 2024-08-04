@@ -24,7 +24,7 @@ export const paramsSchema = {
     type: "Color",
     default: "#d21313",
   },
-  "Cross": {
+  Cross: {
     type: "Color",
     default: "#131d87",
   },
