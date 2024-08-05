@@ -78,7 +78,8 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const seededRand = splitmix32(params["Seed"]);
 
   const rand = params["Randomize circle size"]
-    ? (min: number, max: number) => seededRand() * (max - min) + min
+    ? (min: number, max: number) =>
+        Math.trunc(100 * (seededRand() * (max - min) + min)) / 100
     : (min: number, max: number) => (max - min) / 2 + min;
 
   const matrixWidth = qr.version * 4 + 17;
@@ -90,9 +91,9 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" fill="${params["Tiny circle"]}">`;
   svg += `<rect width="${size}" height="${size}" fill="${bg}"/>`;
 
-  let topLayer = `<g fill="none" stroke="${params["Large circle"]}" stroke-width="0.6">`;
+  let botLayer = `<g fill="none" stroke="${params["Large circle"]}" stroke-width="0.6">`;
   let midLayer = `<g fill="none" stroke="${params["Medium circle"]}" stroke-width="0.5">`;
-  let botLayer = `<g fill="none" stroke="${params["Small circle"]}" stroke-width="0.4">`;
+  let topLayer = `<g fill="none" stroke="${params["Small circle"]}" stroke-width="0.4">`;
 
   function matrix(x: number, y: number) {
     return qr.matrix[y * matrixWidth + x];
@@ -124,8 +125,6 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
       if ((module | 1) === Module.FinderON) continue;
       if (visited(x, y)) continue;
 
-      setVisited(x, y);
-
       if (
         y < matrixWidth - 2 &&
         x < matrixWidth - 2 &&
@@ -141,7 +140,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
           !visited(x + 1, y + 1) &&
           !visited(x + 2, y + 1)
         ) {
-          topLayer += `<circle cx="${x + margin + 1.5}" cy="${
+          botLayer += `<circle cx="${x + margin + 1.5}" cy="${
             y + margin + 1.5
           }" r="${rand(0.8, 1.2)}"/>`;
 
@@ -171,14 +170,14 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
         }
       }
       if (x < matrixWidth - 1 && matrix(x + 1, y) & 1 && !visited(x + 1, y)) {
-        botLayer += `<circle cx="${x + margin + 1}" cy="${
+        topLayer += `<circle cx="${x + margin + 1}" cy="${
           y + margin + 0.5
         }" r="${rand(0.4, 0.6)}"/>`;
         setVisited(x + 1, y);
         continue;
       }
       if (y < matrixWidth - 1 && matrix(x, y + 1) & 1 && !visited(x, y + 1)) {
-        botLayer += `<circle cx="${x + margin + 0.5}" cy="${
+        topLayer += `<circle cx="${x + margin + 0.5}" cy="${
           y + margin + 1
         }" r="${rand(0.3, 0.5)}"/>`;
         setVisited(x, y + 1);
@@ -191,12 +190,12 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     }
   }
 
-  topLayer += `</g>`;
-  svg += topLayer;
-  midLayer += `</g>`;
-  svg += midLayer;
   botLayer += `</g>`;
   svg += botLayer;
+  midLayer += `</g>`;
+  svg += midLayer;
+  topLayer += `</g>`;
+  svg += topLayer;
   svg += `</svg>`;
 
   return svg;

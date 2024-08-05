@@ -1,0 +1,190 @@
+import type { Params, RawParamsSchema } from "~/lib/params";
+import type { OutputQr } from "~/lib/QrContext";
+
+// Based on QRBTF's Line style
+// https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRLine.tsx
+export const paramsSchema = {
+  Margin: {
+    type: "number",
+    min: 0,
+    max: 10,
+    step: 0.1,
+    default: 2,
+  },
+  Background: {
+    type: "Color",
+    default: "#ffffff",
+  },
+  Dots: {
+    type: "Color",
+    default: "#000000",
+  },
+  Lines: {
+    type: "Color",
+    default: "#000000",
+  },
+  Seed: {
+    type: "number",
+    min: 1,
+    max: 100,
+    default: 1,
+  },
+} satisfies RawParamsSchema;
+
+const Module = {
+  DataOFF: 0,
+  DataON: 1,
+  FinderOFF: 2,
+  FinderON: 3,
+  AlignmentOFF: 4,
+  AlignmentON: 5,
+  TimingOFF: 6,
+  TimingON: 7,
+  FormatOFF: 8,
+  FormatON: 9,
+  VersionOFF: 10,
+  VersionON: 11,
+  SeparatorOFF: 12,
+};
+
+function splitmix32(a: number) {
+  return function () {
+    a |= 0;
+    a = (a + 0x9e3779b9) | 0;
+    let t = a ^ (a >>> 16);
+    t = Math.imul(t, 0x21f0aaad);
+    t = t ^ (t >>> 15);
+    t = Math.imul(t, 0x735a2d97);
+    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
+  };
+}
+
+export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+  const seededRand = splitmix32(params["Seed"]);
+  function rand(min: number, max: number) {
+    return Math.trunc(100 * (seededRand() * (max - min) + min)) / 100;
+  }
+
+  const matrixWidth = qr.version * 4 + 17;
+  const margin = params["Margin"];
+  const bg = params["Background"];
+  const dots = params["Dots"];
+  const lines = params["Lines"];
+
+  const size = matrixWidth + 2 * margin;
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">`;
+  svg += `<rect width="${size}" height="${size}" fill="${bg}"/>`;
+
+  let linesLayer = `<g stroke="${lines}">`;
+  let dotsLayer = `<g fill="${dots}">`;
+
+  function matrix(x: number, y: number) {
+    return qr.matrix[y * matrixWidth + x];
+  }
+
+  const rightVisited = Array(matrixWidth * matrixWidth).fill(false);
+  const leftVisited = Array(matrixWidth * matrixWidth).fill(false);
+  function visited1(x: number, y: number) {
+    return rightVisited[y * matrixWidth + x];
+  }
+  function visited2(x: number, y: number) {
+    return leftVisited[y * matrixWidth + x];
+  }
+  function setVisited1(x: number, y: number) {
+    rightVisited[y * matrixWidth + x] = true;
+  }
+  function setVisited2(x: number, y: number) {
+    leftVisited[y * matrixWidth + x] = true;
+  }
+
+  for (const [x, y] of [
+    [margin, margin],
+    [margin + matrixWidth - 7, margin],
+    [margin, margin + matrixWidth - 7],
+  ]) {
+    dotsLayer += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="1.5"/>`;
+
+    dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="0.5"/>`;
+    dotsLayer += `<circle cx="${x + 3.5}" cy="${y + 0.5}" r="0.5"/>`;
+    dotsLayer += `<circle cx="${x + 6.5}" cy="${y + 0.5}" r="0.5"/>`;
+
+    dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 3.5}" r="0.5"/>`;
+    dotsLayer += `<circle cx="${x + 6.5}" cy="${y + 3.5}" r="0.5"/>`;
+
+    dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 6.5}" r="0.5"/>`;
+    dotsLayer += `<circle cx="${x + 3.5}" cy="${y + 6.5}" r="0.5"/>`;
+    dotsLayer += `<circle cx="${x + 6.5}" cy="${y + 6.5}" r="0.5"/>`;
+
+    linesLayer += `<line x1="${x + 0.5}" y1="${y + 0.5}" x2="${x + 6.5}" y2="${
+      y + 6.5
+    }" stroke-width="${rand(0.3, 0.6)}"/>`;
+    linesLayer += `<line x1="${x + 6.5}" y1="${y + 0.5}" x2="${x + 0.5}" y2="${
+      y + 6.5
+    }" stroke-width="${rand(0.3, 0.6)}"/>`;
+  }
+
+  for (let y = 0; y < matrixWidth; y++) {
+    for (let x = 0; x < matrixWidth; x++) {
+      const module = matrix(x, y);
+      if ((module | 1) === Module.FinderON) continue;
+
+      if (!(module & 1)) continue;
+      dotsLayer += `<circle cx="${x + margin + 0.5}" cy="${
+        y + margin + 0.5
+      }" r="${rand(0.2, 0.4)}"/>`;
+
+      if (!visited1(x, y)) {
+        let nx = x + 1;
+        let ny = y + 1;
+        while (
+          nx < matrixWidth &&
+          ny < matrixWidth &&
+          matrix(nx, ny) & 1 &&
+          !visited1(nx, ny)
+        ) {
+          setVisited1(nx, ny);
+          nx++;
+          ny++;
+        }
+        if (ny - y > 1) {
+          linesLayer += `<line x1="${x + margin + 0.5}" y1="${
+            y + margin + 0.5
+          }" x2="${nx + margin - 0.5}" y2="${
+            ny + margin - 0.5
+          }" stroke-width="${rand(0.1, 0.3)}"/>`;
+        }
+      }
+
+      if (!visited2(x, y)) {
+        let nx = x - 1;
+        let ny = y + 1;
+        while (
+          nx >= 0 &&
+          ny < matrixWidth &&
+          matrix(nx, ny) & 1 &&
+          !visited2(nx, ny)
+        ) {
+          setVisited2(nx, ny);
+          nx--;
+          ny++;
+        }
+        if (ny - y > 1) {
+          linesLayer += `<line x1="${x + margin + 0.5}" y1="${
+            y + margin + 0.5
+          }" x2="${nx + margin + 1.5}" y2="${
+            ny + margin - 0.5
+          }" stroke-width="${rand(0.1, 0.3)}"/>`;
+        }
+      }
+    }
+  }
+
+  linesLayer += `</g>`;
+  svg += linesLayer;
+  dotsLayer += `</g>`;
+  svg += dotsLayer;
+  svg += `</svg>`;
+
+  return svg;
+}

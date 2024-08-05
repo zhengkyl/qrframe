@@ -1,3 +1,4 @@
+import { Alien } from "./presets/Alien";
 import { Blocks } from "./presets/Blocks";
 import { Bubbles } from "./presets/Bubbles";
 import { Camo } from "./presets/Camo";
@@ -12,6 +13,7 @@ export const PRESET_CODE = {
   Camo,
   Blocks,
   Bubbles,
+  Alien,
   Halftone,
   Minimal,
 };

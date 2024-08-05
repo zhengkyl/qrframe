@@ -70,6 +70,8 @@ export function Editor(props: Props) {
     Circle: "",
     Camo: "",
     Blocks: "",
+    Bubbles: "",
+    Alien: "",
     Halftone: "",
     Minimal: "",
   });
@@ -107,6 +109,7 @@ export function Editor(props: Props) {
       const thumb = localStorage.getItem(`${key}_thumb`) ?? FALLBACK_THUMB;
       setThumbs(key, thumb);
     }
+    console.log(thumbs.Alien)
   });
 
   const setFuncKeys: typeof _setFuncKeys = (...args: any[]) => {
