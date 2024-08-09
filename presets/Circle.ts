@@ -2,13 +2,44 @@ import type { Params, RawParamsSchema } from "~/lib/params";
 import type { OutputQr } from "~/lib/QrContext";
 
 export const paramsSchema = {
-  "Circular finder pattern": {
-    type: "boolean",
-    default: true,
+  Margin: {
+    type: "number",
+    min: 0,
+    max: 20,
+    step: 0.1,
+    default: 5,
   },
-  "Circular alignment pattern": {
-    type: "boolean",
-    default: true,
+  "Radius offset": {
+    type: "number",
+    min: -10,
+    max: 10,
+    default: 0,
+  },
+  Foreground: {
+    type: "Color",
+    default: "#000000",
+  },
+  Background: {
+    type: "Color",
+    default: "#ffffff",
+  },
+  "Finder pattern": {
+    type: "Select",
+    options: ["Default", "Circle"],
+  },
+  "Alignment pattern": {
+    type: "Select",
+    options: ["Default", "Circle"],
+  },
+  "Scale direction": {
+    type: "Select",
+    options: ["Center", "Edge", "None"],
+  },
+  Seed: {
+    type: "number",
+    min: 1,
+    max: 100,
+    default: 1,
   },
 } satisfies RawParamsSchema;
 
@@ -28,150 +59,121 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-export function renderCanvas(
-  qr: OutputQr,
-  params: Params<typeof paramsSchema>,
-  ctx: CanvasRenderingContext2D
-) {
-  const pixelSize = 10;
-  const margin = 2;
+function splitmix32(a: number) {
+  return function () {
+    a |= 0;
+    a = (a + 0x9e3779b9) | 0;
+    let t = a ^ (a >>> 16);
+    t = Math.imul(t, 0x21f0aaad);
+    t = t ^ (t >>> 15);
+    t = Math.imul(t, 0x735a2d97);
+    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
+  };
+}
+
+export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const matrixWidth = qr.version * 4 + 17;
-  const canvasSize = (matrixWidth + 2 * margin) * pixelSize;
-  ctx.canvas.width = canvasSize;
-  ctx.canvas.height = canvasSize;
+  const margin = params["Margin"];
+  const fg = params["Foreground"];
+  const bg = params["Background"];
+  const circleFinder = params["Finder pattern"] === "Circle";
+  const circleAlignment = params["Alignment pattern"] === "Circle";
+  const rOffset = params["Radius offset"];
+  const rand = splitmix32(params["Seed"]);
 
-  ctx.fillStyle = "rgb(255, 255, 255)";
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  const size = matrixWidth + 2 * margin;
 
-  const gradient = ctx.createRadialGradient(
-    ctx.canvas.width / 2,
-    ctx.canvas.height / 2,
-    2 * pixelSize,
-    ctx.canvas.width / 2,
-    ctx.canvas.height / 2,
-    20 * pixelSize
-  );
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
+  svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
-  gradient.addColorStop(0, "red");
-  gradient.addColorStop(1, "blue");
-
-  ctx.fillStyle = gradient;
-
-  const radius = pixelSize / 2;
-
-  const finderPos = [
-    [margin, margin],
-    [margin + matrixWidth - 7, margin],
-    [margin, margin + matrixWidth - 7],
-  ];
-
-  if (params["Circular finder pattern"]) {
-    for (const [x, y] of finderPos) {
-      ctx.beginPath();
-      ctx.arc(
-        (x + 3.5) * pixelSize,
-        (y + 3.5) * pixelSize,
-        3.5 * pixelSize,
-        0,
-        2 * Math.PI
-      );
-      ctx.fill();
-
-      ctx.fillStyle = "rgb(255, 255, 255)";
-      ctx.beginPath();
-      ctx.arc(
-        (x + 3.5) * pixelSize,
-        (y + 3.5) * pixelSize,
-        2.5 * pixelSize,
-        0,
-        2 * Math.PI
-      );
-      ctx.fill();
-
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(
-        (x + 3.5) * pixelSize,
-        (y + 3.5) * pixelSize,
-        1.5 * pixelSize,
-        0,
-        2 * Math.PI
-      );
-      ctx.fill();
+  if (circleFinder) {
+    for (const [x, y] of [
+      [0, 0],
+      [matrixWidth - 7, 0],
+      [0, matrixWidth - 7],
+    ]) {
+      svg += `<circle cx="${x + 3.5}" cy="${
+        y + 3.5
+      }" r="3" fill="none" stroke="${fg}" stroke-width="1"/>`;
+      svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="1.5" fill="${fg}"/>`;
     }
   }
+  svg += `<path fill="${fg}" d="`;
 
-  const xMid = matrixWidth / 2;
-  const yMid = matrixWidth / 2;
-  const maxDist = Math.sqrt(xMid * xMid + yMid * yMid);
+  const maxDist = Math.sqrt(2) * (matrixWidth / 2);
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
-      const module = qr.matrix[y * matrixWidth + x];
+  // nearest odd number
+  let diameter = Math.round(Math.sqrt(2) * matrixWidth) + 2 * rOffset;
+  if (!(diameter & 1)) diameter += 1;
 
-      if (module & 1) {
-        if (params["Circular finder pattern"] && module === Module.FinderON)
-          continue;
-        if (
-          params["Circular alignment pattern"] &&
-          module === Module.AlignmentON
-        ) {
-          // Find top left corner of alignment square
+  const overflow = (diameter - matrixWidth) / 2;
+  for (let y = -overflow; y < diameter - overflow; y++) {
+    for (let x = -overflow; x < diameter - overflow; x++) {
+      // Quiet zone around qr
+
+      const xRange1 = x >= -1 && x < 8;
+      const yRange1 = y >= -1 && y < 8;
+      const yRange2 = y > matrixWidth - 9 && y <= matrixWidth;
+      const xRange2 = x > matrixWidth - 9 && x <= matrixWidth;
+      if (
+        (x === -1 && (yRange1 || yRange2)) ||
+        (y === -1 && (xRange1 || xRange2)) ||
+        (x === matrixWidth && yRange1) ||
+        (y === matrixWidth && xRange1)
+      ) {
+        continue;
+      }
+
+      const dx = x - (matrixWidth - 1) / 2;
+      const dy = y - (matrixWidth - 1) / 2;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (x >= 0 && x < matrixWidth && y >= 0 && y < matrixWidth) {
+        const module = qr.matrix[y * matrixWidth + x];
+        if (circleFinder && (module | 1) === Module.FinderON) continue;
+        if (!(module & 1)) continue;
+
+        if (circleAlignment && module === Module.AlignmentON) {
           if (
-            qr.matrix[(y - 1) * matrixWidth + x] !== Module.AlignmentON &&
-            qr.matrix[y * matrixWidth + x - 1] !== Module.AlignmentON &&
-            qr.matrix[y * matrixWidth + x + 1] === Module.AlignmentON
+            !(
+              (qr.matrix[(y - 1) * matrixWidth + x] |
+                qr.matrix[y * matrixWidth + x + 1] |
+                qr.matrix[(y + 1) * matrixWidth + x]) &
+              1
+            )
           ) {
-            const xPos = x + 2.5 + margin;
-            const yPos = y + 2.5 + margin;
-
-            ctx.beginPath();
-            ctx.arc(
-              xPos * pixelSize,
-              yPos * pixelSize,
-              2.5 * pixelSize,
-              0,
-              2 * Math.PI
-            );
-            ctx.fill();
-
-            ctx.fillStyle = "rgb(255, 255, 255)";
-            ctx.beginPath();
-            ctx.arc(
-              xPos * pixelSize,
-              yPos * pixelSize,
-              1.5 * pixelSize,
-              0,
-              2 * Math.PI
-            );
-            ctx.fill();
-
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(
-              xPos * pixelSize,
-              yPos * pixelSize,
-              0.5 * pixelSize,
-              0,
-              2 * Math.PI
-            );
-            ctx.fill();
+            svg += `M${x + 0.5},${y - 2}a2.5,2.5 0,0,0 0,5a2.5,2.5 0,0,0 0,-5`;
+            svg += `M${x + 0.5},${y - 1}a1.5,1.5 0,0,1 0,3a1.5,1.5 0,0,1 0,-3`;
+            svg += `M${x + 0.5},${y}a.5,.5 0,0,0 0,1a.5,.5 0,0,0 0,-1`;
           }
           continue;
         }
-
-        const xCenter = (x + margin) * pixelSize + radius;
-        const yCenter = (y + margin) * pixelSize + radius;
-
-        const xDist = Math.abs(xMid - x);
-        const yDist = Math.abs(yMid - y);
-        const scale =
-          (Math.sqrt(xDist * xDist + yDist * yDist) / maxDist) * 0.7 + 0.5;
-
-        ctx.beginPath();
-        ctx.arc(xCenter, yCenter, radius * scale, 0, 2 * Math.PI);
-        ctx.fill();
+      } else if (dist > diameter / 2) {
+        continue;
+      } else if (rand() > 0.5) {
+        continue;
       }
+
+      let ratio;
+      switch (params["Scale direction"]) {
+        case "Center":
+          ratio = 1 - dist / maxDist + 0.8;
+          break;
+        case "Edge":
+          ratio = dist / maxDist + 0.8;
+          break;
+        default:
+          ratio = 1;
+      }
+
+      const radius = 0.5 * ratio;
+
+      svg += `M${x + 0.5},${y + 0.5 - radius}a${radius},${radius} 0,0,0 0,${
+        2 * radius
+      }a${radius},${radius} 0,0,0 0,${-2 * radius}`;
     }
   }
+  svg += `"/></svg>`;
+
+  return svg;
 }

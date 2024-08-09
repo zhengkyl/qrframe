@@ -89,9 +89,8 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const co = ct / Math.sqrt(8); // offset
 
   const size = matrixWidth + 2 * margin;
-
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">`;
-  svg += `<rect width="${size}" height="${size}" fill="${bg}"/>`;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
+  svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
   let topLayer = `<g>`;
 
@@ -108,9 +107,9 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   }
 
   for (const [x, y] of [
-    [margin, margin],
-    [margin + matrixWidth - 7, margin],
-    [margin, margin + matrixWidth - 7],
+    [0, 0],
+    [matrixWidth - 7, 0],
+    [0, matrixWidth - 7],
   ]) {
     svg += `<rect x="${x + 2}" y="${y}" width="3" height="1" fill="${fc}"/>`;
     svg += `<rect x="${x + 2}" y="${
@@ -149,12 +148,12 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
           !visited(x + 2, y + 1)
         ) {
           topLayer += `<g stroke-width="${ct}" stroke="${cc}">`;
-          topLayer += `<line x1="${x + margin + co}" y1="${
-            y + margin + co
-          }" x2="${x + 3 + margin - co}" y2="${y + 3 + margin - co}"/>`;
-          topLayer += `<line x1="${x + margin + 3 - co}" y1="${
-            y + margin + co
-          }" x2="${x + margin + co}" y2="${y + 3 + margin - co}"/>`;
+          topLayer += `<line x1="${x + co}" y1="${y + co}" x2="${
+            x + 3 - co
+          }" y2="${y + 3 - co}"/>`;
+          topLayer += `<line x1="${x + 3 - co}" y1="${y + co}" x2="${
+            x + co
+          }" y2="${y + 3 - co}"/>`;
           topLayer += `</g>`;
 
           setVisited(x + 2, y);
@@ -171,12 +170,12 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
       ) {
         if (!visited(x + 1, y) && !visited(x + 1, y + 1)) {
           topLayer += `<g stroke-width="${ct}" stroke="${cc}">`;
-          topLayer += `<line x1="${x + margin + co}" y1="${
-            y + margin + co
-          }" x2="${x + 2 + margin - co}" y2="${y + 2 + margin - co}"/>`;
-          topLayer += `<line x1="${x + margin + 2 - co}" y1="${
-            y + margin + co
-          }" x2="${x + margin + co}" y2="${y + 2 + margin - co}"/>`;
+          topLayer += `<line x1="${x + co}" y1="${y + co}" x2="${
+            x + 2 - co
+          }" y2="${y + 2 - co}"/>`;
+          topLayer += `<line x1="${x + 2 - co}" y1="${y + co}" x2="${
+            x + co
+          }" y2="${y + 2 - co}"/>`;
           topLayer += `</g>`;
 
           setVisited(x + 1, y);
@@ -191,12 +190,12 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
         ny++;
       }
       if (ny - y > 2) {
-        svg += `<rect x="${x + margin + vo}" y="${
-          y + margin + vo
-        }" width="${vt}" height="${ny - y - 1 - 2 * vo}" fill="${vc}"/>`;
-        svg += `<rect x="${x + margin + vo}" y="${
-          ny - 1 + margin + vo
-        }" width="${vt}" height="${1 - 2 * vo}" fill="${vc}"/>`;
+        svg += `<rect x="${x + vo}" y="${y + vo}" width="${vt}" height="${
+          ny - y - 1 - 2 * vo
+        }" fill="${vc}"/>`;
+        svg += `<rect x="${x + vo}" y="${ny - 1 + vo}" width="${vt}" height="${
+          1 - 2 * vo
+        }" fill="${vc}"/>`;
         for (let i = y + 1; i < ny; i++) {
           setVisited(x, i);
         }
@@ -208,7 +207,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
         setVisited(nx, y);
         nx++;
       }
-      svg += `<rect x="${x + margin + ho}" y="${y + margin + ho}" width="${
+      svg += `<rect x="${x + ho}" y="${y + ho}" width="${
         nx - x - 2 * ho
       }" height="${ht}" fill="${hc}"/>`;
     }

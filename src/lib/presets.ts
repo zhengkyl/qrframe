@@ -11,9 +11,9 @@ export const PRESET_CODE = {
   Square,
   Circle,
   Camo,
+  Halftone,
+  Minimal,
   Blocks,
   Bubbles,
   Alien,
-  Halftone,
-  Minimal,
 };

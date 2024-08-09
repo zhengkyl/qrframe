@@ -48,7 +48,7 @@ function splitmix32(a) {
 }
 
 export function renderCanvas(qr, params, ctx) {
-  const seededRand = splitmix32(params["Seed"]);
+  const rand = splitmix32(params["Seed"]);
   const margin = params["Margin"];
   const quietZone = params["Quiet zone"];
 
@@ -63,12 +63,12 @@ export function renderCanvas(qr, params, ctx) {
   // Copy qr to matrix with margin and randomly set pixels in margin
   for (let y = 0; y < margin - quietZone; y++) {
     for (let x = 0; x < matrixWidth; x++) {
-      if (seededRand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
     }
   }
   for (let y = margin - quietZone; y < margin + qrWidth + quietZone; y++) {
     for (let x = 0; x < margin - quietZone; x++) {
-      if (seededRand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
     }
     if (y >= margin && y < margin + qrWidth) {
       for (let x = margin; x < matrixWidth - margin; x++) {
@@ -77,12 +77,12 @@ export function renderCanvas(qr, params, ctx) {
       }
     }
     for (let x = margin + qrWidth + quietZone; x < matrixWidth; x++) {
-      if (seededRand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
     }
   }
   for (let y = margin + qrWidth + quietZone; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
-      if (seededRand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
     }
   }
 

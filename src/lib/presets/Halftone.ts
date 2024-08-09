@@ -83,9 +83,11 @@ export async function renderCanvas(qr, params, ctx) {
       for (let x = 0; x < matrixWidth; x++) {
         const module = qr.matrix[y * matrixWidth + x];
         if (module & 1) {
+          const px = x + margin;
+          const py = y + margin;
           ctx.fillRect(
-            (x + margin) * moduleSize,
-            (y + margin) * moduleSize,
+            px * moduleSize,
+            py * moduleSize,
             moduleSize,
             moduleSize
           );
@@ -167,22 +169,20 @@ export async function renderCanvas(qr, params, ctx) {
         ctx.fillStyle = bg;
       }
 
+      const px = x + margin;
+      const py = y + margin;
+
       const type = module | 1;
       if (
         type === Module.FinderON ||
         (alignment && type === Module.AlignmentON) ||
         (timing && type === Module.TimingON)
       ) {
-        ctx.fillRect(
-          (x + margin) * moduleSize,
-          (y + margin) * moduleSize,
-          moduleSize,
-          moduleSize
-        );
+        ctx.fillRect(px * moduleSize, py * moduleSize, moduleSize, moduleSize);
       } else {
         ctx.fillRect(
-          (x + margin) * moduleSize + dataOffset,
-          (y + margin) * moduleSize + dataOffset,
+          px * moduleSize + dataOffset,
+          py * moduleSize + dataOffset,
           pixelSize,
           pixelSize
         );

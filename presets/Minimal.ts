@@ -37,27 +37,25 @@ const Module = {
 
 export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const matrixWidth = qr.version * 4 + 17;
-  const margin = params["Margin"];
-  const dataSize = params["Data pixel size"];
   const moduleSize = 10;
+  const dataSize = params["Data pixel size"];
+  const margin = params["Margin"] * moduleSize;
+
   const fg = "#000";
   const bg = "#fff";
 
-  const finderPos = [
-    [margin, margin],
-    [matrixWidth + margin - 7, margin],
-    [margin, matrixWidth + margin - 7],
-  ];
-
-  const svgSize = (matrixWidth + 2 * margin) * moduleSize;
-
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgSize} ${svgSize}">`;
+  const size = matrixWidth * moduleSize + 2 * margin;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
   if (params["Background"]) {
-    svg += `<rect width="${svgSize}" height="${svgSize}" fill="${bg}"/>`;
+    svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
   }
   svg += `<path fill="${fg}" d="`;
 
-  for (const [x, y] of finderPos) {
+  for (const [x, y] of [
+    [0, 0],
+    [matrixWidth - 7, 0],
+    [0, matrixWidth - 7],
+  ]) {
     svg += `M${(x + 3) * moduleSize},${
       y * moduleSize
     }h${moduleSize}v${moduleSize}h-${moduleSize}z`;
@@ -86,8 +84,8 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
       }
 
       if (module & 1) {
-        const sx = (x + margin) * moduleSize + offset;
-        const sy = (y + margin) * moduleSize + offset;
+        const sx = x * moduleSize + offset;
+        const sy = y * moduleSize + offset;
         svg += `M${sx},${sy}h${dataSize}v${dataSize}h-${dataSize}z`;
       }
     }

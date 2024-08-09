@@ -23,16 +23,15 @@ export function renderSVG(qr, params) {
   const bg = params["Background"];
 
   const size = matrixWidth + 2 * margin;
-
-  let svg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 \${size} \${size}">\`;
-  svg += \`<rect width="\${size}" height="\${size}" fill="\${bg}"/>\`;
+  let svg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="\${-margin} \${-margin} \${size} \${size}">\`;
+  svg += \`<rect x="\${-margin}" y="\${-margin}" width="\${size}" height="\${size}" fill="\${bg}"/>\`;
   svg += \`<path fill="\${fg}" d="\`;
 
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = qr.matrix[y * matrixWidth + x];
       if (module & 1) {
-        svg += \`M\${x + margin},\${y + margin}h1v1h-1z\`;
+        svg += \`M\${x},\${y}h1v1h-1z\`;
       }
     }
   }
