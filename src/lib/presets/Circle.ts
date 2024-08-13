@@ -89,9 +89,7 @@ export function renderSVG(qr, params) {
       [matrixWidth - 7, 0],
       [0, matrixWidth - 7],
     ]) {
-      svg += \`<circle cx="\${x + 3.5}" cy="\${
-        y + 3.5
-      }" r="3" fill="none" stroke="\${fg}" stroke-width="1"/>\`;
+      svg += \`<circle cx="\${x + 3.5}" cy="\${y + 3.5}" r="3" fill="none" stroke="\${fg}" stroke-width="1"/>\`;
       svg += \`<circle cx="\${x + 3.5}" cy="\${y + 3.5}" r="1.5" fill="\${fg}"/>\`;
     }
   }
@@ -165,9 +163,7 @@ export function renderSVG(qr, params) {
 
       const radius = Math.trunc(100 * 0.5 * ratio) / 100;
 
-      svg += \`M\${x + 0.5},\${y + 0.5 - radius}a\${radius},\${radius} 0,0,0 0,\${
-        2 * radius
-      }a\${radius},\${radius} 0,0,0 0,\${-2 * radius}\`;
+      svg += \`M\${x + 0.5},\${y + 0.5 - radius}a\${radius},\${radius} 0,0,0 0,\${2 * radius}a\${radius},\${radius} 0,0,0 0,\${-2 * radius}\`;
     }
   }
   svg += \`"/></svg>\`;

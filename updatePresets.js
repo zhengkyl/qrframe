@@ -1,63 +1,71 @@
-import fs from "node:fs/promises";
-import path from "node:path";
+import { promises as fs } from "fs";
+import path from "path";
+import swc from "@swc/core";
+import prettier from "prettier";
 
-async function stringifyPresets(src, dst) {
+async function convertTsToJs(inputDir, outputDir) {
   try {
-    const dir = await fs.opendir(src);
-    for await (const dirent of dir) {
-      const srcPath = path.join(src, dirent.name);
-      const dstPath = path.join(dst, dirent.name);
+    // Ensure output directory exists
+    await fs.mkdir(outputDir, { recursive: true });
 
-      if (dirent.isDirectory()) {
-        try {
-          await fs.access(dstPath, fs.constants.F_OK);
-        } catch (e) {
-          await fs.mkdir(dstPath);
+    const files = await fs.readdir(inputDir);
+    const tsFiles = files.filter((file) => file.endsWith(".ts"));
+
+    for (const file of tsFiles) {
+      const inputPath = path.join(inputDir, file);
+      const outputPath = path.join(outputDir, file);
+
+      const tsCode = await fs.readFile(inputPath, "utf-8");
+
+      const { code } = await swc.transform(tsCode, {
+        filename: inputPath,
+        sourceMaps: false,
+        jsc: {
+          parser: {
+            syntax: "typescript",
+          },
+          target: "ES2020",
+        },
+      });
+
+      const formattedCode = await prettier.format(code, {
+        parser: "babel",
+      });
+
+      const originalLines = tsCode.split("\n").slice(3);
+      const strippedLines = formattedCode.split("\n");
+      let preservedCode = "";
+      let strippedIndex = 0;
+
+      for (const originalLine of originalLines) {
+        if (originalLine.trim() === "") {
+          // Preserve empty lines
+          preservedCode += "\n";
+        } else {
+          if (strippedIndex < strippedLines.length) {
+            preservedCode += strippedLines[strippedIndex] + "\n";
+            strippedIndex++;
+          }
         }
-        stringifyPresets(srcPath, dstPath);
-        continue;
       }
 
-      let fileString = await fs.readFile(srcPath, "utf-8");
-
-      // Quick & dirty "type stripping" only works b/c files are formatted
-      // This preserves spacing + comments which other methods don't
-
-      // Remove imports (identical for all files)
-      fileString = fileString.slice(111);
-
-      // Strip types from simple function args
-      fileString = fileString.replace(
-        /\((?:\s*.+: .+,\s)*\s*.+: [^)]+\s*\)/g,
-        (match) =>
-          "(" +
-          match
-            .slice(1, match.length - 1)
-            .split(",")
-            .map((typedArg) =>
-              typedArg.slice(0, typedArg.indexOf(":")).trimStart()
-            )
-            .join(", ") +
-          ")"
-      );
-
-      fileString = fileString.replace("} satisfies RawParamsSchema;", "};");
-      fileString = fileString.replaceAll("`", "\\`");
-      fileString = fileString.replaceAll("${", "\\${");
-
-      const name = dirent.name.slice(0, dirent.name.length - 3);
-
+      preservedCode = preservedCode.replaceAll("`", "\\`");
+      preservedCode = preservedCode.replaceAll("${", "\\${");
+      
       await fs.writeFile(
-        dstPath,
-        `export const ${name} = \`${fileString}\`\n`,
-        {
-          flag: "w+",
-        }
+        outputPath,
+        `export const ${file.slice(0, -3)} = \`${preservedCode.slice(0, -1)}\`\n`,
+        "utf-8"
       );
+      console.log(`Converted and formatted: ${inputPath} -> ${outputPath}`);
     }
-  } catch (err) {
-    console.error(err);
+
+    console.log("Conversion and formatting completed successfully.");
+  } catch (error) {
+    console.error("An error occurred:", error);
   }
 }
 
-stringifyPresets("./presets", "./src/lib/presets");
+const inputDir = "./presets";
+const outputDir = "./src/lib/presets";
+convertTsToJs(inputDir, outputDir);

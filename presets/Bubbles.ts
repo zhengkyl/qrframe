@@ -88,9 +88,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const bg = params["Background"];
 
   const size = matrixWidth + 2 * margin;
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}" fill="${
-    params["Tiny circle"]
-  }">`;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}" fill="${params["Tiny circle"]}">`;
   svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
   let botLayer = `<g fill="none" stroke="${params["Large circle"]}" stroke-width="0.6">`;
@@ -115,9 +113,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     [matrixWidth - 7, 0],
     [0, matrixWidth - 7],
   ]) {
-    svg += `<circle cx="${x + 3.5}" cy="${
-      y + 3.5
-    }" r="3" fill="none" stroke="${fc}" stroke-width="1"/>`;
+    svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="3" fill="none" stroke="${fc}" stroke-width="1"/>`;
     svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="1.5" fill="${fc}"/>`;
   }
 
@@ -140,10 +136,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
         !visited(x + 1, y + 1) &&
         !visited(x + 2, y + 1)
       ) {
-        botLayer += `<circle cx="${x + 1.5}" cy="${y + 1.5}" r="${range(
-          0.8,
-          1.2
-        )}"/>`;
+        botLayer += `<circle cx="${x + 1.5}" cy="${y + 1.5}" r="${range(0.8, 1.2)}"/>`;
 
         setVisited(x + 1, y);
         setVisited(x, y + 1);
@@ -161,28 +154,19 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
         !visited(x + 1, y) &&
         !visited(x + 1, y + 1)
       ) {
-        midLayer += `<circle cx="${x + 1}" cy="${y + 1}" r="${range(
-          0.4,
-          0.6
-        )}"/>`;
+        midLayer += `<circle cx="${x + 1}" cy="${y + 1}" r="${range(0.4, 0.6)}"/>`;
         setVisited(x + 1, y);
         setVisited(x, y + 1);
         setVisited(x + 1, y + 1);
         continue;
       }
       if (x < matrixWidth - 1 && matrix(x + 1, y) & 1 && !visited(x + 1, y)) {
-        topLayer += `<circle cx="${x + 1}" cy="${y + 0.5}" r="${range(
-          0.4,
-          0.6
-        )}"/>`;
+        topLayer += `<circle cx="${x + 1}" cy="${y + 0.5}" r="${range(0.4, 0.6)}"/>`;
         setVisited(x + 1, y);
         continue;
       }
       if (y < matrixWidth - 1 && matrix(x, y + 1) & 1 && !visited(x, y + 1)) {
-        topLayer += `<circle cx="${x + 0.5}" cy="${y + 1}" r="${range(
-          0.3,
-          0.5
-        )}"/>`;
+        topLayer += `<circle cx="${x + 0.5}" cy="${y + 1}" r="${range(0.3, 0.5)}"/>`;
         setVisited(x, y + 1);
         continue;
       }

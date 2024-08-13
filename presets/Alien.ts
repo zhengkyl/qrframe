@@ -115,12 +115,8 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     dotsLayer += `<circle cx="${x + 3.5}" cy="${y + 6.5}" r="0.5"/>`;
     dotsLayer += `<circle cx="${x + 6.5}" cy="${y + 6.5}" r="0.5"/>`;
 
-    linesLayer += `<line x1="${x + 0.5}" y1="${y + 0.5}" x2="${x + 6.5}" y2="${
-      y + 6.5
-    }" stroke-width="${range(0.3, 0.6)}"/>`;
-    linesLayer += `<line x1="${x + 6.5}" y1="${y + 0.5}" x2="${x + 0.5}" y2="${
-      y + 6.5
-    }" stroke-width="${range(0.3, 0.6)}"/>`;
+    linesLayer += `<line x1="${x + 0.5}" y1="${y + 0.5}" x2="${x + 6.5}" y2="${y + 6.5}" stroke-width="${range(0.3, 0.6)}"/>`;
+    linesLayer += `<line x1="${x + 6.5}" y1="${y + 0.5}" x2="${x + 0.5}" y2="${y + 6.5}" stroke-width="${range(0.3, 0.6)}"/>`;
   }
 
   for (let y = 0; y < matrixWidth; y++) {
@@ -129,10 +125,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
       if ((module | 1) === Module.FinderON) continue;
 
       if (!(module & 1)) continue;
-      dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="${range(
-        0.2,
-        0.4
-      )}"/>`;
+      dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="${range(0.2, 0.4)}"/>`;
 
       if (!visited1(x, y)) {
         let nx = x + 1;
@@ -148,9 +141,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
           ny++;
         }
         if (ny - y > 1) {
-          linesLayer += `<line x1="${x + 0.5}" y1="${y + 0.5}" x2="${
-            nx - 0.5
-          }" y2="${ny - 0.5}" stroke-width="${range(0.1, 0.3)}"/>`;
+          linesLayer += `<line x1="${x + 0.5}" y1="${y + 0.5}" x2="${nx - 0.5}" y2="${ny - 0.5}" stroke-width="${range(0.1, 0.3)}"/>`;
         }
       }
 
@@ -168,9 +159,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
           ny++;
         }
         if (ny - y > 1) {
-          linesLayer += `<line x1="${x + 0.5}" y1="${y + 0.5}" x2="${
-            nx + 1.5
-          }" y2="${ny - 0.5}" stroke-width="${range(0.1, 0.3)}"/>`;
+          linesLayer += `<line x1="${x + 0.5}" y1="${y + 0.5}" x2="${nx + 1.5}" y2="${ny - 0.5}" stroke-width="${range(0.1, 0.3)}"/>`;
         }
       }
     }

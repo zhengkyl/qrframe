@@ -28,7 +28,10 @@
     "vinxi": "^0.3.11"
   },
   "devDependencies": {
+    "@swc/cli": "^0.4.0",
+    "@swc/core": "^1.7.10",
     "@unocss/transformer-variant-group": "^0.59.4",
+    "prettier": "^3.3.3",
     "vite-plugin-wasm-pack": "^0.1.12"
   },
   "pnpm": {

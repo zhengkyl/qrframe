@@ -66,8 +66,8 @@ export async function renderCanvas(
   params: Params<typeof paramsSchema>,
   ctx: CanvasRenderingContext2D
 ) {
-  const moduleSize = 3;
-  const pixelSize = 1;
+  const unit = 3;
+  const pixel = 1;
 
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
@@ -78,7 +78,7 @@ export async function renderCanvas(
   const file = params["Image"];
 
   const pixelWidth = matrixWidth + 2 * margin;
-  const canvasSize = pixelWidth * moduleSize;
+  const canvasSize = pixelWidth * unit;
   ctx.canvas.width = canvasSize;
   ctx.canvas.height = canvasSize;
 
@@ -93,10 +93,10 @@ export async function renderCanvas(
           const px = x + margin;
           const py = y + margin;
           ctx.fillRect(
-            px * moduleSize,
-            py * moduleSize,
-            moduleSize,
-            moduleSize
+            px * unit,
+            py * unit,
+            unit,
+            unit
           );
         }
       }
@@ -144,7 +144,7 @@ export async function renderCanvas(
         newPixel = 255;
         ctx.fillStyle = bg;
       }
-      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+      ctx.fillRect(x * pixel, y * pixel, pixel, pixel);
 
       data[i] = data[i + 1] = data[i + 2] = newPixel;
       const error = oldPixel - newPixel;
@@ -165,7 +165,7 @@ export async function renderCanvas(
     }
   }
 
-  const dataOffset = (moduleSize - pixelSize) / 2;
+  const dataOffset = (unit - pixel) / 2;
 
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
@@ -185,13 +185,13 @@ export async function renderCanvas(
         (alignment && type === Module.AlignmentON) ||
         (timing && type === Module.TimingON)
       ) {
-        ctx.fillRect(px * moduleSize, py * moduleSize, moduleSize, moduleSize);
+        ctx.fillRect(px * unit, py * unit, unit, unit);
       } else {
         ctx.fillRect(
-          px * moduleSize + dataOffset,
-          py * moduleSize + dataOffset,
-          pixelSize,
-          pixelSize
+          px * unit + dataOffset,
+          py * unit + dataOffset,
+          pixel,
+          pixel
         );
       }
     }
