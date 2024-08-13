@@ -77,33 +77,34 @@ export function renderSVG(qr, params) {
   const range = params["Randomize circle size"]
     ? (min, max) => Math.trunc(100 * (rand() * (max - min) + min)) / 100
     : (min, max) => Math.trunc(100 * ((max - min) / 2 + min)) / 100;
+
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
-
   const bg = params["Background"];
+
   const size = matrixWidth + 2 * margin;
-  let svg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="\${-margin} \${-margin} \${size} \${size}" fill="\${params["Tiny circle"]}">\`;
-
+  let svg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="\${-margin} \${-margin} \${size} \${size}">\`;
   svg += \`<rect x="\${-margin}" y="\${-margin}" width="\${size}" height="\${size}" fill="\${bg}"/>\`;
-  let botLayer = \`<g fill="none" stroke="\${params["Large circle"]}" stroke-width="0.6">\`;
-  let midLayer = \`<g fill="none" stroke="\${params["Medium circle"]}" stroke-width="0.5">\`;
 
-  let topLayer = \`<g fill="none" stroke="\${params["Small circle"]}" stroke-width="0.4">\`;
+  let layer1 = \`<g fill="none" stroke="\${params["Large circle"]}" stroke-width="0.6">\`;
+  let layer2 = \`<g fill="none" stroke="\${params["Medium circle"]}" stroke-width="0.5">\`;
+  let layer3 = \`<g fill="none" stroke="\${params["Small circle"]}" stroke-width="0.4">\`;
+  let layer4 = \`<g fill="\${params["Tiny circle"]}">\`;
+
   function matrix(x, y) {
     return qr.matrix[y * matrixWidth + x];
-
   }
+
   const visitedMatrix = Array(matrixWidth * matrixWidth).fill(false);
   function visited(x, y) {
-
     return visitedMatrix[y * matrixWidth + x];
   }
   function setVisited(x, y) {
     visitedMatrix[y * matrixWidth + x] = true;
   }
+
   const fc = params["Finder"];
   for (const [x, y] of [
-
     [0, 0],
     [matrixWidth - 7, 0],
     [0, matrixWidth - 7],
@@ -111,15 +112,15 @@ export function renderSVG(qr, params) {
     svg += \`<circle cx="\${x + 3.5}" cy="\${y + 3.5}" r="3" fill="none" stroke="\${fc}" stroke-width="1"/>\`;
     svg += \`<circle cx="\${x + 3.5}" cy="\${y + 3.5}" r="1.5" fill="\${fc}"/>\`;
   }
+
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
-
       const module = matrix(x, y);
       if ((module | 1) === Module.FinderON) continue;
       if (visited(x, y)) continue;
+
       if (
         y < matrixWidth - 2 &&
-
         x < matrixWidth - 2 &&
         matrix(x + 1, y) &
           matrix(x, y + 1) &
@@ -131,54 +132,56 @@ export function renderSVG(qr, params) {
         !visited(x + 1, y + 1) &&
         !visited(x + 2, y + 1)
       ) {
-        botLayer += \`<circle cx="\${x + 1.5}" cy="\${y + 1.5}" r="\${range(0.8, 1.2)}"/>\`;
+        layer1 += \`<circle cx="\${x + 1.5}" cy="\${y + 1.5}" r="\${range(0.8, 1.2)}"/>\`;
+
         setVisited(x + 1, y);
         setVisited(x, y + 1);
-
         setVisited(x + 2, y + 1);
         setVisited(x + 1, y + 2);
         continue;
       }
       if (!(module & 1)) continue;
       setVisited(x, y);
+
       if (
         y < matrixWidth - 1 &&
-
         x < matrixWidth - 1 &&
         matrix(x + 1, y) & matrix(x, y + 1) & matrix(x + 1, y + 1) & 1 &&
         !visited(x + 1, y) &&
         !visited(x + 1, y + 1)
       ) {
-        midLayer += \`<circle cx="\${x + 1}" cy="\${y + 1}" r="\${range(0.4, 0.6)}"/>\`;
+        layer2 += \`<circle cx="\${x + 1}" cy="\${y + 1}" r="\${range(0.4, 0.6)}"/>\`;
         setVisited(x + 1, y);
         setVisited(x, y + 1);
         setVisited(x + 1, y + 1);
         continue;
       }
       if (x < matrixWidth - 1 && matrix(x + 1, y) & 1 && !visited(x + 1, y)) {
-        topLayer += \`<circle cx="\${x + 1}" cy="\${y + 0.5}" r="\${range(0.4, 0.6)}"/>\`;
+        layer3 += \`<circle cx="\${x + 1}" cy="\${y + 0.5}" r="\${range(0.4, 0.6)}"/>\`;
         setVisited(x + 1, y);
         continue;
       }
       if (y < matrixWidth - 1 && matrix(x, y + 1) & 1 && !visited(x, y + 1)) {
-        topLayer += \`<circle cx="\${x + 0.5}" cy="\${y + 1}" r="\${range(0.3, 0.5)}"/>\`;
+        layer3 += \`<circle cx="\${x + 0.5}" cy="\${y + 1}" r="\${range(0.3, 0.5)}"/>\`;
         setVisited(x, y + 1);
         continue;
       }
-      svg += \`<circle cx="\${x + 0.5}" cy="\${y + 0.5}" r="\${range(0.2, 0.4)}"/>\`;
+
+      layer4 += \`<circle cx="\${x + 0.5}" cy="\${y + 0.5}" r="\${range(0.2, 0.4)}"/>\`;
     }
-
   }
-  botLayer += \`</g>\`;
-  svg += botLayer;
 
-  midLayer += \`</g>\`;
-  svg += midLayer;
-  topLayer += \`</g>\`;
-  svg += topLayer;
+  layer1 += \`</g>\`;
+  svg += layer1;
+  layer2 += \`</g>\`;
+  svg += layer2;
+  layer3 += \`</g>\`;
+  svg += layer3;
+  layer4 += \`</g>\`;
+  svg += layer4;
+
   svg += \`</svg>\`;
+
   return svg;
 }
-
-
 `

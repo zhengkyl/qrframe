@@ -89,7 +89,9 @@ export function renderSVG(qr, params) {
   let svg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="\${-margin} \${-margin} \${size} \${size}">\`;
   svg += \`<rect x="\${-margin}" y="\${-margin}" width="\${size}" height="\${size}" fill="\${bg}"/>\`;
 
-  let topLayer = \`<g>\`;
+  let crossLayer = \`<g stroke-width="\${ct}" stroke="\${cc}">\`;
+  let vLayer = \`<g fill="\${vc}">\`;
+  let hLayer = \`<g fill="\${hc}">\`;
 
   function matrix(x, y) {
     return qr.matrix[y * matrixWidth + x];
@@ -103,17 +105,19 @@ export function renderSVG(qr, params) {
     visitedMatrix[y * matrixWidth + x] = true;
   }
 
+  svg += \`<g fill="\${fc}">\`;
   for (const [x, y] of [
     [0, 0],
     [matrixWidth - 7, 0],
     [0, matrixWidth - 7],
   ]) {
-    svg += \`<rect x="\${x + 2}" y="\${y}" width="3" height="1" fill="\${fc}"/>\`;
-    svg += \`<rect x="\${x + 2}" y="\${y + 2}" width="3" height="3" fill="\${fc}"/>\`;
-    svg += \`<rect x="\${x}" y="\${y + 2}" width="1" height="3" fill="\${fc}"/>\`;
-    svg += \`<rect x="\${x + 6}" y="\${y + 2}" width="1" height="3" fill="\${fc}"/>\`;
-    svg += \`<rect x="\${x + 2}" y="\${y + 6}" width="3" height="1" fill="\${fc}"/>\`;
+    svg += \`<rect x="\${x + 2}" y="\${y}" width="3" height="1"/>\`;
+    svg += \`<rect x="\${x + 2}" y="\${y + 2}" width="3" height="3"/>\`;
+    svg += \`<rect x="\${x}" y="\${y + 2}" width="1" height="3"/>\`;
+    svg += \`<rect x="\${x + 6}" y="\${y + 2}" width="1" height="3"/>\`;
+    svg += \`<rect x="\${x + 2}" y="\${y + 6}" width="3" height="1"/>\`;
   }
+  svg += \`</g>\`;
 
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
@@ -138,10 +142,10 @@ export function renderSVG(qr, params) {
           !visited(x + 1, y + 1) &&
           !visited(x + 2, y + 1)
         ) {
-          topLayer += \`<g stroke-width="\${ct}" stroke="\${cc}">\`;
-          topLayer += \`<line x1="\${x + co}" y1="\${y + co}" x2="\${x + 3 - co}" y2="\${y + 3 - co}"/>\`;
-          topLayer += \`<line x1="\${x + 3 - co}" y1="\${y + co}" x2="\${x + co}" y2="\${y + 3 - co}"/>\`;
-          topLayer += \`</g>\`;
+          crossLayer += \`<g>\`;
+          crossLayer += \`<line x1="\${x + co}" y1="\${y + co}" x2="\${x + 3 - co}" y2="\${y + 3 - co}"/>\`;
+          crossLayer += \`<line x1="\${x + 3 - co}" y1="\${y + co}" x2="\${x + co}" y2="\${y + 3 - co}"/>\`;
+          crossLayer += \`</g>\`;
 
           setVisited(x + 2, y);
           setVisited(x, y + 2);
@@ -156,10 +160,10 @@ export function renderSVG(qr, params) {
         matrix(x + 1, y) & matrix(x, y + 1) & matrix(x + 1, y + 1) & 1
       ) {
         if (!visited(x + 1, y) && !visited(x + 1, y + 1)) {
-          topLayer += \`<g stroke-width="\${ct}" stroke="\${cc}">\`;
-          topLayer += \`<line x1="\${x + co}" y1="\${y + co}" x2="\${x + 2 - co}" y2="\${y + 2 - co}"/>\`;
-          topLayer += \`<line x1="\${x + 2 - co}" y1="\${y + co}" x2="\${x + co}" y2="\${y + 2 - co}"/>\`;
-          topLayer += \`</g>\`;
+          crossLayer += \`<g>\`;
+          crossLayer += \`<line x1="\${x + co}" y1="\${y + co}" x2="\${x + 2 - co}" y2="\${y + 2 - co}"/>\`;
+          crossLayer += \`<line x1="\${x + 2 - co}" y1="\${y + co}" x2="\${x + co}" y2="\${y + 2 - co}"/>\`;
+          crossLayer += \`</g>\`;
 
           setVisited(x + 1, y);
           setVisited(x, y + 1);
@@ -173,8 +177,8 @@ export function renderSVG(qr, params) {
         ny++;
       }
       if (ny - y > 2) {
-        svg += \`<rect x="\${x + vo}" y="\${y + vo}" width="\${vt}" height="\${ny - y - 1 - 2 * vo}" fill="\${vc}"/>\`;
-        svg += \`<rect x="\${x + vo}" y="\${ny - 1 + vo}" width="\${vt}" height="\${1 - 2 * vo}" fill="\${vc}"/>\`;
+        vLayer += \`<rect x="\${x + vo}" y="\${y + vo}" width="\${vt}" height="\${ny - y - 1 - 2 * vo}" fill="\${vc}"/>\`;
+        vLayer += \`<rect x="\${x + vo}" y="\${ny - 1 + vo}" width="\${vt}" height="\${1 - 2 * vo}" fill="\${vc}"/>\`;
         for (let i = y + 1; i < ny; i++) {
           setVisited(x, i);
         }
@@ -186,12 +190,17 @@ export function renderSVG(qr, params) {
         setVisited(nx, y);
         nx++;
       }
-      svg += \`<rect x="\${x + ho}" y="\${y + ho}" width="\${nx - x - 2 * ho}" height="\${ht}" fill="\${hc}"/>\`;
+      hLayer += \`<rect x="\${x + ho}" y="\${y + ho}" width="\${nx - x - 2 * ho}" height="\${ht}" fill="\${hc}"/>\`;
     }
   }
 
-  topLayer += \`</g>\`;
-  svg += topLayer;
+  vLayer += \`</g>\`;
+  svg += vLayer;
+  hLayer += \`</g>\`;
+  svg += hLayer;
+  crossLayer += \`</g>\`;
+  svg += crossLayer;
+
   svg += \`</svg>\`;
 
   return svg;

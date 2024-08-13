@@ -19,6 +19,9 @@ export const Camo = `export const paramsSchema = {
     max: 10,
     default: 1,
   },
+  Invert: {
+    type: "boolean",
+  },
   Seed: {
     type: "number",
     min: 1,
@@ -96,6 +99,7 @@ export function renderSVG(qr, params) {
 
   let svg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 \${matrixWidth} \${matrixWidth}">\`;
   svg += \`<rect width="\${matrixWidth}" height="\${matrixWidth}" fill="\${bg}"/>\`;
+  svg += \`<g fill="\${fg}">\`;
 
   const xMax = matrixWidth - 1;
   const yMax = matrixWidth - 1;
@@ -103,14 +107,14 @@ export function renderSVG(qr, params) {
   let baseX;
   let baseY;
 
-  function on(x, y) {
-    return (newMatrix[y * matrixWidth + x] & 1) === 1;
-  }
+  const on = params["Invert"]
+    ? (x, y) => (newMatrix[y * matrixWidth + x] & 1) === 0
+    : (x, y) => (newMatrix[y * matrixWidth + x] & 1) === 1;
 
-  function goRight(x, y, shape) {
+  function goRight(x, y, path, cw) {
     let sx = x;
     let vert = false;
-    visited[y * matrixWidth + x] = shape;
+    visited[y * matrixWidth + x] = path;
     while (x < xMax) {
       const right = on(x + 1, y);
       const vertRight = y > 0 && on(x + 1, y - 1);
@@ -119,19 +123,19 @@ export function renderSVG(qr, params) {
         break;
       }
       x++;
-      visited[y * matrixWidth + x] = shape;
+      visited[y * matrixWidth + x] = path;
     }
-    paths[shape] += \`h\${x - sx}\`;
+    paths[path] += \`h\${x - sx}\`;
     if (vert) {
-      paths[shape] += \`a.5.5 0,0,0 .5-.5\`;
-      goUp(x + 1, y - 1, shape);
+      paths[path] += \`a.5.5 0,0,0 .5-.5\`;
+      goUp(x + 1, y - 1, path, cw);
     } else {
-      paths[shape] += \`a.5.5 0,0,1 .5.5\`;
-      goDown(x, y, shape);
+      paths[path] += \`a.5.5 0,0,1 .5.5\`;
+      goDown(x, y, path, cw);
     }
   }
 
-  function goLeft(x, y, shape) {
+  function goLeft(x, y, shape, cw) {
     let sx = x;
     let vert = false;
     visited[y * matrixWidth + x] = shape;
@@ -145,7 +149,7 @@ export function renderSVG(qr, params) {
       x--;
       visited[y * matrixWidth + x] = shape;
     }
-    if (shape !== paths.length - 1 && x === baseX && y === baseY) {
+    if (!cw && x === baseX && y === baseY) {
       paths[shape] += "z";
       return;
     }
@@ -153,14 +157,14 @@ export function renderSVG(qr, params) {
 
     if (vert) {
       paths[shape] += \`a.5.5 0,0,0 -.5.5\`;
-      goDown(x - 1, y + 1, shape);
+      goDown(x - 1, y + 1, shape, cw);
     } else {
       paths[shape] += \`a.5.5 0,0,1 -.5-.5\`;
-      goUp(x, y, shape);
+      goUp(x, y, shape, cw);
     }
   }
 
-  function goUp(x, y, shape) {
+  function goUp(x, y, shape, cw) {
     let sy = y;
     let horz = false;
     visited[y * matrixWidth + x] = shape;
@@ -175,21 +179,21 @@ export function renderSVG(qr, params) {
       visited[y * matrixWidth + x] = shape;
     }
 
-    if (shape === paths.length - 1 && x === baseX && y === baseY) {
+    if (cw && x === baseX && y === baseY) {
       paths[shape] += "z";
       return;
     }
     paths[shape] += \`v\${y - sy}\`;
     if (horz) {
       paths[shape] += \`a.5.5 0,0,0 -.5-.5\`;
-      goLeft(x - 1, y - 1, shape);
+      goLeft(x - 1, y - 1, shape, cw);
     } else {
       paths[shape] += \`a.5.5 0,0,1 .5-.5\`;
-      goRight(x, y, shape);
+      goRight(x, y, shape, cw);
     }
   }
 
-  function goDown(x, y, shape) {
+  function goDown(x, y, shape, cw) {
     let sy = y;
     let horz = false;
     visited[y * matrixWidth + x] = shape;
@@ -206,10 +210,10 @@ export function renderSVG(qr, params) {
     paths[shape] += \`v\${y - sy}\`;
     if (horz) {
       paths[shape] += \`a.5.5 0,0,0 .5.5\`;
-      goRight(x + 1, y + 1, shape);
+      goRight(x + 1, y + 1, shape, cw);
     } else {
       paths[shape] += \`a.5.5 0,0,1 -.5.5\`;
-      goLeft(x, y, shape);
+      goLeft(x, y, shape, cw);
     }
   }
 
@@ -258,7 +262,7 @@ export function renderSVG(qr, params) {
         // these indexes are correct, think about it
         baseY = y - 1;
         baseX = x;
-        goDown(x - 1, y, shape);
+        goDown(x - 1, y, shape, false);
         stack.push([x, y]);
         dfsOff();
         continue;
@@ -273,12 +277,12 @@ export function renderSVG(qr, params) {
         continue;
       }
 
-      paths.push(\`<path fill="\${fg}" d="M\${x},\${y + 0.5}a.5.5 0,0,1 .5-.5\`);
+      paths.push(\`<path d="M\${x},\${y + 0.5}a.5.5 0,0,1 .5-.5\`);
 
       baseY = y;
       baseX = x;
 
-      goRight(x, y, paths.length - 1);
+      goRight(x, y, paths.length - 1, true);
     }
   }
 
@@ -288,7 +292,7 @@ export function renderSVG(qr, params) {
     svg += \`"/>\`;
   });
 
-  svg += \`</svg>\`;
+  svg += \`</g></svg>\`;
 
   return svg;
 }

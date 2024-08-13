@@ -132,6 +132,12 @@ function RenderedQrCode() {
     }
   });
 
+  const filename = () => {
+    const s = outputQr().text.slice(0, 32);
+    // : and / are not valid filename chars, so it looks bad
+    return s.startsWith("https://") ? s.slice(8, 28) : s.slice(0, 20);
+  };
+
   return (
     <>
       <div class="checkboard aspect-[1/1] border rounded-md relative overflow-hidden">
@@ -182,10 +188,27 @@ function RenderedQrCode() {
         <FlatButton
           class="inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
           onClick={async () => {
-            download(
-              canvas.toDataURL("image/png"),
-              `${outputQr().text.slice(0, 15).trim()}.png`
-            );
+            if (canvas != null) {
+              download(canvas.toDataURL("image/png"), `${filename()}.png`);
+            } else {
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d")!;
+              // TODO allow adjust resolution/aspect ratio
+              const size = (outputQr().version * 4 + 17) * 10;
+              canvas.width = size;
+              canvas.height = size;
+
+              const url = URL.createObjectURL(
+                new Blob([svgParent.innerHTML], { type: "image/svg+xml" })
+              );
+              const img = new Image();
+              img.src = url;
+              await img.decode();
+              ctx.drawImage(img, 0, 0, size, size);
+
+              download(canvas.toDataURL("image/png"), `${filename()}.png`);
+              URL.revokeObjectURL(url);
+            }
           }}
         >
           <Download size={20} />
@@ -195,12 +218,11 @@ function RenderedQrCode() {
           <FlatButton
             class="inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
             onClick={async () => {
-              download(
-                URL.createObjectURL(
-                  new Blob([svgParent.innerHTML], { type: "image/svg" })
-                ),
-                `${outputQr().text.slice(0, 15).trim()}.svg`
+              const url = URL.createObjectURL(
+                new Blob([svgParent.innerHTML], { type: "image/svg+xml" })
               );
+              download(url, `${filename()}.svg`);
+              URL.revokeObjectURL(url);
             }}
           >
             <Download size={20} />
