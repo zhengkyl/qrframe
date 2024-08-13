@@ -77,7 +77,8 @@ export function renderSVG(qr, params) {
   const range = params["Randomize circle size"]
     ? (min, max) =>
         Math.trunc(100 * (rand() * (max - min) + min)) / 100
-    : (min, max) => (max - min) / 2 + min;
+    : (min, max) =>
+        Math.trunc(100 * ((max - min) / 2 + min)) / 100;
 
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];

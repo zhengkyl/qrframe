@@ -89,27 +89,21 @@ export function Editor(props: Props) {
 
     for (const key of keys) {
       if (isPreset(key)) {
-        const tryThumb = localStorage.getItem(`${key}_thumb`);
-        if (tryThumb != null) {
-          setThumbs(key, tryThumb);
-          continue;
-        } else {
-          // No try-catch b/c presets should not have errors
-          const { renderSVG, renderCanvas, parsedParamsSchema } =
-            await importCode(PRESET_CODE[key]);
-          await updateThumbnail(
-            key,
-            renderSVG,
-            renderCanvas,
-            parsedParamsSchema
-          );
-        }
+        // const tryThumb = localStorage.getItem(`${key}_thumb`);
+        // if (tryThumb != null) {
+        //   setThumbs(key, tryThumb);
+        //   continue;
+        // } else {
+        // No try-catch b/c presets should not have errors
+        const { renderSVG, renderCanvas, parsedParamsSchema } =
+          await importCode(PRESET_CODE[key]);
+        await updateThumbnail(key, renderSVG, renderCanvas, parsedParamsSchema);
+        // }
       }
 
       const thumb = localStorage.getItem(`${key}_thumb`) ?? FALLBACK_THUMB;
       setThumbs(key, thumb);
     }
-    console.log(thumbs.Alien)
   });
 
   const setFuncKeys: typeof _setFuncKeys = (...args: any[]) => {

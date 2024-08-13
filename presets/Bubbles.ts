@@ -80,7 +80,8 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const range = params["Randomize circle size"]
     ? (min: number, max: number) =>
         Math.trunc(100 * (rand() * (max - min) + min)) / 100
-    : (min: number, max: number) => (max - min) / 2 + min;
+    : (min: number, max: number) =>
+        Math.trunc(100 * ((max - min) / 2 + min)) / 100;
 
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];

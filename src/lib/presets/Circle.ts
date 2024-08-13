@@ -163,7 +163,7 @@ export function renderSVG(qr, params) {
           ratio = 1;
       }
 
-      const radius = 0.5 * ratio;
+      const radius = Math.trunc(100 * 0.5 * ratio) / 100;
 
       svg += \`M\${x + 0.5},\${y + 0.5 - radius}a\${radius},\${radius} 0,0,0 0,\${
         2 * radius

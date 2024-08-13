@@ -2,6 +2,14 @@ import type { Params, RawParamsSchema } from "~/lib/params";
 import type { OutputQr } from "~/lib/QrContext";
 
 export const paramsSchema = {
+  Foreground: {
+    type: "Color",
+    default: "#1c4a1a",
+  },
+  Background: {
+    type: "Color",
+    default: "#e3d68a",
+  },
   Margin: {
     type: "number",
     min: 0,
@@ -50,22 +58,21 @@ function splitmix32(a: number) {
   };
 }
 
-export function renderCanvas(
-  qr: OutputQr,
-  params: Params<typeof paramsSchema>,
-  ctx: CanvasRenderingContext2D
-) {
+export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const rand = splitmix32(params["Seed"]);
   const margin = params["Margin"];
   const quietZone = params["Quiet zone"];
+  const fg = params["Foreground"];
+  const bg = params["Background"];
 
-  const pixelSize = 10;
-  const radius = pixelSize / 2;
+  const moduleSize = 3;
+  const lineSize = 1;
+  
   const qrWidth = qr.version * 4 + 17;
   const matrixWidth = qrWidth + 2 * margin;
-  const canvasSize = matrixWidth * pixelSize;
 
-  const newMatrix = Array(matrixWidth * matrixWidth).fill(Module.SeparatorOFF);
+  const newMatrix = Array(matrixWidth * matrixWidth).fill(Module.DataOFF);
+  const visited = new Uint16Array(matrixWidth * matrixWidth);
 
   // Copy qr to matrix with margin and randomly set pixels in margin
   for (let y = 0; y < margin - quietZone; y++) {
@@ -93,60 +100,207 @@ export function renderCanvas(
     }
   }
 
-  const fg = "rgb(40, 70, 10)";
-  const bg = "rgb(200, 200, 100)";
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${matrixWidth} ${matrixWidth}">`;
 
-  ctx.canvas.width = canvasSize;
-  ctx.canvas.height = canvasSize;
-
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
+  svg += `<filter id="shadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="0.5" flood-color="cyan" />
+    </filter>`
+  
+  svg += `<rect width="${matrixWidth}" height="${matrixWidth}" fill="${bg}"/>`;
+  
   const xMax = matrixWidth - 1;
   const yMax = matrixWidth - 1;
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
-      const module = newMatrix[y * matrixWidth + x];
+  let baseX: number;
+  let baseY: number;
 
-      const top = y > 0 && newMatrix[(y - 1) * matrixWidth + x] & 1;
-      const bottom = y < yMax && newMatrix[(y + 1) * matrixWidth + x] & 1;
-      const left = x > 0 && newMatrix[y * matrixWidth + x - 1] & 1;
-      const right = x < xMax && newMatrix[y * matrixWidth + x + 1] & 1;
+  function on(x: number, y: number) {
+    return (newMatrix[y * matrixWidth + x] & 1) === 1;
+  }
 
-      ctx.fillStyle = fg;
-
-      if (module & 1) {
-        ctx.beginPath();
-        ctx.roundRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize, [
-          (!left && !top && radius) || 0,
-          (!top && !right && radius) || 0,
-          (!right && !bottom && radius) || 0,
-          (!bottom && !left && radius) || 0,
-        ]);
-        ctx.fill();
+  function goRight(x: number, y: number, shape: number) {
+    let sx = x;
+    let vert = false;
+    visited[y * matrixWidth + x] = shape;
+    while (x < xMax) {
+      const right = on(x + 1, y);
+      const vertRight = y > 0 && on(x + 1, y - 1)
+      if (!right || vertRight) {
+        vert = right && vertRight;
+        break;
+      }
+      x++;
+      visited[y * matrixWidth + x] = shape;
+    }
+    paths[shape] += `h${x - sx}`;
+      if (vert) {
+        paths[shape] += `a.5.5 0,0,0 .5-.5`
+        goUp(x + 1, y - 1, shape) 
       } else {
-        // Draw rounded concave corners
-        const topLeft =
-          y > 0 && x > 0 && newMatrix[(y - 1) * matrixWidth + x - 1] & 1;
-        const topRight =
-          y > 0 && x < xMax && newMatrix[(y - 1) * matrixWidth + x + 1] & 1;
-        const bottomRight =
-          y < yMax && x < xMax && newMatrix[(y + 1) * matrixWidth + x + 1] & 1;
-        const bottomLeft =
-          y < yMax && x > 0 && newMatrix[(y + 1) * matrixWidth + x - 1] & 1;
-        ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+        paths[shape] += `a.5.5 0,0,1 .5.5`
+        goDown(x, y, shape) 
+      }
+  }
 
-        ctx.beginPath();
-        ctx.fillStyle = bg;
-        ctx.roundRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize, [
-          (left && top && topLeft && radius) || 0,
-          (top && right && topRight && radius) || 0,
-          (right && bottom && bottomRight && radius) || 0,
-          (bottom && left && bottomLeft && radius) || 0,
-        ]);
-        ctx.fill();
+  function goLeft(x: number, y: number, shape: number) {
+    let sx = x;
+    let vert = false;
+    visited[y * matrixWidth + x] = shape;
+    while (x > 0) {
+      const left = on(x - 1, y)
+      const vertLeft = y < yMax && on(x - 1, y + 1)
+      if (!left || vertLeft) {
+        vert = left && vertLeft;
+        break;
+      }
+      x--;
+      visited[y * matrixWidth + x] = shape;
+    }
+    if (shape !== paths.length - 1 && x === baseX && y === baseY) {
+      paths[shape] += "z"
+      return;
+    }
+    paths[shape] += `h${x - sx}`;
+
+      if (vert) {
+         paths[shape] += `a.5.5 0,0,0 -.5.5`
+         goDown(x - 1, y + 1, shape) 
+      } else {
+        paths[shape] += `a.5.5 0,0,1 -.5-.5`
+         goUp(x, y, shape) 
+      }
+  }
+
+  function goUp(x: number, y: number, shape: number) {
+    let sy = y;
+    let horz = false;
+    visited[y * matrixWidth + x] = shape;
+    while (y > 0) {
+      const up = on(x, y - 1);
+      const horzUp =  x > 0 && on(x - 1, y - 1)
+      if (!up || horzUp) {
+        horz = up && horzUp;
+        break;
+      }
+      y--;
+      visited[y * matrixWidth + x] = shape;
+    }
+
+    if (shape === paths.length - 1 && x === baseX && y === baseY) {
+      paths[shape] += "z"
+      return;
+    }
+    paths[shape] += `v${y - sy}`
+      if (horz) {
+        paths[shape] += `a.5.5 0,0,0 -.5-.5`
+         goLeft(x - 1, y - 1, shape) 
+      } else {
+        paths[shape] += `a.5.5 0,0,1 .5-.5`
+         goRight(x, y, shape) 
+      }
+  }
+  
+  function goDown(x: number, y: number, shape: number) {
+    let sy = y;
+    let horz = false;
+    visited[y * matrixWidth + x] = shape;
+    while (y < yMax) {
+      const down = on(x, y + 1);
+      const horzDown =  x < xMax && on(x + 1, y + 1) 
+      if (!down || horzDown) {
+        horz = down && horzDown;
+        break;
+      }
+      y++;
+      visited[y * matrixWidth + x] = shape;
+    }
+    paths[shape] += `v${y - sy}`
+      if (horz) {
+        paths[shape] += `a.5.5 0,0,0 .5.5`
+        goRight(x + 1, y + 1, shape) 
+      } else {
+        paths[shape] += `a.5.5 0,0,1 -.5.5`
+        goLeft(x, y, shape) 
+      }
+  }
+  
+  const stack: [number, number][] = []
+  for (let x = 0; x < matrixWidth; x++) {
+    if (!on(x, 0)) stack.push([x, 0])
+  }
+  for (let y = 1; y < yMax; y++) {
+    if (!on(0, y)) stack.push([0, y])
+    if (!on(xMax, y)) stack.push([xMax, y])
+  }
+  for (let x = 0; x < matrixWidth; x++) {
+    if (!on(x, yMax)) stack.push([x, yMax])
+  }
+  
+  // recursion dfs limited to ~4000
+  // visit all whitespace connected to edges 
+  function dfsOff() {
+    while (stack.length > 0) {
+      const [x, y] = stack.pop()!; 
+      if (visited[y * matrixWidth + x]) continue;
+      visited[y * matrixWidth + x] = 1;
+      for (let dy =-1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dy === 0 && dx === 0) continue;
+          let nx = x + dx;
+          let ny = y + dy;
+          if (nx < 0 || nx > xMax || ny < 0 || ny > yMax) continue;
+          if (on(nx, ny)) continue;
+          stack.push([nx, ny]);
+        }
       }
     }
   }
+  dfsOff()
+
+  const paths = [""]
+  for (let y = 0; y < matrixWidth; y++) {
+    for (let x = 0; x < matrixWidth; x++) {
+      if (visited[y * matrixWidth + x]) continue;
+
+      if (!on(x, y)) {
+        const shape = visited[y * matrixWidth + x - 1]
+        paths[shape] += `M${x + 0.5},${y}a.5.5 0,0,0 -.5.5`
+
+        // these indexes are correct, think about it
+        baseY = y -1;
+        baseX = x ;
+        goDown(x - 1, y, shape) 
+        stack.push([x, y])
+        dfsOff()
+        continue;
+      };
+
+      if (y > 0 && on(x, y-1) && visited[(y - 1) * matrixWidth + x]) {
+        visited[y * matrixWidth + x] = visited[(y - 1) * matrixWidth + x];
+        continue;
+      };
+      if (x > 0 && on(x - 1, y) && visited[y * matrixWidth + x - 1]) {
+        visited[y * matrixWidth + x] = visited[y * matrixWidth + x - 1];
+        continue;
+      };
+
+      paths.push(`<path fill="${fg}" d="M${x},${y+0.5}a.5.5 0,0,1 .5-.5`)
+      
+      baseY = y;
+      baseX = x
+
+      goRight(x, y, paths.length - 1);
+    }
+  }
+
+  paths.forEach((path, i) => {
+    if (i === 0) return
+    svg += path;
+    svg += `"/>`
+  })
+
+  svg += `</svg>`;
+
+  return svg;
 }
+
