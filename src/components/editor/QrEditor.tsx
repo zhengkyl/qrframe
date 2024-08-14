@@ -69,6 +69,7 @@ export function Editor(props: Props) {
     Square: "",
     Circle: "",
     Camo: "",
+    Neon: "",
     Blocks: "",
     Bubbles: "",
     Alien: "",
@@ -188,12 +189,12 @@ export function Editor(props: Props) {
 
       if (changed) {
         localStorage.setItem(renderFuncKey(), code);
-        // updateThumbnail(
-        //   renderFuncKey(),
-        //   renderSVG,
-        //   renderCanvas,
-        //   parsedParamsSchema
-        // );
+        updateThumbnail(
+          renderFuncKey(),
+          renderSVG,
+          renderCanvas,
+          parsedParamsSchema
+        );
       }
     } catch (e) {
       console.log("e", e!.toString());

@@ -121,7 +121,7 @@ export type Params<T extends RawParamsSchema = ParamsSchema> = {
   [K in keyof T]: T[K] extends { type: "Select" }
     ? T[K]["options"][number]
     : PARAM_VALUE_TYPES[T[K]["type"]];
-};
+} & {}; // & {} necessary for readable typehints, see ts "prettify"
 
 export type ParamsSchema = {
   [label: string]: Required<RawParamsSchema[string]>;

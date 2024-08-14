@@ -14,7 +14,7 @@ Blatantly inspired by [QRBTF](https://qrbtf.com) and [Anthony Fu's QR Toolkit](h
   - Choose any preset, customize or even create a new one from scratch via code editor.
   - Define arbitrary ui parameters in code
   - Supports SVG and PNG (canvas)
-  - All code runs directly in browser (no safeguards). This is a hammer, not a toy for babies 🤡.
+  - All code runs *directly* in browser. There are no safeguards except that which browser vendors have bestowed upon us.
 
 ## Use existing presets
 
@@ -31,19 +31,19 @@ I'm working on more examples.
 <table>
   <thead>
     <tr>
-      <th colspan="3">Basic styles</th>
+      <th colspan="3">Extending with noise</th>
     </tr>
   </thead>
   <tbody>
   <tr>
     <td>
-      <img src="./examples/circle.png"/>
+      <img src="./examples/circle.svg" width="300"/>
     </td>
     <td>
-      <img src="./examples/camo.png"/>
+      <img src="./examples/camo.svg" width="300"/>
     </td>
     <td>
-      <img src="./examples/halftone.png" width="290"/>
+      <img src="./examples/neon.svg" width="300"/>
     </td>
   </tr>
   </tbody>
@@ -52,19 +52,19 @@ I'm working on more examples.
 <table>
   <thead>
     <tr>
-      <th colspan="3">Implementing styles from <a href="https://qrbtf.com">QRBTF</a></th>
+      <th colspan="3">Styles from <a href="https://qrbtf.com">QRBTF</a></th>
     </tr>
   </thead>
   <tbody>
   <tr>
     <td>
-      <img src="./examples/blocks.svg" width="290"/>
+      <img src="./examples/blocks.svg" width="300"/>
     </td>
     <td>
-      <img src="./examples/bubbles.svg" width="290"/>
+      <img src="./examples/bubbles.svg" width="300"/>
     </td>
     <td>
-      <img src="./examples/alien.svg" width="290"/>
+      <img src="./examples/alien.svg" width="300"/>
     </td>
   </tr>
   </tbody>
