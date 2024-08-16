@@ -194,7 +194,7 @@ function RenderedQrCode() {
               const canvas = document.createElement("canvas");
               const ctx = canvas.getContext("2d")!;
               // TODO allow adjust resolution/aspect ratio
-              const size = (outputQr().version * 4 + 17) * 10;
+              const size = 300 //(outputQr().version * 4 + 17) * 10;
               canvas.width = size;
               canvas.height = size;
 

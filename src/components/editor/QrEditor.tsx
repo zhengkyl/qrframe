@@ -70,6 +70,7 @@ export function Editor(props: Props) {
     Circle: "",
     Camo: "",
     Neon: "",
+    Drawing: "",
     Blocks: "",
     Bubbles: "",
     Alien: "",

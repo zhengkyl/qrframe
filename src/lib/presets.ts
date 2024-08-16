@@ -3,6 +3,7 @@ import { Blocks } from "./presets/Blocks";
 import { Bubbles } from "./presets/Bubbles";
 import { Camo } from "./presets/Camo";
 import { Circle } from "./presets/Circle";
+import { Drawing } from "./presets/Drawing";
 import { Halftone } from "./presets/Halftone";
 import { Minimal } from "./presets/Minimal";
 import { Neon } from "./presets/Neon";
@@ -13,6 +14,7 @@ export const PRESET_CODE = {
   Circle,
   Camo,
   Neon,
+  Drawing,
   Halftone,
   Minimal,
   Blocks,
