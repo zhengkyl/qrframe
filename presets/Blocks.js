@@ -1,6 +1,3 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-
 // Based on QRBTF's DSJ style
 // https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRDsj.tsx
 export const paramsSchema = {
@@ -52,7 +49,7 @@ export const paramsSchema = {
     step: 0.1,
     default: 0.7,
   },
-} satisfies RawParamsSchema;
+};
 
 const Module = {
   DataOFF: 0,
@@ -70,7 +67,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+export function renderSVG(qr, params) {
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
   const bg = params["Background"];
@@ -96,15 +93,15 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   let vLayer = `<g fill="${vc}">`;
   let hLayer = `<g fill="${hc}">`;
 
-  function matrix(x: number, y: number) {
+  function matrix(x, y) {
     return qr.matrix[y * matrixWidth + x];
   }
 
   const visitedMatrix = Array(matrixWidth * matrixWidth).fill(false);
-  function visited(x: number, y: number) {
+  function visited(x, y) {
     return visitedMatrix[y * matrixWidth + x];
   }
-  function setVisited(x: number, y: number) {
+  function setVisited(x, y) {
     visitedMatrix[y * matrixWidth + x] = true;
   }
 

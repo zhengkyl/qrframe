@@ -1,6 +1,3 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-
 // Based on QRBTF's Line style
 // https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRLine.tsx
 export const paramsSchema = {
@@ -29,7 +26,7 @@ export const paramsSchema = {
     max: 100,
     default: 1,
   },
-} satisfies RawParamsSchema;
+};
 
 const Module = {
   DataOFF: 0,
@@ -47,7 +44,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-function splitmix32(a: number) {
+function splitmix32(a) {
   return function () {
     a |= 0;
     a = (a + 0x9e3779b9) | 0;
@@ -59,9 +56,9 @@ function splitmix32(a: number) {
   };
 }
 
-export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+export function renderSVG(qr, params) {
   const rand = splitmix32(params["Seed"]);
-  function range(min: number, max: number) {
+  function range(min, max) {
     return Math.trunc(100 * (rand() * (max - min) + min)) / 100;
   }
 
@@ -78,22 +75,22 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   let linesLayer = `<g stroke="${lines}">`;
   let dotsLayer = `<g fill="${dots}">`;
 
-  function matrix(x: number, y: number) {
+  function matrix(x, y) {
     return qr.matrix[y * matrixWidth + x];
   }
 
   const rightVisited = Array(matrixWidth * matrixWidth).fill(false);
   const leftVisited = Array(matrixWidth * matrixWidth).fill(false);
-  function visited1(x: number, y: number) {
+  function visited1(x, y) {
     return rightVisited[y * matrixWidth + x];
   }
-  function visited2(x: number, y: number) {
+  function visited2(x, y) {
     return leftVisited[y * matrixWidth + x];
   }
-  function setVisited1(x: number, y: number) {
+  function setVisited1(x, y) {
     rightVisited[y * matrixWidth + x] = true;
   }
-  function setVisited2(x: number, y: number) {
+  function setVisited2(x, y) {
     leftVisited[y * matrixWidth + x] = true;
   }
 

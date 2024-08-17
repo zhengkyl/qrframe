@@ -37,6 +37,17 @@ I'm working on more examples.
       <img src="./examples/drawing3.png"/>
     </td>
     <tr>
+      <th colspan="3">Variations of existing styles</th>
+    </tr>
+    <tr>
+      <td>
+        <img src="./examples/quantum.svg" width="300"/>
+      </td>
+      <td>
+        <img src="./examples/halftone.png" width="300"/>
+      </td>
+    </tr>
+    <tr>
       <th colspan="3">Styles from <a href="https://qrbtf.com">QRBTF</a></th>
     </tr>
     <tr>

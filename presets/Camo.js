@@ -1,57 +1,26 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-
-const COLORS = {
-  Cyberpunk: {
-    bg: "#101529",
-    fg: ["#fb51dd", "#f2cffa", "#aefdfd", "#54a9fe"],
-  },
-  Glow: {
-    bg: "#1c1c1c",
-    fg: ["#9af86d", "#e44ff0", "#56ebe0", "#6a5afc", "#f8c76b"],
-  },
-  Arcade: {
-    bg: "#000",
-    fg: ["#ffbe0b", "#fb5607", "#ff006e", "#8338ec", "#3a86ff"],
-  },
-};
-
 export const paramsSchema = {
-  "Color palette": {
-    type: "Select",
-    options: Object.keys(COLORS),
+  Foreground: {
+    type: "Color",
+    default: "#1c4a1a",
+  },
+  Background: {
+    type: "Color",
+    default: "#e3d68a",
   },
   Margin: {
     type: "number",
     min: 0,
     max: 10,
-    default: 4,
+    default: 3,
   },
   "Quiet zone": {
-    type: "Select",
-    options: ["Minimal", "Full"],
+    type: "number",
+    min: 0,
+    max: 10,
+    default: 1,
   },
   Invert: {
     type: "boolean",
-  },
-  "Line thickness": {
-    type: "number",
-    min: 1,
-    max: 4,
-    default: 2,
-  },
-  "Finder thickness": {
-    type: "number",
-    min: 1,
-    max: 4,
-    default: 4,
-  },
-  "Glow strength": {
-    type: "number",
-    min: 0,
-    max: 4,
-    step: 0.1,
-    default: 2,
   },
   Seed: {
     type: "number",
@@ -59,7 +28,7 @@ export const paramsSchema = {
     max: 100,
     default: 1,
   },
-} satisfies RawParamsSchema;
+};
 
 const Module = {
   DataOFF: 0,
@@ -77,7 +46,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-function splitmix32(a: number) {
+function splitmix32(a) {
   return function () {
     a |= 0;
     a = (a + 0x9e3779b9) | 0;
@@ -89,11 +58,12 @@ function splitmix32(a: number) {
   };
 }
 
-export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+export function renderSVG(qr, params) {
   const rand = splitmix32(params["Seed"]);
   const margin = params["Margin"];
-  const colors = COLORS[params["Color palette"] as keyof typeof COLORS].fg;
-  const bg = COLORS[params["Color palette"] as keyof typeof COLORS].bg;
+  const quietZone = params["Quiet zone"];
+  const fg = params["Foreground"];
+  const bg = params["Background"];
 
   const qrWidth = qr.version * 4 + 17;
   const matrixWidth = qrWidth + 2 * margin;
@@ -102,13 +72,13 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const visited = new Uint16Array(matrixWidth * matrixWidth);
 
   // Copy qr to matrix with margin and randomly set pixels in margin
-  for (let y = 0; y < margin - 1; y++) {
+  for (let y = 0; y < margin - quietZone; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
     }
   }
-  for (let y = margin - 1; y < margin + qrWidth + 1; y++) {
-    for (let x = 0; x < margin - 1; x++) {
+  for (let y = margin - quietZone; y < margin + qrWidth + quietZone; y++) {
+    for (let x = 0; x < margin - quietZone; x++) {
       if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
     }
     if (y >= margin && y < margin + qrWidth) {
@@ -117,63 +87,34 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
           qr.matrix[(y - margin) * qrWidth + x - margin];
       }
     }
-    for (let x = margin + qrWidth + 1; x < matrixWidth; x++) {
+    for (let x = margin + qrWidth + quietZone; x < matrixWidth; x++) {
       if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
     }
   }
-  for (let y = margin + qrWidth + 1; y < matrixWidth; y++) {
+  for (let y = margin + qrWidth + quietZone; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
     }
   }
-  if (params["Quiet zone"] === "Minimal") {
-    for (let x = margin + 8; x < matrixWidth - margin - 8; x++) {
-      if (rand() > 0.5)
-        newMatrix[(margin - 1) * matrixWidth + x] = Module.DataON;
-    }
-    for (let y = margin + 8; y < matrixWidth - margin; y++) {
-      if (y < matrixWidth - margin - 8) {
-        if (rand() > 0.5)
-          newMatrix[y * matrixWidth + margin - 1] = Module.DataON;
-      }
-      if (rand() > 0.5)
-        newMatrix[y * matrixWidth + matrixWidth - margin] = Module.DataON;
-    }
-    for (let x = margin + 8; x < matrixWidth - margin + 1; x++) {
-      if (rand() > 0.5)
-        newMatrix[(matrixWidth - margin) * matrixWidth + x] = Module.DataON;
-    }
-  }
 
-  const unit = 4;
-  let thin = params["Line thickness"];
-  let offset = (unit - thin) / 2;
-  const size = matrixWidth * unit - 2 * offset;
-
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${offset} ${offset} ${size} ${size}">`;
-
-  svg += `<filter id="glow">
-  <feGaussianBlur stdDeviation="${params["Glow strength"]}"/>
-  <feComposite in2="SourceGraphic" operator="over"/>
-</filter>`;
-
-  svg += `<rect x="${offset}" y="${offset}" width="${size}" height="${size}" fill="${bg}"/>`;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${matrixWidth} ${matrixWidth}">`;
+  svg += `<rect width="${matrixWidth}" height="${matrixWidth}" fill="${bg}"/>`;
+  svg += `<g fill="${fg}">`;
 
   const xMax = matrixWidth - 1;
   const yMax = matrixWidth - 1;
 
-  let baseX: number;
-  let baseY: number;
+  let baseX;
+  let baseY;
 
   const on = params["Invert"]
-    ? (x: number, y: number) => (newMatrix[y * matrixWidth + x] & 1) === 0
-    : (x: number, y: number) => (newMatrix[y * matrixWidth + x] & 1) === 1;
+    ? (x, y) => (newMatrix[y * matrixWidth + x] & 1) === 0
+    : (x, y) => (newMatrix[y * matrixWidth + x] & 1) === 1;
 
-  function goRight(x: number, y: number, shape: number, cw: boolean) {
+  function goRight(x, y, path, cw) {
     let sx = x;
-
     let vert = false;
-    visited[y * matrixWidth + x] = shape;
+    visited[y * matrixWidth + x] = path;
     while (x < xMax) {
       const right = on(x + 1, y);
       const vertRight = y > 0 && on(x + 1, y - 1);
@@ -182,21 +123,20 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
         break;
       }
       x++;
-      visited[y * matrixWidth + x] = shape;
+      visited[y * matrixWidth + x] = path;
     }
-
+    paths[path] += `h${x - sx}`;
     if (vert) {
-      paths[shape] += `h${(x - sx + 1) * unit}v${-2 * offset}`;
-      goUp(x + 1, y - 1, shape, cw);
+      paths[path] += `a.5.5 0,0,0 .5-.5`;
+      goUp(x + 1, y - 1, path, cw);
     } else {
-      paths[shape] += `h${(x - sx) * unit + thin}`;
-      goDown(x, y, shape, cw);
+      paths[path] += `a.5.5 0,0,1 .5.5`;
+      goDown(x, y, path, cw);
     }
   }
 
-  function goLeft(x: number, y: number, shape: number, cw: boolean) {
+  function goLeft(x, y, shape, cw) {
     let sx = x;
-
     let vert = false;
     visited[y * matrixWidth + x] = shape;
     while (x > 0) {
@@ -213,17 +153,18 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
       paths[shape] += "z";
       return;
     }
+    paths[shape] += `h${x - sx}`;
 
     if (vert) {
-      paths[shape] += `h${(x - sx - 1) * unit}v${2 * offset}`;
+      paths[shape] += `a.5.5 0,0,0 -.5.5`;
       goDown(x - 1, y + 1, shape, cw);
     } else {
-      paths[shape] += `h${(x - sx) * unit - thin}`;
+      paths[shape] += `a.5.5 0,0,1 -.5-.5`;
       goUp(x, y, shape, cw);
     }
   }
 
-  function goUp(x: number, y: number, shape: number, cw: boolean) {
+  function goUp(x, y, shape, cw) {
     let sy = y;
     let horz = false;
     visited[y * matrixWidth + x] = shape;
@@ -237,21 +178,22 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
       y--;
       visited[y * matrixWidth + x] = shape;
     }
+
     if (cw && x === baseX && y === baseY) {
       paths[shape] += "z";
       return;
     }
-
+    paths[shape] += `v${y - sy}`;
     if (horz) {
-      paths[shape] += `v${(y - sy - 1) * unit}h${-2 * offset}`;
+      paths[shape] += `a.5.5 0,0,0 -.5-.5`;
       goLeft(x - 1, y - 1, shape, cw);
     } else {
-      paths[shape] += `v${(y - sy) * unit - thin}`;
+      paths[shape] += `a.5.5 0,0,1 .5-.5`;
       goRight(x, y, shape, cw);
     }
   }
 
-  function goDown(x: number, y: number, shape: number, cw: boolean) {
+  function goDown(x, y, shape, cw) {
     let sy = y;
     let horz = false;
     visited[y * matrixWidth + x] = shape;
@@ -265,17 +207,17 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
       y++;
       visited[y * matrixWidth + x] = shape;
     }
-
+    paths[shape] += `v${y - sy}`;
     if (horz) {
-      paths[shape] += `v${(y - sy + 1) * unit}h${2 * offset}`;
+      paths[shape] += `a.5.5 0,0,0 .5.5`;
       goRight(x + 1, y + 1, shape, cw);
     } else {
-      paths[shape] += `v${(y - sy) * unit + thin}`;
+      paths[shape] += `a.5.5 0,0,1 -.5.5`;
       goLeft(x, y, shape, cw);
     }
   }
 
-  const stack: [number, number][] = [];
+  const stack = [];
   for (let x = 0; x < matrixWidth; x++) {
     if (!on(x, 0)) stack.push([x, 0]);
   }
@@ -291,7 +233,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   // visit all whitespace connected to edges
   function dfsOff() {
     while (stack.length > 0) {
-      const [x, y] = stack.pop()!;
+      const [x, y] = stack.pop();
       if (visited[y * matrixWidth + x]) continue;
       visited[y * matrixWidth + x] = 1;
       for (let dy = -1; dy <= 1; dy++) {
@@ -313,19 +255,11 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     for (let x = 0; x < matrixWidth; x++) {
       if (visited[y * matrixWidth + x]) continue;
 
-      if ((newMatrix[y * matrixWidth + x] | 1) === Module.FinderON) {
-        thin = params["Finder thickness"];
-        offset = (unit - thin) / 2;
-      } else {
-        thin = params["Line thickness"];
-        offset = (unit - thin) / 2;
-      }
-
       if (!on(x, y)) {
         const shape = visited[y * matrixWidth + x - 1];
-        paths[shape] +=
-          `M${x * unit - offset},${y * unit - offset}v${2 * offset}`;
+        paths[shape] += `M${x + 0.5},${y}a.5.5 0,0,0 -.5.5`;
 
+        // these indexes are correct, think about it
         baseY = y - 1;
         baseX = x;
         goDown(x - 1, y, shape, false);
@@ -343,10 +277,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
         continue;
       }
 
-      const color = colors[Math.floor(rand() * colors.length)];
-      paths.push(
-        `<path fill="${color}" filter="url(#glow)" d="M${x * unit + offset},${y * unit + offset}`
-      );
+      paths.push(`<path d="M${x},${y + 0.5}a.5.5 0,0,1 .5-.5`);
 
       baseY = y;
       baseX = x;
@@ -360,6 +291,8 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     svg += path;
     svg += `"/>`;
   });
-  svg += `</svg>`;
+
+  svg += `</g></svg>`;
+
   return svg;
 }

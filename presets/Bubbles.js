@@ -1,6 +1,3 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-
 // Based on QRBTF's Bubble style
 // https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRBubble.tsx
 export const paramsSchema = {
@@ -44,7 +41,7 @@ export const paramsSchema = {
     max: 100,
     default: 1,
   },
-} satisfies RawParamsSchema;
+};
 
 const Module = {
   DataOFF: 0,
@@ -62,7 +59,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-function splitmix32(a: number) {
+function splitmix32(a) {
   return function () {
     a |= 0;
     a = (a + 0x9e3779b9) | 0;
@@ -74,12 +71,12 @@ function splitmix32(a: number) {
   };
 }
 
-export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+export function renderSVG(qr, params) {
   const rand = splitmix32(params["Seed"]);
 
   const range = params["Randomize circle size"]
-    ? (min: number, max: number) => Math.trunc(100 * (rand() * (max - min) + min)) / 100
-    : (min: number, max: number) => Math.trunc(100 * ((max - min) / 2 + min)) / 100;
+    ? (min, max) => Math.trunc(100 * (rand() * (max - min) + min)) / 100
+    : (min, max) => Math.trunc(100 * ((max - min) / 2 + min)) / 100;
 
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
@@ -94,15 +91,15 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   let layer3 = `<g fill="none" stroke="${params["Small circle"]}" stroke-width="0.4">`;
   let layer4 = `<g fill="${params["Tiny circle"]}">`;
 
-  function matrix(x: number, y: number) {
+  function matrix(x, y) {
     return qr.matrix[y * matrixWidth + x];
   }
 
   const visitedMatrix = Array(matrixWidth * matrixWidth).fill(false);
-  function visited(x: number, y: number) {
+  function visited(x, y) {
     return visitedMatrix[y * matrixWidth + x];
   }
-  function setVisited(x: number, y: number) {
+  function setVisited(x, y) {
     visitedMatrix[y * matrixWidth + x] = true;
   }
 

@@ -74,6 +74,7 @@ export function Editor(props: Props) {
     Blocks: "",
     Bubbles: "",
     Alien: "",
+    Quantum: "",
     Halftone: "",
     Minimal: "",
   });

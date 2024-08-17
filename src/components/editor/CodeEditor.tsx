@@ -100,7 +100,16 @@ export function CodeEditor(props: Props) {
     // Saving should not reset editor state (cursor pos etc)
     if (view.state.doc.toString() === props.initialValue) return;
 
-    view.setState(EditorState.create({ doc: props.initialValue, extensions }));
+    view.setState(
+      EditorState.create({
+        doc: props.initialValue,
+        extensions,
+        selection: {
+          head: 0,
+          anchor: 0,
+        },
+      })
+    );
 
     const currVimMode = untrack(vimMode);
     if (currVimMode) {
@@ -108,6 +117,11 @@ export function CodeEditor(props: Props) {
         effects: modeComp.reconfigure(vim()),
       });
     }
+
+    // These 2 lines partially fix auto-scroll to cursor issue (focusing, then switching code, then scrolling down)
+    // But causes blurring then scrolling to be weird
+    view.contentDOM.focus({ preventScroll: true });
+    view.contentDOM.blur();
   });
 
   const [showCode, setShowCode] = createSignal(false);

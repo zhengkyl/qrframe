@@ -1,6 +1,3 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -41,7 +38,7 @@ export const paramsSchema = {
     max: 100,
     default: 1,
   },
-} satisfies RawParamsSchema;
+};
 
 const Module = {
   DataOFF: 0,
@@ -59,7 +56,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-function splitmix32(a: number) {
+function splitmix32(a) {
   return function () {
     a |= 0;
     a = (a + 0x9e3779b9) | 0;
@@ -71,7 +68,7 @@ function splitmix32(a: number) {
   };
 }
 
-export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+export function renderSVG(qr, params) {
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
   const fg = params["Foreground"];

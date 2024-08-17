@@ -1,6 +1,3 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -17,9 +14,9 @@ export const paramsSchema = {
     type: "Color",
     default: "#ffffff",
   },
-} satisfies RawParamsSchema;
+};
 
-export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+export function renderSVG(qr, params) {
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
   const fg = params["Foreground"];

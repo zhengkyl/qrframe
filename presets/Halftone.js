@@ -1,6 +1,3 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-
 export const paramsSchema = {
   Image: {
     type: "File",
@@ -43,7 +40,7 @@ export const paramsSchema = {
     type: "Color",
     default: "#ffffff",
   },
-} satisfies RawParamsSchema;
+};
 
 const Module = {
   DataOFF: 0,
@@ -61,11 +58,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-export async function renderCanvas(
-  qr: OutputQr,
-  params: Params<typeof paramsSchema>,
-  ctx: CanvasRenderingContext2D
-) {
+export async function renderCanvas(qr, params, ctx) {
   const unit = 3;
   const pixel = 1;
 
@@ -92,12 +85,7 @@ export async function renderCanvas(
         if (module & 1) {
           const px = x + margin;
           const py = y + margin;
-          ctx.fillRect(
-            px * unit,
-            py * unit,
-            unit,
-            unit
-          );
+          ctx.fillRect(px * unit, py * unit, unit, unit);
         }
       }
     }

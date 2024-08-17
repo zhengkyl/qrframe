@@ -1,6 +1,3 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-// @ts-expect-error not bundled
 import rough from "https://esm.sh/roughjs";
 
 export const paramsSchema = {
@@ -75,7 +72,7 @@ export const paramsSchema = {
     max: 100,
     default: 1,
   },
-} satisfies RawParamsSchema;
+};
 
 const Module = {
   DataOFF: 0,
@@ -93,7 +90,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-function splitmix32(a: number) {
+function splitmix32(a) {
   return function () {
     a |= 0;
     a = (a + 0x9e3779b9) | 0;
@@ -107,21 +104,21 @@ function splitmix32(a: number) {
 
 const domMock = {
   ownerDocument: {
-    createElementNS: (_ns: string, tagName: string) => {
-      const children: any[] = [];
-      const attributes: any = {};
+    createElementNS: (_ns, tagName) => {
+      const children = [];
+      const attributes = {};
       return {
         tagName,
         attributes,
-        setAttribute: (key: string, value: string) => (attributes[key] = value),
-        appendChild: (node: any) => children.push(node),
+        setAttribute: (key, value) => (attributes[key] = value),
+        appendChild: (node) => children.push(node),
         children,
       };
     },
   },
 };
 
-export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+export function renderSVG(qr, params) {
   const roughSVG = rough.svg(domMock, {
     options: {
       roughness: params["Roughness"],
@@ -137,7 +134,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     },
   });
 
-  let matrix = qr.matrix as any;
+  let matrix = qr.matrix;
   let matrixWidth = qr.version * 4 + 17;
 
   if (params["Invert"]) {
@@ -171,14 +168,14 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   const xMax = matrixWidth - 1;
   const yMax = matrixWidth - 1;
 
-  let baseX: number;
-  let baseY: number;
+  let baseX;
+  let baseY;
 
   const on = params["Invert"]
-    ? (x: number, y: number) => (matrix[y * matrixWidth + x] & 1) === 0
-    : (x: number, y: number) => (matrix[y * matrixWidth + x] & 1) === 1;
+    ? (x, y) => (matrix[y * matrixWidth + x] & 1) === 0
+    : (x, y) => (matrix[y * matrixWidth + x] & 1) === 1;
 
-  function goRight(x: number, y: number, shape: number, cw: boolean) {
+  function goRight(x, y, shape, cw) {
     let sx = x;
 
     let vert = false;
@@ -202,7 +199,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     }
   }
 
-  function goLeft(x: number, y: number, shape: number, cw: boolean) {
+  function goLeft(x, y, shape, cw) {
     let sx = x;
 
     let vert = false;
@@ -230,7 +227,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     }
   }
 
-  function goUp(x: number, y: number, shape: number, cw: boolean) {
+  function goUp(x, y, shape, cw) {
     let sy = y;
     let horz = false;
     visited[y * matrixWidth + x] = shape;
@@ -257,7 +254,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     }
   }
 
-  function goDown(x: number, y: number, shape: number, cw: boolean) {
+  function goDown(x, y, shape, cw) {
     let sy = y;
     let horz = false;
     visited[y * matrixWidth + x] = shape;
@@ -280,7 +277,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     }
   }
 
-  const stack: [number, number][] = [];
+  const stack = [];
   for (let x = 0; x < matrixWidth; x++) {
     if (!on(x, 0)) stack.push([x, 0]);
   }
@@ -296,7 +293,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   // visit all whitespace connected to edges
   function dfsOff() {
     while (stack.length > 0) {
-      const [x, y] = stack.pop()!;
+      const [x, y] = stack.pop();
       if (visited[y * matrixWidth + x]) continue;
       visited[y * matrixWidth + x] = 1;
       for (let dy = -1; dy <= 1; dy++) {
@@ -348,7 +345,7 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
     }
   }
 
-  function domToString(node: any) {
+  function domToString(node) {
     const attrs = Object.entries(node.attributes)
       .map(([key, value]) => `${key}="${value}"`)
       .join(" ");
@@ -360,7 +357,6 @@ export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
   paths.forEach((path, i) => {
     if (i === 0) return;
     const g = roughSVG.path(path);
-    console.log(g);
     domToString(g);
   });
 

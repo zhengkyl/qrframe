@@ -1,6 +1,3 @@
-import type { Params, RawParamsSchema } from "~/lib/params";
-import type { OutputQr } from "~/lib/QrContext";
-
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -17,7 +14,7 @@ export const paramsSchema = {
   Background: {
     type: "boolean",
   },
-} satisfies RawParamsSchema;
+};
 
 const Module = {
   DataOFF: 0,
@@ -35,7 +32,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-export function renderSVG(qr: OutputQr, params: Params<typeof paramsSchema>) {
+export function renderSVG(qr, params) {
   const matrixWidth = qr.version * 4 + 17;
   const unit = 10;
   const dataSize = params["Data pixel size"];

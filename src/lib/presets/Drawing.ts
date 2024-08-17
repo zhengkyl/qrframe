@@ -357,7 +357,6 @@ export function renderSVG(qr, params) {
   paths.forEach((path, i) => {
     if (i === 0) return;
     const g = roughSVG.path(path);
-    console.log(g);
     domToString(g);
   });
 

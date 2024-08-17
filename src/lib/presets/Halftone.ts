@@ -61,14 +61,15 @@ const Module = {
 export async function renderCanvas(qr, params, ctx) {
   const unit = 3;
   const pixel = 1;
+
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
   const fg = params["Foreground"];
   const bg = params["Background"];
-
   const alignment = params["Alignment pattern"];
   const timing = params["Timing pattern"];
   const file = params["Image"];
+
   const pixelWidth = matrixWidth + 2 * margin;
   const canvasSize = pixelWidth * unit;
   ctx.canvas.width = canvasSize;
@@ -78,7 +79,6 @@ export async function renderCanvas(qr, params, ctx) {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, canvasSize, canvasSize);
     ctx.fillStyle = fg;
-
     for (let y = 0; y < matrixWidth; y++) {
       for (let x = 0; x < matrixWidth; x++) {
         const module = qr.matrix[y * matrixWidth + x];
@@ -90,7 +90,9 @@ export async function renderCanvas(qr, params, ctx) {
       }
     }
   }
+
   const image = new Image();
+
   if (file != null) {
     image.src = URL.createObjectURL(file);
   } else {
@@ -99,35 +101,34 @@ export async function renderCanvas(qr, params, ctx) {
     image.crossOrigin = "anonymous";
     image.src =
       "https://upload.wikimedia.org/wikipedia/commons/1/14/The_Widow_%28Boston_Public_Library%29_%28cropped%29.jpg";
-
   }
-
   await image.decode();
+
   ctx.filter = \`brightness(\${params["Brightness"]}) contrast(\${params["Contrast"]})\`;
   ctx.drawImage(image, 0, 0, canvasSize, canvasSize);
   ctx.filter = "none";
+
   if (file != null) {
     URL.revokeObjectURL(image.src);
   }
+
   const imageData = ctx.getImageData(0, 0, canvasSize, canvasSize);
   const data = imageData.data;
-  for (let y = 0; y < canvasSize; y++) {
 
+  for (let y = 0; y < canvasSize; y++) {
     for (let x = 0; x < canvasSize; x++) {
       const i = (y * canvasSize + x) * 4;
-      if (data[i + 3] === 0) continue;
 
+      if (data[i + 3] === 0) continue;
       // Convert to grayscale and normalize to 0-255
       const oldPixel =
         (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) | 0;
 
       let newPixel;
       if (oldPixel < 128) {
-
         newPixel = 0;
         ctx.fillStyle = fg;
       } else {
-
         newPixel = 255;
         ctx.fillStyle = bg;
       }
@@ -135,6 +136,7 @@ export async function renderCanvas(qr, params, ctx) {
 
       data[i] = data[i + 1] = data[i + 2] = newPixel;
       const error = oldPixel - newPixel;
+
       // Distribute error to neighboring pixels
       if (x < canvasSize - 1) {
         data[i + 4] += (error * 7) / 16;
@@ -142,17 +144,17 @@ export async function renderCanvas(qr, params, ctx) {
       if (y < canvasSize - 1) {
         if (x > 0) {
           data[i + canvasSize * 4 - 4] += (error * 3) / 16;
-
         }
         data[i + canvasSize * 4] += (error * 5) / 16;
-
         if (x < canvasSize - 1) {
           data[i + canvasSize * 4 + 4] += (error * 1) / 16;
         }
       }
     }
   }
+
   const dataOffset = (unit - pixel) / 2;
+
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = qr.matrix[y * matrixWidth + x];
@@ -163,8 +165,8 @@ export async function renderCanvas(qr, params, ctx) {
       }
 
       const px = x + margin;
-
       const py = y + margin;
+
       const type = module | 1;
       if (
         type === Module.FinderON ||
@@ -172,18 +174,15 @@ export async function renderCanvas(qr, params, ctx) {
         (timing && type === Module.TimingON)
       ) {
         ctx.fillRect(px * unit, py * unit, unit, unit);
-
       } else {
         ctx.fillRect(
-
           px * unit + dataOffset,
           py * unit + dataOffset,
           pixel,
-          pixel,
+          pixel
         );
       }
     }
   }
 }
-
 `

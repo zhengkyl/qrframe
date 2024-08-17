@@ -342,7 +342,7 @@ export function renderSVG(qr, params) {
 
       const color = colors[Math.floor(rand() * colors.length)];
       paths.push(
-        \`<path fill="\${color}" filter="url(#glow)" d="M\${x * unit + offset},\${y * unit + offset}\`,
+        \`<path fill="\${color}" filter="url(#glow)" d="M\${x * unit + offset},\${y * unit + offset}\`
       );
 
       baseY = y;
