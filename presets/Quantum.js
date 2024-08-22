@@ -89,7 +89,7 @@ export function renderSVG(qr, params) {
     svg += `<circle cx="${x + 3.5}" cy="${y + 6.5}" r="0.5"/>`;
 
     switch (params["Finder pattern"]) {
-      case "Atom": {
+      case "Atom":
         let r1 = 0.98;
         let r2 = 1.5;
 
@@ -101,11 +101,11 @@ export function renderSVG(qr, params) {
 
         svg += `M${x + 3.5},${y + 3.5 - 3 * r2}a${r1},${r2} 0,0,1 0,${6 * r2}a${r1},${r2} 0,0,1 0,${-6 * r2}`;
         break;
-      }
-      case "Planet": {
+
+      case "Planet":
         svg += `<path fill="none" stroke-width="0.1" stroke="${fg}" stroke-dasharray="0.5 0.65" d="`;
         svg += `M${x + 3.5},${y + 0.5}a3,3 0,0,1 0,6a3,3 0,0,1 0-6`;
-      }
+        break;
     }
     svg += `"/></g>`;
   }

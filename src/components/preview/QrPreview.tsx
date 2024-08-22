@@ -1,13 +1,6 @@
 import { QrError } from "fuqr";
 import Download from "lucide-solid/icons/download";
-import {
-  Match,
-  Show,
-  Switch,
-  createEffect,
-  createSignal,
-  untrack,
-} from "solid-js";
+import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 import { useQrContext, type OutputQr } from "~/lib/QrContext";
 import {
   ECL_LABELS,
@@ -47,7 +40,7 @@ export default function QrPreview(props: Props) {
               </Match>
               <Match when={outputQr() === QrError.InvalidEncoding}>
                 {`Input cannot be encoded in ${
-                  // @ts-expect-error props.mode not null b/c InvalidEncoding implies mode
+                  // @ts-expect-error props.mode not null b/c InvalidEncoding requires mode
                   MODE_NAMES[inputQr.mode + 1]
                 } mode`}
               </Match>
@@ -71,9 +64,8 @@ export default function QrPreview(props: Props) {
 function RenderedQrCode() {
   const {
     outputQr: _outputQr,
-    getRenderSVG,
-    getRenderCanvas,
-    renderFuncKey,
+    render,
+    renderKey,
     params,
     paramsSchema,
   } = useQrContext();
@@ -86,51 +78,76 @@ function RenderedQrCode() {
 
   const [canvasDims, setCanvasDims] = createSignal({ width: 0, height: 0 });
 
-  let prevFuncKey = "";
+  let worker: Worker | null = null;
+  const timeoutIdSet = new Set<NodeJS.Timeout>();
 
-  let renderCount = 0;
   createEffect(async () => {
-    const render = getRenderSVG();
-    const fallbackRender = getRenderCanvas();
+    const r = render();
 
-    // Track store without passing store into function and leaking extra params
+    // Track store without leaking extra params
     const paramsCopy: Params = {};
     Object.keys(paramsSchema()).forEach((key) => {
       paramsCopy[key] = params[key];
     });
 
-    if (render == null && fallbackRender == null) return; // only true on page load
-    const currentRender = ++renderCount;
+    // all reactive deps must be above early return!
+    // true on page load
+    if (r == null) return;
 
-    prevFuncKey = untrack(renderFuncKey);
-    try {
-      // users can arbitrarily manipulate function args
-      // outputQr (big) is frozen, and params (small) is copied
+    if (worker == null) setupWorker();
 
-      if (render != null) {
-        const svgString = await render(outputQr(), paramsCopy);
-        if (currentRender !== renderCount) {
-          // race condition
-          return;
-        }
-
-        svgParent.innerHTML = svgString;
-      } else {
-        const ctx = canvas.getContext("2d")!;
-        ctx.reset();
-
-        // race condition can't be solved without double buffering
-        await fallbackRender!(outputQr(), paramsCopy, ctx);
-
-        setCanvasDims({ width: ctx.canvas.width, height: ctx.canvas.height });
+    const timeoutId = setTimeout(() => {
+      console.error(`Render took longer than 5 seconds, timed out!`, timeoutId);
+      timeoutIdSet.delete(timeoutId);
+      if (worker != null) {
+        worker.terminate();
+        worker = null
       }
+    }, 5000);
+    timeoutIdSet.add(timeoutId);
 
-      setRuntimeError(null);
-    } catch (e) {
-      setRuntimeError(e!.toString());
-      console.error(`${prevFuncKey} render:`, e);
-    }
+    worker!.postMessage({
+      type: r.type,
+      url: r.url,
+      qr: outputQr(),
+      params: paramsCopy,
+      timeoutId,
+    });
+
+    return () => {
+      worker?.terminate();
+      timeoutIdSet.forEach((timeout) => clearTimeout(timeout));
+    };
   });
+
+  const setupWorker = () => {
+    console.log("new worker")
+    worker = new Worker("renderWorker.js", { type: "module" });
+
+    worker.onmessage = (e) => {
+      clearTimeout(e.data.timeoutId);
+      timeoutIdSet.delete(e.data.timeoutId);
+
+      switch (e.data.type) {
+        case "svg":
+          svgParent.innerHTML = e.data.svg;
+          setRuntimeError(null);
+          break;
+        case "canvas":
+          canvas
+            .getContext("bitmaprenderer")!
+            .transferFromImageBitmap(e.data.bitmap);
+          setCanvasDims({ width: canvas.width, height: canvas.height });
+          setRuntimeError(null);
+          break;
+        case "error":
+          console.error(e.data.error);
+          break;
+        // case "canceled":
+        //   break;
+      }
+    };
+  };
 
   const filename = () => {
     const s = outputQr().text.slice(0, 32);
@@ -141,22 +158,24 @@ function RenderedQrCode() {
   return (
     <>
       <div class="checkboard aspect-[1/1] border rounded-md relative overflow-hidden">
-        <Show when={getRenderSVG() != null}>
-          <div ref={svgParent!}></div>
-        </Show>
-        <Show when={getRenderCanvas() != null}>
-          <canvas
-            class="w-full h-full image-render-pixel"
-            ref={canvas!}
-          ></canvas>
-        </Show>
+        <Switch>
+          <Match when={render()?.type === "svg"}>
+            <div ref={svgParent!}></div>
+          </Match>
+          <Match when={render()?.type === "canvas"}>
+            <canvas
+              class="w-full h-full image-render-pixel"
+              ref={canvas!}
+            ></canvas>
+          </Match>
+        </Switch>
       </div>
       <Show when={runtimeError() != null}>
         <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md">
           {runtimeError()}
         </div>
       </Show>
-      <Show when={getRenderCanvas() != null}>
+      <Show when={render()?.type === "canvas"}>
         <div class="text-center">
           {canvasDims().width}x{canvasDims().height} px
         </div>
@@ -194,7 +213,7 @@ function RenderedQrCode() {
               const canvas = document.createElement("canvas");
               const ctx = canvas.getContext("2d")!;
               // TODO allow adjust resolution/aspect ratio
-              const size = 300 //(outputQr().version * 4 + 17) * 10;
+              const size = 300; //(outputQr().version * 4 + 17) * 10;
               canvas.width = size;
               canvas.height = size;
 
@@ -214,7 +233,7 @@ function RenderedQrCode() {
           <Download size={20} />
           Download PNG
         </FlatButton>
-        <Show when={getRenderSVG() != null}>
+        <Show when={render()?.type === "svg"}>
           <FlatButton
             class="inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
             onClick={async () => {

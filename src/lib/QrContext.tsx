@@ -43,14 +43,10 @@ export const QrContext = createContext<{
   inputQr: InputQr;
   setInputQr: SetStoreFunction<InputQr>;
   outputQr: Accessor<OutputQr | QrError>;
-
-  getRenderSVG: Accessor<RenderSVG | null>;
-  setRenderSVG: Setter<RenderSVG | null>;
-  getRenderCanvas: Accessor<RenderCanvas | null>;
-  setRenderCanvas: Setter<RenderCanvas | null>;
-
-  renderFuncKey: Accessor<string>;
-  setRenderFuncKey: Setter<string>;
+  render: Accessor<Render | null>;
+  setRender: Setter<Render | null>;
+  renderKey: Accessor<string>;
+  setRenderKey: Setter<string>;
   params: Params;
   setParams: SetStoreFunction<Params>;
   paramsSchema: Accessor<ParamsSchema>;
@@ -65,6 +61,14 @@ export type RenderCanvas = (
 
 export type RenderSVG = (qr: OutputQr, params: Params) => string;
 
+const renderTypes = ["svg", "canvas"] as const;
+export type RenderType = (typeof renderTypes)[number];
+
+type Render = {
+  type: RenderType;
+  url: string;
+};
+
 export function QrContextProvider(props: { children: JSX.Element }) {
   const [inputQr, setInputQr] = createStore<InputQr>({
     text: "https://qrframe.kylezhe.ng",
@@ -76,11 +80,8 @@ export function QrContextProvider(props: { children: JSX.Element }) {
     mask: null,
   });
 
-  const [renderCanvas, setRenderCanvas] = createSignal<RenderCanvas | null>(
-    null
-  );
-  const [renderSVG, setRenderSVG] = createSignal<RenderSVG | null>(null);
-  const [renderFuncKey, setRenderFuncKey] = createSignal("");
+  const [renderKey, setRenderKey] = createSignal<string>("Square");
+  const [render, setRender] = createSignal<Render | null>(null);
 
   const [paramsSchema, setParamsSchema] = createSignal<ParamsSchema>({});
   const [params, setParams] = createStore({});
@@ -122,12 +123,10 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         inputQr,
         setInputQr,
         outputQr,
-        getRenderSVG: renderSVG,
-        setRenderSVG,
-        getRenderCanvas: renderCanvas,
-        setRenderCanvas,
-        renderFuncKey,
-        setRenderFuncKey,
+        render,
+        setRender,
+        renderKey,
+        setRenderKey,
         params,
         setParams,
         paramsSchema,
@@ -147,13 +146,4 @@ export function useQrContext() {
   return context;
 }
 
-// pre generated b/c needed often for thumbnails (generated on every save/load)
-export const PREVIEW_OUTPUTQR = {
-  text: "https://qrfra.me",
-  // prettier-ignore
-  matrix: [3,3,3,3,3,3,3,12,8,0,0,0,0,12,3,3,3,3,3,3,3,3,2,2,2,2,2,3,12,9,0,0,1,1,12,3,2,2,2,2,2,3,3,2,3,3,3,2,3,12,8,1,0,1,1,12,3,2,3,3,3,2,3,3,2,3,3,3,2,3,12,9,1,0,1,0,12,3,2,3,3,3,2,3,3,2,3,3,3,2,3,12,8,0,1,0,0,12,3,2,3,3,3,2,3,3,2,2,2,2,2,3,12,9,1,1,1,1,12,3,2,2,2,2,2,3,3,3,3,3,3,3,3,12,7,6,7,6,7,12,3,3,3,3,3,3,3,12,12,12,12,12,12,12,12,8,0,1,0,0,12,12,12,12,12,12,12,12,9,9,9,9,9,8,7,9,9,1,0,1,0,9,8,9,8,9,8,9,8,0,0,0,1,0,0,6,1,0,0,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,1,0,7,1,0,0,1,0,1,1,1,1,0,0,1,1,0,0,1,1,0,0,0,6,0,0,1,1,1,1,1,0,0,1,1,1,0,0,1,0,0,1,0,0,7,1,1,0,0,0,1,1,1,0,1,1,0,0,1,12,12,12,12,12,12,12,12,9,1,0,0,0,0,0,1,1,1,1,0,1,3,3,3,3,3,3,3,12,9,1,1,1,1,1,0,1,0,0,1,1,0,3,2,2,2,2,2,3,12,8,1,0,0,0,1,0,1,1,1,1,0,0,3,2,3,3,3,2,3,12,9,0,0,0,1,1,1,1,1,1,0,0,0,3,2,3,3,3,2,3,12,9,0,1,1,0,0,0,0,1,0,1,1,0,3,2,3,3,3,2,3,12,9,1,1,1,1,0,1,1,0,0,1,0,0,3,2,2,2,2,2,3,12,9,0,0,0,0,1,0,0,1,1,1,0,0,3,3,3,3,3,3,3,12,9,1,0,1,1,0,1,1,0,1,0,1,0],
-  version: 1,
-  ecl: ECL.Low,
-  mode: Mode.Byte,
-  mask: Mask.M2,
-};
+

@@ -58,7 +58,7 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-export async function renderCanvas(qr, params, ctx) {
+export async function renderCanvas(qr, params, canvas) {
   const unit = 3;
   const pixel = 1;
 
@@ -68,10 +68,17 @@ export async function renderCanvas(qr, params, ctx) {
   const bg = params["Background"];
   const alignment = params["Alignment pattern"];
   const timing = params["Timing pattern"];
-  const file = params["Image"];
+  let file = params["Image"];
+  if (file == null) {
+    file = await fetch(
+      "https://upload.wikimedia.org/wikipedia/commons/1/14/The_Widow_%28Boston_Public_Library%29_%28cropped%29.jpg"
+    ).then((res) => res.blob());
+  }
+  const image = await createImageBitmap(file)
 
   const pixelWidth = matrixWidth + 2 * margin;
   const canvasSize = pixelWidth * unit;
+  const ctx = canvas.getContext("2d");
   ctx.canvas.width = canvasSize;
   ctx.canvas.height = canvasSize;
 
@@ -91,26 +98,9 @@ export async function renderCanvas(qr, params, ctx) {
     }
   }
 
-  const image = new Image();
-
-  if (file != null) {
-    image.src = URL.createObjectURL(file);
-  } else {
-    // if canvas tainted, need to reload
-    // https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image
-    image.crossOrigin = "anonymous";
-    image.src =
-      "https://upload.wikimedia.org/wikipedia/commons/1/14/The_Widow_%28Boston_Public_Library%29_%28cropped%29.jpg";
-  }
-  await image.decode();
-
   ctx.filter = `brightness(${params["Brightness"]}) contrast(${params["Contrast"]})`;
   ctx.drawImage(image, 0, 0, canvasSize, canvasSize);
   ctx.filter = "none";
-
-  if (file != null) {
-    URL.revokeObjectURL(image.src);
-  }
 
   const imageData = ctx.getImageData(0, 0, canvasSize, canvasSize);
   const data = imageData.data;

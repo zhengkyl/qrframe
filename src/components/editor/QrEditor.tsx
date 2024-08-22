@@ -8,16 +8,10 @@ import {
   defaultParams,
   paramsEqual,
   parseParamsSchema,
-  type Params,
   type ParamsSchema,
 } from "~/lib/params";
 import { PRESET_CODE } from "~/lib/presets";
-import {
-  PREVIEW_OUTPUTQR,
-  useQrContext,
-  type RenderCanvas,
-  type RenderSVG,
-} from "~/lib/QrContext";
+import { useQrContext, type RenderType } from "~/lib/QrContext";
 import { FillButton, FlatButton } from "../Button";
 import { Collapsible } from "../Collapsible";
 import { IconButtonDialog } from "../Dialog";
@@ -52,14 +46,13 @@ function isPreset(key: string): key is keyof typeof PRESET_CODE {
 export function Editor(props: Props) {
   const {
     setInputQr,
-    setRenderSVG,
-    setRenderCanvas,
-    renderFuncKey,
-    setRenderFuncKey,
     paramsSchema,
     setParamsSchema,
     params,
     setParams,
+    renderKey,
+    setRenderKey,
+    setRender,
   } = useQrContext();
 
   const [code, setCode] = createSignal(PRESET_CODE.Square);
@@ -79,6 +72,9 @@ export function Editor(props: Props) {
     Minimal: "",
   });
 
+  let thumbWorker: Worker | null = null;
+  const timeoutIdMap = new Map<NodeJS.Timeout, string>();
+
   onMount(async () => {
     const storedFuncKeys = localStorage.getItem(CUSTOM_FUNCS);
     let keys;
@@ -92,20 +88,22 @@ export function Editor(props: Props) {
 
     for (const key of keys) {
       if (isPreset(key)) {
-        // const tryThumb = localStorage.getItem(`${key}_thumb`);
-        // if (tryThumb != null) {
-        //   setThumbs(key, tryThumb);
-        //   continue;
-        // } else {
-        // No try-catch b/c presets should not have errors
-        const { renderSVG, renderCanvas, parsedParamsSchema } =
-          await importCode(PRESET_CODE[key]);
-        await updateThumbnail(key, renderSVG, renderCanvas, parsedParamsSchema);
-        // }
+        const tryThumb = localStorage.getItem(`${key}_thumb`);
+        if (tryThumb != null) {
+          setThumbs(key, tryThumb);
+          continue;
+        } else {
+          // preset CAN error out, e.g. when importing 3rd party dep
+          try {
+            const { type, url, parsedParamsSchema } = await importCode(
+              PRESET_CODE[key]
+            );
+            updateThumbnail(key, type, url, parsedParamsSchema);
+          } catch (e) {
+            // skippa
+          }
+        }
       }
-
-      const thumb = localStorage.getItem(`${key}_thumb`) ?? FALLBACK_THUMB;
-      setThumbs(key, thumb);
     }
   });
 
@@ -119,7 +117,7 @@ export function Editor(props: Props) {
   };
 
   const setExistingKey = (key: string) => {
-    setRenderFuncKey(key);
+    setRenderKey(key);
     if (isPreset(key)) {
       trySetCode(PRESET_CODE[key], false);
     } else {
@@ -133,50 +131,43 @@ export function Editor(props: Props) {
 
   const importCode = async (code: string) => {
     const blob = new Blob([code], { type: "text/javascript" });
+    // This url is cleaned up in trySetCode()
     const url = URL.createObjectURL(blob);
 
-    // TODO check perf of caching functions
     const {
       renderSVG,
       renderCanvas,
       paramsSchema: rawParamsSchema,
-    } = await import(/* @vite-ignore */ url).finally(() =>
-      URL.revokeObjectURL(url)
-    );
+    } = await import(/* @vite-ignore */ url);
 
-    if (typeof renderCanvas !== "function" && typeof renderSVG !== "function") {
+    let type = "" as RenderType;
+    if (typeof renderSVG === "function") {
+      type = "svg";
+    }
+    if (typeof renderCanvas === "function") {
+      if (type) {
+        throw new Error("renderSVG and renderCanvas cannot both be exported");
+      }
+      type = "canvas";
+    }
+    if (!type) {
       throw new Error("renderSVG or renderCanvas must be exported");
-    } else if (
-      typeof renderCanvas === "function" &&
-      typeof renderSVG === "function"
-    ) {
-      throw new Error("renderSVG and renderCanvas cannot both be exported");
     }
 
     // TODO see impl, user set default and props might be wrong
     const parsedParamsSchema = parseParamsSchema(rawParamsSchema);
 
-    return { renderSVG, renderCanvas, parsedParamsSchema };
+    return { type, url, parsedParamsSchema };
   };
 
   const trySetCode = async (code: string, changed: boolean) => {
     try {
-      const { renderSVG, renderCanvas, parsedParamsSchema } = await importCode(
-        code
-      );
-      if (
-        typeof renderCanvas !== "function" &&
-        typeof renderSVG !== "function"
-      ) {
-        throw new Error("renderSVG or renderCanvas must be exported");
-      } else if (
-        typeof renderCanvas === "function" &&
-        typeof renderSVG === "function"
-      ) {
-        throw new Error("renderSVG and renderCanvas cannot both be exported");
-      }
+      // If import fails and code is unchanged, it should still load
+      // otherwise, changed code should only save if valid
+      if (!changed) setCode(code);
+      const { type, url, parsedParamsSchema } = await importCode(code);
       setCompileError(null);
-      setCode(code);
+      if (changed) setCode(code);
 
       // batched b/c trigger rendering effect
       batch(() => {
@@ -184,70 +175,87 @@ export function Editor(props: Props) {
           setParams(defaultParams(parsedParamsSchema));
         }
         setParamsSchema(parsedParamsSchema); // always update in case different property order
-
-        setRenderSVG(() => renderSVG ?? null);
-        setRenderCanvas(() => renderCanvas ?? null);
+        setRender((prev) => {
+          // TODO check perf of caching
+          if (prev != null) {
+            URL.revokeObjectURL(prev.url);
+          }
+          return { type, url };
+        });
       });
 
       if (changed) {
-        localStorage.setItem(renderFuncKey(), code);
-        updateThumbnail(
-          renderFuncKey(),
-          renderSVG,
-          renderCanvas,
-          parsedParamsSchema
-        );
+        localStorage.setItem(renderKey(), code);
+        updateThumbnail(renderKey(), type, url, parsedParamsSchema);
       }
     } catch (e) {
-      console.log("e", e!.toString());
+      console.error("e", e!.toString());
       setCompileError(e!.toString());
     }
   };
 
-  const updateThumbnail = async (
-    renderKey: string,
-    renderSVG: RenderSVG | undefined,
-    renderCanvas: RenderCanvas | undefined,
+  const updateThumbnail = (
+    key: string,
+    type: "svg" | "canvas",
+    url: string,
     parsedParamsSchema: ParamsSchema
   ) => {
-    try {
-      const defaultParams: Params = {};
-      Object.entries(parsedParamsSchema).forEach(([label, props]) => {
-        defaultParams[label] = props.default;
-      });
+    if (thumbWorker == null) setupThumbWorker();
+
+    const timeoutId = setTimeout(() => {
+      console.error(
+        `Thumbnail render took longer than 5 seconds, timed out!`,
+        timeoutId
+      );
+      timeoutIdMap.delete(timeoutId);
+      if (thumbWorker != null) {
+        thumbWorker.terminate();
+        thumbWorker = null;
+      }
+    }, 5000);
+    timeoutIdMap.set(timeoutId, key);
+
+    thumbWorker!.postMessage({
+      type,
+      url,
+      params: defaultParams(parsedParamsSchema),
+      timeoutId,
+    });
+  };
+
+  const setupThumbWorker = () => {
+    thumbWorker = new Worker("thumbnailWorker.js", { type: "module" });
+
+    thumbWorker.onmessage = (e) => {
+      clearTimeout(e.data.timeoutId);
+      const key = timeoutIdMap.get(e.data.timeoutId)!;
+      timeoutIdMap.delete(e.data.timeoutId);
 
       let thumbnail;
-      if (renderSVG != null) {
-        // https://www.phpied.com/truth-encoding-svg-data-uris/
-        // Only need to encode #
-        thumbnail =
-          "data:image/svg+xml," +
-          (await renderSVG(PREVIEW_OUTPUTQR, defaultParams).replaceAll(
-            "#",
-            "%23"
-          ));
-      } else {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d")!;
-        await renderCanvas!(PREVIEW_OUTPUTQR, defaultParams, ctx);
+      switch (e.data.type) {
+        case "svg":
+          thumbnail = "data:image/svg+xml," + e.data.svg.replaceAll("#", "%23");
+          break;
+        case "canvas":
+          const size = 96;
+          const smallCanvas = document.createElement("canvas");
 
-        const smallCanvas = document.createElement("canvas");
-        const size = 96;
-        smallCanvas.width = size;
-        smallCanvas.height = size;
-        const smallCtx = smallCanvas.getContext("2d")!;
-        smallCtx.drawImage(canvas, 0, 0, size, size);
-        thumbnail = smallCanvas.toDataURL("image/jpeg", 0.5);
+          smallCanvas.width = size;
+          smallCanvas.height = size;
+          const smallCtx = smallCanvas.getContext("2d")!;
+          smallCtx.drawImage(e.data.bitmap, 0, 0, size, size);
+          e.data.bitmap.close();
+
+          thumbnail = smallCanvas.toDataURL("image/jpeg", 0.5);
+          break;
+        case "error":
+          console.error(e.data.error);
+          return;
       }
 
-      localStorage.setItem(`${renderKey}_thumb`, thumbnail);
-
-      if (!presetKeys.includes(renderKey)) {
-        setThumbs(renderKey, thumbnail);
-      }
-    } catch (e) {
-      console.error(`${renderKey} thumbnail render:`, e);
-    }
+      localStorage.setItem(`${key}_thumb`, thumbnail!);
+      setThumbs(key, thumbnail!);
+    };
   };
 
   const createAndSelectFunc = (name: string, code: string) => {
@@ -261,7 +269,7 @@ export function Editor(props: Props) {
 
     // TODO double setting thumbs
     setThumbs(key, FALLBACK_THUMB);
-    setRenderFuncKey(key);
+    setRenderKey(key);
     trySetCode(code, true);
   };
 
@@ -282,16 +290,16 @@ export function Editor(props: Props) {
                 Render function
               </div>
               <div class="flex gap-2">
-                <div class="flex items-center font-bold">{renderFuncKey()}</div>
-                <Show when={!presetKeys.includes(renderFuncKey())}>
+                <div class="flex items-center font-bold">{renderKey()}</div>
+                <Show when={!presetKeys.includes(renderKey())}>
                   <IconButtonDialog
-                    title={`Rename ${renderFuncKey()}`}
+                    title={`Rename ${renderKey()}`}
                     triggerTitle="Rename"
                     triggerChildren={<Pencil class="w-5 h-5" />}
                     onOpenAutoFocus={(e) => e.preventDefault()}
                   >
                     {(close) => {
-                      const [rename, setRename] = createSignal(renderFuncKey());
+                      const [rename, setRename] = createSignal(renderKey());
                       const [duplicate, setDuplicate] = createSignal(false);
 
                       let ref: HTMLInputElement;
@@ -304,7 +312,7 @@ export function Editor(props: Props) {
                             defaultValue={rename()}
                             onChange={setRename}
                             onInput={() => duplicate() && setDuplicate(false)}
-                            placeholder={renderFuncKey()}
+                            placeholder={renderKey()}
                           />
                           <div class="absolute p-1 text-sm text-red-600">
                             <Show when={duplicate()}>
@@ -315,30 +323,28 @@ export function Editor(props: Props) {
                             class="px-3 py-2 float-right mt-4"
                             // input onChange runs after focus lost, so onMouseDown is too early
                             onClick={() => {
-                              if (rename() === renderFuncKey()) return close();
+                              if (rename() === renderKey()) return close();
 
                               if (funcKeys.includes(rename())) {
                                 setDuplicate(true);
                                 return;
                               }
 
-                              localStorage.removeItem(renderFuncKey());
-                              localStorage.removeItem(
-                                `${renderFuncKey()}_thumb`
-                              );
+                              localStorage.removeItem(renderKey());
+                              localStorage.removeItem(`${renderKey()}_thumb`);
 
-                              const thumb = thumbs[renderFuncKey()];
+                              const thumb = thumbs[renderKey()];
                               localStorage.setItem(rename(), code());
                               localStorage.setItem(`${rename()}_thumb`, thumb);
                               setThumbs(rename(), thumb);
-                              setThumbs(renderFuncKey(), undefined!);
+                              setThumbs(renderKey(), undefined!);
 
                               setFuncKeys(
-                                funcKeys.indexOf(renderFuncKey()),
+                                funcKeys.indexOf(renderKey()),
                                 rename()
                               );
 
-                              setRenderFuncKey(rename());
+                              setRenderKey(rename());
                               close();
                             }}
                           >
@@ -349,7 +355,7 @@ export function Editor(props: Props) {
                     }}
                   </IconButtonDialog>
                   <IconButtonDialog
-                    title={`Delete ${renderFuncKey()}`}
+                    title={`Delete ${renderKey()}`}
                     triggerTitle="Delete"
                     triggerChildren={<Trash2 class="w-5 h-5" />}
                   >
@@ -361,14 +367,12 @@ export function Editor(props: Props) {
                         <div class="flex justify-end gap-2">
                           <FillButton
                             onMouseDown={() => {
-                              localStorage.removeItem(renderFuncKey());
-                              localStorage.removeItem(
-                                `${renderFuncKey()}_thumb`
-                              );
-                              setThumbs(renderFuncKey(), undefined!);
+                              localStorage.removeItem(renderKey());
+                              localStorage.removeItem(`${renderKey()}_thumb`);
+                              setThumbs(renderKey(), undefined!);
 
                               setFuncKeys((keys) =>
-                                keys.filter((key) => key !== renderFuncKey())
+                                keys.filter((key) => key !== renderKey())
                               );
 
                               setExistingKey(funcKeys[0]);
@@ -391,7 +395,7 @@ export function Editor(props: Props) {
                   <Preview
                     onClick={() => setExistingKey(key)}
                     label={key}
-                    active={renderFuncKey() === key}
+                    active={renderKey() === key}
                   >
                     <img class="rounded-sm" src={thumbs[key]} />
                   </Preview>
@@ -437,8 +441,8 @@ export function Editor(props: Props) {
           <CodeEditor
             initialValue={code()}
             onSave={(code) => {
-              if (presetKeys.includes(renderFuncKey())) {
-                createAndSelectFunc(renderFuncKey(), code);
+              if (presetKeys.includes(renderKey())) {
+                createAndSelectFunc(renderKey(), code);
               } else {
                 trySetCode(code, true);
               }
