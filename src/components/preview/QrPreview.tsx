@@ -97,7 +97,7 @@ function RenderedQrCode() {
     if (worker == null) setupWorker();
 
     const timeoutId = setTimeout(() => {
-      console.error(`Render took longer than 5 seconds, timed out!`, timeoutId);
+      console.error(`Preview took longer than 5 seconds, timed out!`, timeoutId);
       timeoutIdSet.delete(timeoutId);
       if (worker != null) {
         worker.terminate();
@@ -121,8 +121,8 @@ function RenderedQrCode() {
   });
 
   const setupWorker = () => {
-    console.log("new worker")
-    worker = new Worker("renderWorker.js", { type: "module" });
+    console.log("Starting previewWorker")
+    worker = new Worker("previewWorker.js", { type: "module" });
 
     worker.onmessage = (e) => {
       clearTimeout(e.data.timeoutId);

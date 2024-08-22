@@ -23,22 +23,19 @@ type Props = {
   class?: string;
 };
 
-const CUSTOM_FUNCS = "funcKeys";
+const FUNC_KEYS = "funcKeys";
 
-// TODO temp fallback thumb
-const FALLBACK_THUMB =
-  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>";
+const VERSION = 1;
+const PRESETS_VERSION = "presetsVersion";
+
+const LOADING_THUMB =
+  `data:image/svg+xml,<svg viewBox="-12 -12 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"><animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12" repeatCount="indefinite"/></path></svg>`;
 
 type Thumbs = { [T in keyof typeof PRESET_CODE]: string } & {
   [key: string]: string;
 };
 
-type t<T> = {
-  [K in keyof T]: string;
-};
-
 const presetKeys = Object.keys(PRESET_CODE);
-// 'in' doesn't work b/c key can overlap with inherited properties
 function isPreset(key: string): key is keyof typeof PRESET_CODE {
   return presetKeys.includes(key);
 }
@@ -76,7 +73,25 @@ export function Editor(props: Props) {
   const timeoutIdMap = new Map<NodeJS.Timeout, string>();
 
   onMount(async () => {
-    const storedFuncKeys = localStorage.getItem(CUSTOM_FUNCS);
+    const storedVersion = localStorage.getItem(PRESETS_VERSION);
+    const upToDate =
+      storedVersion != null && parseInt(storedVersion) >= VERSION;
+    if (!upToDate) {
+      localStorage.setItem(PRESETS_VERSION, VERSION.toString());
+      for (const key of presetKeys) {
+        // preset CAN error out, e.g. when importing 3rd party dep
+        try {
+          const { type, url, parsedParamsSchema } = await importCode(
+            PRESET_CODE[key as keyof typeof PRESET_CODE]
+          );
+          asyncUpdateThumbnail(key, type, url, parsedParamsSchema);
+        } catch (e) {
+          // skippa
+        }
+      }
+    }
+
+    const storedFuncKeys = localStorage.getItem(FUNC_KEYS);
     let keys;
     if (storedFuncKeys == null || storedFuncKeys === "") {
       keys = presetKeys;
@@ -87,22 +102,13 @@ export function Editor(props: Props) {
     setExistingKey(keys[0]);
 
     for (const key of keys) {
-      if (isPreset(key)) {
-        const tryThumb = localStorage.getItem(`${key}_thumb`);
-        if (tryThumb != null) {
-          setThumbs(key, tryThumb);
-          continue;
-        } else {
-          // preset CAN error out, e.g. when importing 3rd party dep
-          try {
-            const { type, url, parsedParamsSchema } = await importCode(
-              PRESET_CODE[key]
-            );
-            updateThumbnail(key, type, url, parsedParamsSchema);
-          } catch (e) {
-            // skippa
-          }
-        }
+      // don't override asynchronously set thumbnails above
+      if (!upToDate && isPreset(key)) continue;
+
+      const tryThumb = localStorage.getItem(`${key}_thumb`);
+      if (tryThumb != null) {
+        setThumbs(key, tryThumb);
+        continue;
       }
     }
   });
@@ -111,7 +117,7 @@ export function Editor(props: Props) {
     // @ts-expect-error this is fine
     _setFuncKeys(...args);
     localStorage.setItem(
-      CUSTOM_FUNCS,
+      FUNC_KEYS,
       funcKeys.filter((key) => !presetKeys.includes(key)).join(",")
     );
   };
@@ -176,7 +182,7 @@ export function Editor(props: Props) {
         }
         setParamsSchema(parsedParamsSchema); // always update in case different property order
         setRender((prev) => {
-          // TODO check perf of caching
+          // TODO consider caching for faster switching?
           if (prev != null) {
             URL.revokeObjectURL(prev.url);
           }
@@ -186,7 +192,7 @@ export function Editor(props: Props) {
 
       if (changed) {
         localStorage.setItem(renderKey(), code);
-        updateThumbnail(renderKey(), type, url, parsedParamsSchema);
+        asyncUpdateThumbnail(renderKey(), type, url, parsedParamsSchema);
       }
     } catch (e) {
       console.error("e", e!.toString());
@@ -194,7 +200,7 @@ export function Editor(props: Props) {
     }
   };
 
-  const updateThumbnail = (
+  const asyncUpdateThumbnail = (
     key: string,
     type: "svg" | "canvas",
     url: string,
@@ -204,7 +210,7 @@ export function Editor(props: Props) {
 
     const timeoutId = setTimeout(() => {
       console.error(
-        `Thumbnail render took longer than 5 seconds, timed out!`,
+        `Thumbnail took longer than 5 seconds, timed out!`,
         timeoutId
       );
       timeoutIdMap.delete(timeoutId);
@@ -224,6 +230,7 @@ export function Editor(props: Props) {
   };
 
   const setupThumbWorker = () => {
+    console.log("Starting thumbnailWorker");
     thumbWorker = new Worker("thumbnailWorker.js", { type: "module" });
 
     thumbWorker.onmessage = (e) => {
@@ -267,8 +274,7 @@ export function Editor(props: Props) {
     }
     setFuncKeys(funcKeys.length, key);
 
-    // TODO double setting thumbs
-    setThumbs(key, FALLBACK_THUMB);
+    setThumbs(key, LOADING_THUMB);
     setRenderKey(key);
     trySetCode(code, true);
   };
