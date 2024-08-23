@@ -22,15 +22,15 @@ export const paramsSchema = {
   },
   "Finder pattern": {
     type: "Select",
-    options: ["Default", "Circle"],
+    options: ["Default", "Circle", "Square"],
   },
   "Alignment pattern": {
     type: "Select",
-    options: ["Default", "Circle"],
+    options: ["Default", "Circle", "Square"],
   },
   "Scale direction": {
     type: "Select",
-    options: ["Center", "Edge", "None"],
+    options: ["None", "Center", "Edge"],
   },
   Seed: {
     type: "number",
@@ -73,8 +73,6 @@ export function renderSVG(qr, params) {
   const margin = params["Margin"];
   const fg = params["Foreground"];
   const bg = params["Background"];
-  const circleFinder = params["Finder pattern"] === "Circle";
-  const circleAlignment = params["Alignment pattern"] === "Circle";
   const rOffset = params["Radius offset"];
   const rand = splitmix32(params["Seed"]);
 
@@ -83,14 +81,18 @@ export function renderSVG(qr, params) {
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
   svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
-  if (circleFinder) {
+  if (params["Finder pattern"] !== "Default") {
     for (const [x, y] of [
       [0, 0],
       [matrixWidth - 7, 0],
       [0, matrixWidth - 7],
     ]) {
-      svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="3" fill="none" stroke="${fg}" stroke-width="1"/>`;
-      svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="1.5" fill="${fg}"/>`;
+      if (params["Finder pattern"] === "Circle") {
+        svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="3" fill="none" stroke="${fg}" stroke-width="1"/>`;
+        svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="1.5" fill="${fg}"/>`;
+      } else {
+        svg += `<path d="M${x},${y}h7v7h-7zM${x + 1},${y + 1}v5h5v-5zM${x + 2},${y + 2}h3v3h-3z"/>`;
+      }
     }
   }
   svg += `<path fill="${fg}" d="`;
@@ -125,10 +127,18 @@ export function renderSVG(qr, params) {
 
       if (x >= 0 && x < matrixWidth && y >= 0 && y < matrixWidth) {
         const module = qr.matrix[y * matrixWidth + x];
-        if (circleFinder && (module | 1) === Module.FinderON) continue;
         if (!(module & 1)) continue;
 
-        if (circleAlignment && module === Module.AlignmentON) {
+        if (
+          params["Finder pattern"] !== "Default" &&
+          (module | 1) === Module.FinderON
+        ) {
+          continue;
+        }
+        if (
+          params["Alignment pattern"] !== "Default" &&
+          module === Module.AlignmentON
+        ) {
           if (
             !(
               (qr.matrix[(y - 1) * matrixWidth + x] |
@@ -137,9 +147,13 @@ export function renderSVG(qr, params) {
               1
             )
           ) {
-            svg += `M${x + 0.5},${y - 2}a2.5,2.5 0,0,0 0,5a2.5,2.5 0,0,0 0,-5`;
-            svg += `M${x + 0.5},${y - 1}a1.5,1.5 0,0,1 0,3a1.5,1.5 0,0,1 0,-3`;
-            svg += `M${x + 0.5},${y}a.5,.5 0,0,0 0,1a.5,.5 0,0,0 0,-1`;
+            if (params["Alignment pattern"] === "Circle") {
+              svg += `M${x + 0.5},${y - 2}a2.5,2.5 0,0,0 0,5a2.5,2.5 0,0,0 0,-5`;
+              svg += `M${x + 0.5},${y - 1}a1.5,1.5 0,0,1 0,3a1.5,1.5 0,0,1 0,-3`;
+              svg += `M${x + 0.5},${y}a.5,.5 0,0,0 0,1a.5,.5 0,0,0 0,-1`;
+            } else {
+              svg += `M${x - 2},${y - 2}h5v5h-5zM${x - 1},${y - 1}v3h3v-3zM${x},${y}h1v1h-1z`;
+            }
           }
           continue;
         }

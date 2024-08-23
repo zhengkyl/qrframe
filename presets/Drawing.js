@@ -64,7 +64,7 @@ export const paramsSchema = {
   },
   Background: {
     type: "Color",
-    default: "#000000",
+    default: "#222222",
   },
   Seed: {
     type: "number",

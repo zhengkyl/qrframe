@@ -28,8 +28,7 @@ const FUNC_KEYS = "funcKeys";
 const VERSION = 1;
 const PRESETS_VERSION = "presetsVersion";
 
-const LOADING_THUMB =
-  `data:image/svg+xml,<svg viewBox="-12 -12 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"><animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12" repeatCount="indefinite"/></path></svg>`;
+const LOADING_THUMB = `data:image/svg+xml,<svg viewBox="-12 -12 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"><animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12" repeatCount="indefinite"/></path></svg>`;
 
 type Thumbs = { [T in keyof typeof PRESET_CODE]: string } & {
   [key: string]: string;
@@ -62,6 +61,7 @@ export function Editor(props: Props) {
     Neon: "",
     Drawing: "",
     Blocks: "",
+    Mondrian: "",
     Bubbles: "",
     Alien: "",
     Quantum: "",
@@ -73,21 +73,24 @@ export function Editor(props: Props) {
   const timeoutIdMap = new Map<NodeJS.Timeout, string>();
 
   onMount(async () => {
+    async function updatePresetThumbnail(key: keyof typeof PRESET_CODE) {
+      // preset CAN error out, e.g. when importing 3rd party dep
+      try {
+        const { type, url, parsedParamsSchema } = await importCode(
+          PRESET_CODE[key]
+        );
+        asyncUpdateThumbnail(key, type, url, parsedParamsSchema);
+      } catch (e) {
+        // skippa
+      }
+    }
     const storedVersion = localStorage.getItem(PRESETS_VERSION);
     const upToDate =
       storedVersion != null && parseInt(storedVersion) >= VERSION;
     if (!upToDate) {
       localStorage.setItem(PRESETS_VERSION, VERSION.toString());
       for (const key of presetKeys) {
-        // preset CAN error out, e.g. when importing 3rd party dep
-        try {
-          const { type, url, parsedParamsSchema } = await importCode(
-            PRESET_CODE[key as keyof typeof PRESET_CODE]
-          );
-          asyncUpdateThumbnail(key, type, url, parsedParamsSchema);
-        } catch (e) {
-          // skippa
-        }
+        updatePresetThumbnail(key as keyof typeof PRESET_CODE);
       }
     }
 
@@ -110,6 +113,7 @@ export function Editor(props: Props) {
         setThumbs(key, tryThumb);
         continue;
       }
+      if (isPreset(key)) updatePresetThumbnail(key);
     }
   });
 
