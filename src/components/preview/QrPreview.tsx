@@ -11,6 +11,7 @@ import {
 } from "~/lib/options";
 import type { Params } from "~/lib/params";
 import { FlatButton } from "../Button";
+import { clearToasts, toastError } from "../ErrorToasts";
 
 function download(href: string, name: string) {
   const a = document.createElement("a");
@@ -74,8 +75,6 @@ function RenderedQrCode() {
   let svgParent: HTMLDivElement;
   let canvas: HTMLCanvasElement;
 
-  const [runtimeError, setRuntimeError] = createSignal<string | null>(null);
-
   const [canvasDims, setCanvasDims] = createSignal({ width: 0, height: 0 });
 
   let worker: Worker | null = null;
@@ -97,11 +96,14 @@ function RenderedQrCode() {
     if (worker == null) setupWorker();
 
     const timeoutId = setTimeout(() => {
-      console.error(`Preview took longer than 5 seconds, timed out!`, timeoutId);
+      console.error(
+        `Preview took longer than 5 seconds, timed out!`,
+        timeoutId
+      );
       timeoutIdSet.delete(timeoutId);
       if (worker != null) {
         worker.terminate();
-        worker = null
+        worker = null;
       }
     }, 5000);
     timeoutIdSet.add(timeoutId);
@@ -121,7 +123,7 @@ function RenderedQrCode() {
   });
 
   const setupWorker = () => {
-    console.log("Starting previewWorker")
+    console.log("Starting previewWorker");
     worker = new Worker("previewWorker.js", { type: "module" });
 
     worker.onmessage = (e) => {
@@ -131,16 +133,17 @@ function RenderedQrCode() {
       switch (e.data.type) {
         case "svg":
           svgParent.innerHTML = e.data.svg;
-          setRuntimeError(null);
+          clearToasts();
           break;
         case "canvas":
           canvas
             .getContext("bitmaprenderer")!
             .transferFromImageBitmap(e.data.bitmap);
           setCanvasDims({ width: canvas.width, height: canvas.height });
-          setRuntimeError(null);
+          clearToasts();
           break;
         case "error":
+          toastError("Render failed", e.data.error.toString());
           console.error(e.data.error);
           break;
         // case "canceled":
@@ -170,11 +173,6 @@ function RenderedQrCode() {
           </Match>
         </Switch>
       </div>
-      <Show when={runtimeError() != null}>
-        <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md">
-          {runtimeError()}
-        </div>
-      </Show>
       <Show when={render()?.type === "canvas"}>
         <div class="text-center">
           {canvasDims().width}x{canvasDims().height} px

@@ -18,6 +18,7 @@ import { IconButtonDialog } from "../Dialog";
 import { TextInput, TextareaInput } from "../TextInput";
 import { CodeEditor } from "./CodeEditor";
 import { Settings } from "./Settings";
+import { clearToasts, toastError } from "../ErrorToasts";
 
 type Props = {
   class?: string;
@@ -52,7 +53,6 @@ export function Editor(props: Props) {
   } = useQrContext();
 
   const [code, setCode] = createSignal(PRESET_CODE.Square);
-  const [compileError, setCompileError] = createSignal<string | null>(null);
   const [funcKeys, _setFuncKeys] = createStore<string[]>([]);
   const [thumbs, setThumbs] = createStore<Thumbs>({
     Square: "",
@@ -129,13 +129,13 @@ export function Editor(props: Props) {
   const setExistingKey = (key: string) => {
     setRenderKey(key);
     if (isPreset(key)) {
-      trySetCode(PRESET_CODE[key], false);
+      saveAndRun(PRESET_CODE[key], false);
     } else {
       let storedCode = localStorage.getItem(key);
       if (storedCode == null) {
         storedCode = `Failed to load ${key}`;
       }
-      trySetCode(storedCode, false);
+      saveAndRun(storedCode, false);
     }
   };
 
@@ -170,14 +170,15 @@ export function Editor(props: Props) {
     return { type, url, parsedParamsSchema };
   };
 
-  const trySetCode = async (code: string, changed: boolean) => {
+  const saveAndRun = async (code: string, changed: boolean) => {
     try {
-      // If import fails and code is unchanged, it should still load
-      // otherwise, changed code should only save if valid
-      if (!changed) setCode(code);
+      setCode(code);
+      if (changed) {
+        localStorage.setItem(renderKey(), code);
+      }
+
       const { type, url, parsedParamsSchema } = await importCode(code);
-      setCompileError(null);
-      if (changed) setCode(code);
+      clearToasts()
 
       // batched b/c trigger rendering effect
       batch(() => {
@@ -195,12 +196,11 @@ export function Editor(props: Props) {
       });
 
       if (changed) {
-        localStorage.setItem(renderKey(), code);
         asyncUpdateThumbnail(renderKey(), type, url, parsedParamsSchema);
       }
     } catch (e) {
       console.error("e", e!.toString());
-      setCompileError(e!.toString());
+      toastError("Invalid code", e!.toString())
     }
   };
 
@@ -280,7 +280,7 @@ export function Editor(props: Props) {
 
     setThumbs(key, LOADING_THUMB);
     setRenderKey(key);
-    trySetCode(code, true);
+    saveAndRun(code, true);
   };
 
   return (
@@ -454,11 +454,9 @@ export function Editor(props: Props) {
               if (presetKeys.includes(renderKey())) {
                 createAndSelectFunc(renderKey(), code);
               } else {
-                trySetCode(code, true);
+                saveAndRun(code, true);
               }
             }}
-            error={compileError()}
-            clearError={() => setCompileError(null)}
           />
         </div>
       </Collapsible>

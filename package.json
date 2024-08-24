@@ -14,7 +14,7 @@
     "@codemirror/state": "^6.4.1",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.28.3",
-    "@kobalte/core": "^0.13.3",
+    "@kobalte/core": "^0.13.4",
     "@replit/codemirror-vim": "^6.2.1",
     "@solidjs/router": "^0.13.3",
     "@solidjs/start": "^1.0.0",

@@ -1,7 +1,10 @@
 import { clientOnly } from "@solidjs/start";
-import { Editor } from "~/components/editor/QrEditor";
-import QrPreview from "~/components/preview/QrPreview";
+import { Portal } from "solid-js/web";
 import init from "fuqr";
+
+import { Editor } from "~/components/editor/QrEditor";
+import { ErrorToasts } from "~/components/ErrorToasts";
+import QrPreview from "~/components/preview/QrPreview";
 
 const QrContextProvider = clientOnly(async () => {
   await init();
@@ -18,6 +21,9 @@ export default function Home() {
           <Editor class="flex-1 flex-grow-3 flex flex-col gap-2 px-4" />
           <QrPreview class="flex-1 flex-grow-2 min-w-300px sticky top-8 self-start px-4 flex flex-col gap-4" />
         </div>
+        <Portal>
+          <ErrorToasts />
+        </Portal>
       </main>
     </QrContextProvider>
   );

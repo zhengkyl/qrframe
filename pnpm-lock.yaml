@@ -31,8 +31,8 @@ importers:
         specifier: ^6.28.3
         version: 6.28.3
       '@kobalte/core':
-        specifier: ^0.13.3
-        version: 0.13.3(solid-js@1.8.17)
+        specifier: ^0.13.4
+        version: 0.13.4(solid-js@1.8.17)
       '@replit/codemirror-vim':
         specifier: ^6.2.1
         version: 6.2.1(@codemirror/commands@6.6.0)(@codemirror/language@6.10.2)(@codemirror/search@6.5.6)(@codemirror/state@6.4.1)(@codemirror/view@6.28.3)
@@ -571,14 +571,8 @@ packages:
   '@floating-ui/core@1.6.1':
     resolution: {integrity: sha512-42UH54oPZHPdRHdw6BgoBD6cg/eVTmVrFcgeRDM3jbO7uxSoipVcmcIGFcA5jmOHO5apcyvBhkSKES3fQJnu7A==}
 
-  '@floating-ui/dom@1.6.4':
-    resolution: {integrity: sha512-0G8R+zOvQsAG1pg2Q99P21jiqxqGBW1iRe/iXHsBRBxnpXKFI8QwbB4x5KmYLggNO5m34IQgOIu9SCRfR/WWiQ==}
-
   '@floating-ui/dom@1.6.7':
     resolution: {integrity: sha512-wmVfPG5o2xnKDU4jx/m4w5qva9FWHcnZ8BvzEe90D/RpwsJaTAVYPEPdQ8sbr/N8zZTAHlZUTQdqg8ZUbzHmng==}
-
-  '@floating-ui/utils@0.2.2':
-    resolution: {integrity: sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw==}
 
   '@floating-ui/utils@0.2.4':
     resolution: {integrity: sha512-dWO2pw8hhi+WrXq1YJy2yCuWoL20PddgGaqTgVe4cOS9Q6qklXCiA1tJEqX6BEwRNSCP84/afac9hd4MS+zEUA==}
@@ -623,8 +617,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@kobalte/core@0.13.3':
-    resolution: {integrity: sha512-7ansvAwiIz2EYuifI8jmGj+ZNG/3R4hdkXZkCEFVKsQzq3vZpuSiAXgrdZeQOR4Zby7gxLOzpakjfv7D/3PPGw==}
+  '@kobalte/core@0.13.4':
+    resolution: {integrity: sha512-ElvazoxoQU/z5pQUdHtXAzjiZA60J+Fo36WgO+j8sMvycIGwrlv+Fdr+uXcLSm1onYOYoSG1+vumD3Ce5OYzzw==}
     peerDependencies:
       solid-js: ^1.8.15
 
@@ -3435,19 +3429,12 @@ snapshots:
 
   '@floating-ui/core@1.6.1':
     dependencies:
-      '@floating-ui/utils': 0.2.2
-
-  '@floating-ui/dom@1.6.4':
-    dependencies:
-      '@floating-ui/core': 1.6.1
-      '@floating-ui/utils': 0.2.2
+      '@floating-ui/utils': 0.2.4
 
   '@floating-ui/dom@1.6.7':
     dependencies:
       '@floating-ui/core': 1.6.1
       '@floating-ui/utils': 0.2.4
-
-  '@floating-ui/utils@0.2.2': {}
 
   '@floating-ui/utils@0.2.4': {}
 
@@ -3506,12 +3493,13 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.4.15
 
-  '@kobalte/core@0.13.3(solid-js@1.8.17)':
+  '@kobalte/core@0.13.4(solid-js@1.8.17)':
     dependencies:
-      '@floating-ui/dom': 1.6.4
+      '@floating-ui/dom': 1.6.7
       '@internationalized/date': 3.5.4
       '@internationalized/number': 3.5.3
       '@kobalte/utils': 0.9.0(solid-js@1.8.17)
+      '@solid-primitives/props': 3.1.11(solid-js@1.8.17)
       solid-js: 1.8.17
       solid-presence: 0.1.7(solid-js@1.8.17)
       solid-prevent-scroll: 0.1.6(solid-js@1.8.17)

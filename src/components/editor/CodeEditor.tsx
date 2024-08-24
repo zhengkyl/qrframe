@@ -19,8 +19,6 @@ import { Switch } from "../Switch";
 type Props = {
   onSave: (s: string) => void;
   initialValue: string;
-  error: string | null;
-  clearError: () => void;
 };
 
 const VIM_MODE_KEY = "vimMode";
@@ -70,10 +68,6 @@ export function CodeEditor(props: Props) {
         // if (!u.docChanged) return;
         const newDirty = u.state.doc.toString() !== props.initialValue;
         setDirty(newDirty);
-
-        if (!newDirty && props.error) {
-          props.clearError();
-        }
       }, 300)
     ),
   ];
@@ -149,11 +143,6 @@ export function CodeEditor(props: Props) {
           </Button>
         </Show>
       </div>
-      <Show when={props.error}>
-        <div class="text-red-100 bg-red-950 px-2 py-1 rounded-md mb-1">
-          {props.error}
-        </div>
-      </Show>
       <div ref={parent!} classList={{ hidden: !showCode() }}></div>
     </div>
   );

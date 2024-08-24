@@ -29,7 +29,7 @@ export const Mondrian = `export const paramsSchema = {
     type: "number",
     min: 0,
     max: 10,
-    default: 3,
+    default: 4,
   },
   Seed: {
     type: "number",
@@ -55,7 +55,7 @@ export function renderSVG(qr, params) {
   const rand = splitmix32(params["Seed"]);
   const margin = params["Margin"];
 
-  const unit = 16;
+  const unit = 20;
   const matrixWidth = qr.version * 4 + 17 + 2 * margin;
   const size = matrixWidth * unit;
 

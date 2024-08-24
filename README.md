@@ -46,6 +46,9 @@ I'm working on more examples.
       <td>
         <img src="./examples/halftone.png" width="300"/>
       </td>
+      <td>
+        <img src="./examples/mondrian.svg" width="300"/>
+      </td>
     </tr>
     <tr>
       <th colspan="3">Styles from <a href="https://qrbtf.com">QRBTF</a></th>
@@ -75,7 +78,7 @@ I'm working on more examples.
   - Choose any preset, customize or even create a new one from scratch via code editor.
   - Define arbitrary ui parameters in code
   - Supports SVG and PNG (canvas)
-  - All code runs _directly_ in browser. There are no safeguards except that which browser vendors have bestowed upon us.
+  - All code runs _directly_ in browser in a web worker with no restrictions.
 
 ## Use existing presets
 
