@@ -6,7 +6,7 @@ import { Dynamic } from "solid-js/web";
 import {
   PARAM_COMPONENTS,
   defaultParams,
-  paramsEqual,
+  deepEqualObj,
   parseParamsSchema,
   type ParamsSchema,
 } from "~/lib/params";
@@ -19,6 +19,8 @@ import { TextInput, TextareaInput } from "../TextInput";
 import { CodeEditor } from "./CodeEditor";
 import { Settings } from "./Settings";
 import { clearToasts, toastError } from "../ErrorToasts";
+import Minus from "lucide-solid/icons/minus";
+import Plus from "lucide-solid/icons/plus";
 
 type Props = {
   class?: string;
@@ -129,13 +131,13 @@ export function Editor(props: Props) {
   const setExistingKey = (key: string) => {
     setRenderKey(key);
     if (isPreset(key)) {
-      saveAndRun(PRESET_CODE[key], false);
+      saveAndRun(PRESET_CODE[key], false, false);
     } else {
       let storedCode = localStorage.getItem(key);
       if (storedCode == null) {
         storedCode = `Failed to load ${key}`;
       }
-      saveAndRun(storedCode, false);
+      saveAndRun(storedCode, false, false);
     }
   };
 
@@ -170,19 +172,23 @@ export function Editor(props: Props) {
     return { type, url, parsedParamsSchema };
   };
 
-  const saveAndRun = async (code: string, changed: boolean) => {
+  const saveAndRun = async (
+    code: string,
+    save: boolean,
+    thumbnail: boolean
+  ) => {
     try {
       setCode(code);
-      if (changed) {
+      if (save) {
         localStorage.setItem(renderKey(), code);
       }
 
       const { type, url, parsedParamsSchema } = await importCode(code);
-      clearToasts()
+      clearToasts();
 
       // batched b/c trigger rendering effect
       batch(() => {
-        if (!paramsEqual(parsedParamsSchema, paramsSchema())) {
+        if (!deepEqualObj(parsedParamsSchema, paramsSchema())) {
           setParams(defaultParams(parsedParamsSchema));
         }
         setParamsSchema(parsedParamsSchema); // always update in case different property order
@@ -195,12 +201,12 @@ export function Editor(props: Props) {
         });
       });
 
-      if (changed) {
+      if (thumbnail) {
         asyncUpdateThumbnail(renderKey(), type, url, parsedParamsSchema);
       }
     } catch (e) {
       console.error("e", e!.toString());
-      toastError("Invalid code", e!.toString())
+      toastError("Invalid code", e!.toString());
     }
   };
 
@@ -280,7 +286,7 @@ export function Editor(props: Props) {
 
     setThumbs(key, LOADING_THUMB);
     setRenderKey(key);
-    saveAndRun(code, true);
+    saveAndRun(code, true, true);
   };
 
   return (
@@ -431,11 +437,64 @@ export function Editor(props: Props) {
           <div class="flex flex-col gap-2 mb-4">
             <For each={Object.entries(paramsSchema())}>
               {([label, { type, ...props }]) => {
+                if (type === "Array") {
+                  return (
+                    <div>
+                      <div class="grid grid-cols-[144px_1fr] justify-items-end gap-y-2">
+                        <div class="text-sm py-2 w-36">{label}</div>
+                        <div class="flex gap-1">
+                          <Show when={props.resizable}>
+                            <FlatButton
+                              class="p-1.5"
+                              onClick={() =>
+                                setParams(label, (prev: any[]) =>
+                                  prev.slice(0, -1)
+                                )
+                              }
+                            >
+                              <Minus />
+                            </FlatButton>
+                            <FlatButton
+                              class="p-1.5"
+                              onClick={() =>
+                                setParams(label, (prev: any[]) => [
+                                  ...prev,
+                                  props.props.default,
+                                ])
+                              }
+                            >
+                              <Plus />
+                            </FlatButton>
+                          </Show>
+                        </div>
+                        <For each={params[label]}>
+                          {(v, i) => (
+                            <>
+                              <div class="text-sm py-2 pl-4 w-full text-left">
+                                {i()}
+                              </div>
+                              <Dynamic
+                                component={
+                                  PARAM_COMPONENTS[
+                                    props.props
+                                      .type as keyof typeof PARAM_COMPONENTS
+                                  ]
+                                }
+                                {...props.props}
+                                value={v}
+                                setValue={(v: any) => setParams(label, i(), v)}
+                              />
+                            </>
+                          )}
+                        </For>
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <>
                     <div class="flex justify-between">
-                      <div class="text-sm py-2 w-48">{label}</div>
-                      {/* @ts-expect-error lose type b/c type and props destructured */}
+                      <div class="text-sm py-2 w-36 shrink-0">{label}</div>
                       <Dynamic
                         component={PARAM_COMPONENTS[type]}
                         {...props}
@@ -450,11 +509,11 @@ export function Editor(props: Props) {
           </div>
           <CodeEditor
             initialValue={code()}
-            onSave={(code) => {
+            onSave={(code, updateThumbnail) => {
               if (presetKeys.includes(renderKey())) {
                 createAndSelectFunc(renderKey(), code);
               } else {
-                saveAndRun(code, true);
+                saveAndRun(code, true, updateThumbnail);
               }
             }}
           />

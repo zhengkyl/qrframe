@@ -17,7 +17,7 @@ import { debounce } from "~/lib/util";
 import { Switch } from "../Switch";
 
 type Props = {
-  onSave: (s: string) => void;
+  onSave: (s: string, thumbnail: boolean) => void;
   initialValue: string;
 };
 
@@ -37,6 +37,8 @@ export function CodeEditor(props: Props) {
     localStorage.setItem(VIM_MODE_KEY, v ? "true" : "false");
   };
 
+  const [updateThumbnail, setUpdateThumbnail] = createSignal(true);
+
   const [dirty, setDirty] = createSignal(false);
 
   const extensions = [
@@ -54,7 +56,7 @@ export function CodeEditor(props: Props) {
         key: "Mod-s",
         linux: "Ctrl-s", // untested, but might be necessary
         run: (view) => {
-          props.onSave(view.state.doc.toString());
+          props.onSave(view.state.doc.toString(), updateThumbnail());
           return true;
         },
       },
@@ -134,9 +136,20 @@ export function CodeEditor(props: Props) {
               onChange={(e) => setVimMode(e.target.checked)}
             />
           </label>
+          <label class="flex items-center gap-1 text-sm">
+            Update thumbnail
+            <input
+              class="h-4 w-4"
+              type="checkbox"
+              checked={updateThumbnail()}
+              onChange={(e) => setUpdateThumbnail(e.target.checked)}
+            />
+          </label>
           <Button
             disabled={!dirty()}
-            onMouseDown={() => props.onSave(view.state.doc.toString())}
+            onMouseDown={() =>
+              props.onSave(view.state.doc.toString(), updateThumbnail())
+            }
             class="bg-green-700 border rounded-md hover:bg-green-700/90 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(bg-transparent text-fore-base pointer-events-none opacity-50) transition-colors px-3 min-w-150px"
           >
             {dirty() ? "Save" : "No changes"}

@@ -12,6 +12,7 @@ import {
 import type { Params } from "~/lib/params";
 import { FlatButton } from "../Button";
 import { clearToasts, toastError } from "../ErrorToasts";
+import { unwrap } from "solid-js/store";
 
 function download(href: string, name: string) {
   const a = document.createElement("a");
@@ -85,8 +86,10 @@ function RenderedQrCode() {
 
     // Track store without leaking extra params
     const paramsCopy: Params = {};
+    const unwrapped = unwrap(params)
     Object.keys(paramsSchema()).forEach((key) => {
-      paramsCopy[key] = params[key];
+      params[key]; // access to track
+      paramsCopy[key] = unwrapped[key];
     });
 
     // all reactive deps must be above early return!

@@ -4,7 +4,7 @@ import { NumberInput } from "~/components/NumberInput";
 import { Select } from "~/components/Select";
 import { Switch } from "~/components/Switch";
 
-const PARAM_TYPES = ["boolean", "number", "Color", "Select", "File"];
+const PARAM_TYPES = ["boolean", "number", "Color", "Select", "File", "Array"];
 
 export const PARAM_COMPONENTS = {
   boolean: Switch,
@@ -17,38 +17,51 @@ export const PARAM_COMPONENTS = {
 export const PARAM_DEFAULTS = {
   boolean: false,
   number: 0,
-  Color: "rgb(0,0,0)",
+  Color: "#000000",
   // Select: //default is first option
   File: null,
+  Array: [],
 };
 
-export function paramsEqual(
-  paramsSchemaA: ParamsSchema,
-  paramsSchemaB: ParamsSchema
-) {
-  const labelsA = Object.keys(paramsSchemaA);
-  if (labelsA.length !== Object.keys(paramsSchemaB).length) return false;
+type PARAM_VALUE_TYPES = {
+  boolean: boolean;
+  number: number;
+  Color: string;
+  Select: any;
+  File: File | null;
+  Array: any[];
+};
 
-  for (const label of labelsA) {
-    if (!paramsSchemaB.hasOwnProperty(label)) return false;
+export type Params = {
+  [key: string]: PARAM_VALUE_TYPES[keyof PARAM_VALUE_TYPES];
+};
 
-    const propsA = Object.keys(paramsSchemaA[label]);
-    if (propsA.length != Object.keys(paramsSchemaB[label]).length) return false;
+export type ParamsSchema = {
+  [label: string]: Required<RawParamsSchema>;
+};
 
-    for (const prop of propsA) {
-      if (prop === "options") {
-        // @ts-expect-error Object.keys() returns keys
-        const optionsA = paramsSchemaA[label][prop] as string[];
-        // @ts-expect-error Object.keys() returns keys
-        const optionsB = paramsSchemaA[label][prop] as string[];
+export type RawParamsSchema = {
+  type: keyof PARAM_VALUE_TYPES;
+  default?: any;
+  [key: string]: any;
+};
 
-        if (optionsA.length !== optionsB.length) return false;
-        if (optionsA.some((option) => !optionsB.includes(option))) return false;
-      } else {
-        // @ts-expect-error Object.keys() returns keys
-        if (paramsSchemaA[label][prop] !== paramsSchemaB[label][prop])
-          return false;
-      }
+export function deepEqualObj(a: any, b: any) {
+  if (Object.keys(a).length !== Object.keys(b).length) {
+    return false;
+  }
+
+  for (const key in a) {
+    if (!b.hasOwnProperty(key)) return false;
+    if (
+      typeof a[key] === "object" &&
+      a[key] != null &&
+      typeof b[key] === "object" &&
+      b[key] != null
+    ) {
+      if (!deepEqualObj(a[key], b[key])) return false;
+    } else if (a[key] !== b[key]) {
+      return false;
     }
   }
 
@@ -63,42 +76,59 @@ export function parseParamsSchema(rawParamsSchema: any) {
   let parsedParamsSchema: ParamsSchema = {};
   if (typeof rawParamsSchema === "object") {
     for (const [key, value] of Object.entries(rawParamsSchema)) {
-      if (
-        value == null ||
-        typeof value !== "object" ||
-        !("type" in value) ||
-        typeof value.type !== "string" ||
-        !PARAM_TYPES.includes(value.type)
-      ) {
-        continue;
-      } else if (value.type === "Select") {
-        if (
-          !("options" in value) ||
-          !Array.isArray(value.options) ||
-          value.options.length === 0
-        ) {
-          continue;
-        }
-      }
-
-      // === undefined b/c null is a valid default value for ImageInput
-      // @ts-expect-error yes .default might be undefined thanks typescript
-      if (value.default === undefined) {
-        if (value.type === "Select") {
-          // @ts-expect-error adding default, options validated above
-          value.default = value.options[0];
-        } else {
-          // @ts-expect-error adding default, type validated above
-          value.default = PARAM_DEFAULTS[value.type];
-        }
-      }
       // TODO so user set default could be wrong type
-      // @ts-expect-error prop types not validated
-      parsedParamsSchema[key] = value;
+      const parsedField = parseField(value);
+      if (parsedField == null) continue;
+      parsedParamsSchema[key] = parsedField;
+    }
+  }
+  return parsedParamsSchema;
+}
+
+function parseField(value: any) {
+  if (
+    value == null ||
+    typeof value !== "object" ||
+    !("type" in value) ||
+    typeof value.type !== "string" ||
+    !PARAM_TYPES.includes(value.type)
+  ) {
+    return null;
+  } else if (value.type === "Select") {
+    if (
+      !("options" in value) ||
+      !Array.isArray(value.options) ||
+      value.options.length === 0
+    ) {
+      return null;
+    }
+  } else if (value.type === "Array") {
+    if (!("props" in value)) {
+      return null;
+    }
+    const innerProps = parseField(value.props);
+    if (innerProps == null || innerProps.default === undefined) {
+      return null;
+    }
+    value.props = innerProps;
+  }
+
+  // === undefined b/c null is a valid default value for ImageInput
+  if (value.default === undefined) {
+    if (value.type === "Select") {
+      value.default = value.options[0];
+    } else if (value.type === "Array") {
+      value.default = Array.from(
+        { length: value.defaultLength ?? 1 },
+        () => value.props.default
+      );
+    } else {
+      // @ts-expect-error adding default, type validated above
+      value.default = PARAM_DEFAULTS[value.type];
     }
   }
 
-  return parsedParamsSchema;
+  return value;
 }
 
 export function defaultParams(paramsSchema: ParamsSchema) {
@@ -108,50 +138,3 @@ export function defaultParams(paramsSchema: ParamsSchema) {
   });
   return defaultParams;
 }
-
-type PARAM_VALUE_TYPES = {
-  boolean: boolean;
-  number: number;
-  Color: string;
-  Select: never; // see Params, uses options field instead of this mapping
-  File: File | null;
-};
-
-export type Params<T extends RawParamsSchema = ParamsSchema> = {
-  [K in keyof T]: T[K] extends { type: "Select" }
-    ? T[K]["options"][number]
-    : PARAM_VALUE_TYPES[T[K]["type"]];
-} & {}; // & {} necessary for readable typehints, see ts "prettify"
-
-export type ParamsSchema = {
-  [label: string]: Required<RawParamsSchema[string]>;
-};
-
-export type RawParamsSchema = SchemaFromMapping<typeof PARAM_COMPONENTS>;
-
-/**
- * Given object mapping keys to components, returns union of [key, props]
- */
-type Step1<T extends { [key: keyof any]: (...args: any) => any }> = {
-  [K in keyof T]: [K, Parameters<T[K]>[0]];
-}[keyof T];
-
-/**
- * Given union of [key, props]:
- *
- * adds default to props based on type of value and removes value and setValue from props
- */
-type Step2<T extends [keyof any, { [prop: string]: any }]> = T extends any
-  ? [T[0], Omit<T[1], "value" | "setValue"> & { default?: T[1]["value"] }]
-  : never;
-
-/**
- * Converts each tuple to an object with a type corresponding to key
- * (discriminated union of component props) assignable to any label
- */
-type Step3<T extends [keyof any, { [prop: string]: any }]> = {
-  [label: string]: T extends any ? { type: T[0] } & T[1] : never;
-};
-
-type SchemaFromMapping<T extends { [key: string]: (...args: any) => any }> =
-  Step3<Step2<Step1<T>>>;
