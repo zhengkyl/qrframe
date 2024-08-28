@@ -25,7 +25,7 @@ I'm working on more examples.
       </td>
     </tr>
     <tr>
-      <th colspan="3">Using external libs like <a href="https://roughjs.com/">Rough.js</a></th>
+      <th colspan="3">Import external libs, fetch external files, etc </th>
     </tr>
     <td>
       <img src="./examples/drawing1.png"/>
@@ -33,25 +33,11 @@ I'm working on more examples.
     <td>
       <img src="./examples/drawing2.png"/>
     </td>
-    <td>
-      <img src="./examples/drawing3.png"/>
-    </td>
-    <tr>
-      <th colspan="3">Variations of existing styles</th>
-    </tr>
-    <tr>
-      <td>
-        <img src="./examples/quantum.svg" width="300"/>
-      </td>
       <td>
         <img src="./examples/halftone.png" width="300"/>
       </td>
-      <td>
-        <img src="./examples/mondrian.svg" width="300"/>
-      </td>
-    </tr>
     <tr>
-      <th colspan="3">Styles from <a href="https://qrbtf.com">QRBTF</a></th>
+      <th colspan="3">Styles copied from <a href="https://qrbtf.com">QRBTF</a></th>
     </tr>
     <tr>
       <td>
@@ -62,6 +48,20 @@ I'm working on more examples.
       </td>
       <td>
         <img src="./examples/alien.svg" width="300"/>
+      </td>
+    </tr>
+    <tr>
+      <th colspan="3">And many more!</th>
+    </tr>
+    <tr>
+      <td>
+        <img src="./examples/quantum.svg" width="300"/>
+      </td>
+      <td>
+        <img src="./examples/mondrian.svg" width="300"/>
+      </td>
+      <td>
+        <img src="./examples/mosaic.svg" width="300"/>
       </td>
     </tr>
   </tbody>

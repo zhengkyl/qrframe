@@ -5,19 +5,15 @@ export const paramsSchema = {
     max: 10,
     default: 2,
   },
-  Dark1: {
-    type: "Color",
-    default: "#ad1010",
+  Foreground: {
+    type: "Array",
+    props: {
+      type: "Color",
+    },
+    resizable: true,
+    default: ["#ad1010","#172fce","#b39906"]
   },
-  Dark2: {
-    type: "Color",
-    default: "#172fce",
-  },
-  Dark3: {
-    type: "Color",
-    default: "#b39906",
-  },
-  Light: {
+  Background: {
     type: "Color",
     default: "#ffffff",
   },
@@ -65,13 +61,8 @@ export function renderSVG(qr, params) {
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">`;
   svg += `<rect width="${size}" height="${size}" fill="${params["Lines"]}"/>`;
 
-  let lightLayer = `<path fill="${params["Light"]}" d="`;
-  const darkLayers = [
-    `<path fill="${params["Dark1"]}" d="`,
-    `<path fill="${params["Dark2"]}" d="`,
-    `<path fill="${params["Dark3"]}" d="`,
-    `<path fill="${params["Dark4"]}" d="`,
-  ];
+  let lightLayer = `<path fill="${params["Background"]}" d="`;
+  const darkLayers = params["Foreground"].map((color) => `<path fill="${color}" d="`)
 
   const visited = Array.from({ length: matrixWidth * matrixWidth }).fill(false);
   const matrix = Array.from({ length: matrixWidth * matrixWidth }).fill(0);
@@ -130,15 +121,13 @@ export function renderSVG(qr, params) {
       layer += `M${x * unit + offset},${y * unit + offset}h${hSide}v${vSide}h-${hSide}z`;
 
       if (on) {
-        darkLayers[Math.floor(rand() * 3)] += layer;
+        darkLayers[Math.floor(rand() * darkLayers.length)] += layer;
       } else {
         lightLayer += layer;
       }
     }
   }
-  svg += darkLayers[0] + `"/>`;
-  svg += darkLayers[1] + `"/>`;
-  svg += darkLayers[2] + `"/>`;
+  darkLayers.forEach((layer) => svg += layer + `"/>`)
   svg += lightLayer + `"/>`;
   svg += `</svg>`;
 

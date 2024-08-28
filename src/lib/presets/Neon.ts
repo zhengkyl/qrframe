@@ -1,22 +1,15 @@
-export const Neon = `const COLORS = {
-  Cyberpunk: {
-    bg: "#101529",
-    fg: ["#fb51dd", "#f2cffa", "#aefdfd", "#54a9fe"],
+export const Neon = `export const paramsSchema = {
+  Foreground: {
+    type: "Array" ,
+    props: {
+       type: "Color",
+    },
+    resizable: true,
+    default: [ "#fb51dd", "#f2cffa", "#aefdfd", "#54a9fe" ]
   },
-  Glow: {
-    bg: "#1c1c1c",
-    fg: ["#9af86d", "#e44ff0", "#56ebe0", "#6a5afc", "#f8c76b"],
-  },
-  Arcade: {
-    bg: "#000",
-    fg: ["#ffbe0b", "#fb5607", "#ff006e", "#8338ec", "#3a86ff"],
-  },
-};
-
-export const paramsSchema = {
-  "Color palette": {
-    type: "Select",
-    options: Object.keys(COLORS),
+  Background: {
+     type: "Color",
+      default: "#101529"
   },
   Margin: {
     type: "number",
@@ -89,8 +82,8 @@ function splitmix32(a) {
 export function renderSVG(qr, params) {
   const rand = splitmix32(params["Seed"]);
   const margin = params["Margin"];
-  const colors = COLORS[params["Color palette"]].fg;
-  const bg = COLORS[params["Color palette"]].bg;
+  const colors = params["Foreground"];
+  const bg = params["Background"];
 
   const qrWidth = qr.version * 4 + 17;
   const matrixWidth = qrWidth + 2 * margin;

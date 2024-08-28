@@ -61,14 +61,15 @@ export function Editor(props: Props) {
     Circle: "",
     Camo: "",
     Neon: "",
-    Drawing: "",
-    Blocks: "",
+    Mosaic: "",
     Mondrian: "",
-    Bubbles: "",
-    Alien: "",
     Quantum: "",
+    Drawing: "",
     Halftone: "",
     Minimal: "",
+    Blocks: "",
+    Bubbles: "",
+    Alien: "",
   });
 
   let thumbWorker: Worker | null = null;
