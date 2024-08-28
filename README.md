@@ -11,6 +11,25 @@ I'm working on more examples.
 <table>
   <tbody>
     <tr>
+      <th colspan="3">Creative possibilities</th>
+    </tr>
+    <tr>
+      <td>
+        <img src="./examples/quantum.svg" width="300"/>
+      </td>
+      <td>
+        <img src="./examples/mondrian.svg" width="300"/>
+      </td>
+      <td>
+        <img src="./examples/glass.svg" width="300"/>
+      </td>
+    </tr>
+    <td>
+      <img src="./examples/tile.png"/>
+    </td>
+    <tr>
+    </tr>
+    <tr>
       <th colspan="3">Extending with noise</th>
     </tr>
     <tr>
@@ -50,20 +69,7 @@ I'm working on more examples.
         <img src="./examples/alien.svg" width="300"/>
       </td>
     </tr>
-    <tr>
-      <th colspan="3">And many more!</th>
-    </tr>
-    <tr>
-      <td>
-        <img src="./examples/quantum.svg" width="300"/>
-      </td>
-      <td>
-        <img src="./examples/mondrian.svg" width="300"/>
-      </td>
-      <td>
-        <img src="./examples/mosaic.svg" width="300"/>
-      </td>
-    </tr>
+
   </tbody>
 </table>
 
@@ -77,7 +83,7 @@ I'm working on more examples.
 - Customize appearance:
   - Choose any preset, customize or even create a new one from scratch via code editor.
   - Define arbitrary ui parameters in code
-  - Supports SVG and PNG (canvas)
+  - Supports SVG (string) and PNG (canvas)
   - All code runs _directly_ in browser in a web worker with no restrictions.
 
 ## Use existing presets

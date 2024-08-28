@@ -1,4 +1,4 @@
-export const Mosaic = `export const paramsSchema = {
+export const Glass = `export const paramsSchema = {
   Margin: {
     type: "number",
     min: 0,

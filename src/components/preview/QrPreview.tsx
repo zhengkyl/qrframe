@@ -67,7 +67,6 @@ function RenderedQrCode() {
   const {
     outputQr: _outputQr,
     render,
-    renderKey,
     params,
     paramsSchema,
   } = useQrContext();
@@ -88,8 +87,13 @@ function RenderedQrCode() {
     const paramsCopy: Params = {};
     const unwrapped = unwrap(params)
     Object.keys(paramsSchema()).forEach((key) => {
-      params[key]; // access to track
       paramsCopy[key] = unwrapped[key];
+
+      // access to track
+      params[key]; 
+      if (Array.isArray(unwrapped[key])) {
+        params[key].forEach((_: any)=>{});
+      }
     });
 
     // all reactive deps must be above early return!

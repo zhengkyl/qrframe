@@ -4,22 +4,24 @@ import { Bubbles } from "./presets/Bubbles";
 import { Camo } from "./presets/Camo";
 import { Circle } from "./presets/Circle";
 import { Drawing } from "./presets/Drawing";
+import { Glass } from "./presets/Glass";
 import { Halftone } from "./presets/Halftone";
 import { Minimal } from "./presets/Minimal";
 import { Mondrian } from "./presets/Mondrian";
-import { Mosaic } from "./presets/Mosaic";
 import { Neon } from "./presets/Neon";
 import { Quantum } from "./presets/Quantum";
 import { Square } from "./presets/Square";
+import { Tile } from "./presets/Tile";
 
 export const PRESET_CODE = {
   Square,
   Circle,
   Camo,
   Neon,
-  Mosaic,
+  Glass,
   Mondrian,
   Quantum,
+  Tile,
   Drawing,
   Halftone,
   Minimal,

@@ -1,6 +1,14 @@
 import Pencil from "lucide-solid/icons/pencil";
 import Trash2 from "lucide-solid/icons/trash-2";
-import { For, Show, batch, createSignal, onMount, type JSX } from "solid-js";
+import {
+  For,
+  Index,
+  Show,
+  batch,
+  createSignal,
+  onMount,
+  type JSX,
+} from "solid-js";
 import { createStore } from "solid-js/store";
 import { Dynamic } from "solid-js/web";
 import {
@@ -56,21 +64,7 @@ export function Editor(props: Props) {
 
   const [code, setCode] = createSignal(PRESET_CODE.Square);
   const [funcKeys, _setFuncKeys] = createStore<string[]>([]);
-  const [thumbs, setThumbs] = createStore<Thumbs>({
-    Square: "",
-    Circle: "",
-    Camo: "",
-    Neon: "",
-    Mosaic: "",
-    Mondrian: "",
-    Quantum: "",
-    Drawing: "",
-    Halftone: "",
-    Minimal: "",
-    Blocks: "",
-    Bubbles: "",
-    Alien: "",
-  });
+  const [thumbs, setThumbs] = createStore<Thumbs>({} as Thumbs);
 
   let thumbWorker: Worker | null = null;
   const timeoutIdMap = new Map<NodeJS.Timeout, string>();
@@ -468,11 +462,11 @@ export function Editor(props: Props) {
                             </FlatButton>
                           </Show>
                         </div>
-                        <For each={params[label]}>
+                        <Index each={params[label]}>
                           {(v, i) => (
                             <>
                               <div class="text-sm py-2 pl-4 w-full text-left">
-                                {i()}
+                                {i}
                               </div>
                               <Dynamic
                                 component={
@@ -482,12 +476,12 @@ export function Editor(props: Props) {
                                   ]
                                 }
                                 {...props.props}
-                                value={v}
-                                setValue={(v: any) => setParams(label, i(), v)}
+                                value={v()}
+                                setValue={(v: any) => setParams(label, i, v)}
                               />
                             </>
                           )}
-                        </For>
+                        </Index>
                       </div>
                     </div>
                   );
