@@ -74,9 +74,9 @@ function splitmix32(a) {
 export function renderSVG(qr, params) {
   const rand = splitmix32(params["Seed"]);
 
-  const range = params["Randomize circle size"]
-    ? (min, max) => Math.trunc(100 * (rand() * (max - min) + min)) / 100
-    : (min, max) => Math.trunc(100 * ((max - min) / 2 + min)) / 100;
+  const rangeStr = params["Randomize circle size"]
+    ? (min, max) => (rand() * (max - min) + min).toFixed(2)
+    : (min, max) => ((max - min) / 2 + min).toFixed(2);
 
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
@@ -132,7 +132,7 @@ export function renderSVG(qr, params) {
         !visited(x + 1, y + 1) &&
         !visited(x + 2, y + 1)
       ) {
-        layer1 += `<circle cx="${x + 1.5}" cy="${y + 1.5}" r="${range(0.8, 1.2)}"/>`;
+        layer1 += `<circle cx="${x + 1.5}" cy="${y + 1.5}" r="${rangeStr(0.8, 1.2)}"/>`;
 
         setVisited(x + 1, y);
         setVisited(x, y + 1);
@@ -150,24 +150,24 @@ export function renderSVG(qr, params) {
         !visited(x + 1, y) &&
         !visited(x + 1, y + 1)
       ) {
-        layer2 += `<circle cx="${x + 1}" cy="${y + 1}" r="${range(0.4, 0.6)}"/>`;
+        layer2 += `<circle cx="${x + 1}" cy="${y + 1}" r="${rangeStr(0.4, 0.6)}"/>`;
         setVisited(x + 1, y);
         setVisited(x, y + 1);
         setVisited(x + 1, y + 1);
         continue;
       }
       if (x < matrixWidth - 1 && matrix(x + 1, y) & 1 && !visited(x + 1, y)) {
-        layer3 += `<circle cx="${x + 1}" cy="${y + 0.5}" r="${range(0.4, 0.6)}"/>`;
+        layer3 += `<circle cx="${x + 1}" cy="${y + 0.5}" r="${rangeStr(0.4, 0.6)}"/>`;
         setVisited(x + 1, y);
         continue;
       }
       if (y < matrixWidth - 1 && matrix(x, y + 1) & 1 && !visited(x, y + 1)) {
-        layer3 += `<circle cx="${x + 0.5}" cy="${y + 1}" r="${range(0.3, 0.5)}"/>`;
+        layer3 += `<circle cx="${x + 0.5}" cy="${y + 1}" r="${rangeStr(0.3, 0.5)}"/>`;
         setVisited(x, y + 1);
         continue;
       }
 
-      layer4 += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="${range(0.2, 0.4)}"/>`;
+      layer4 += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="${rangeStr(0.2, 0.4)}"/>`;
     }
   }
 

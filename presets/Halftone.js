@@ -1,3 +1,4 @@
+// Halftone is a misnomer, but that's what this type of QR code is known as
 export const paramsSchema = {
   Image: {
     type: "File",

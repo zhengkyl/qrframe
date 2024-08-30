@@ -18,6 +18,7 @@
     "@replit/codemirror-vim": "^6.2.1",
     "@solidjs/router": "^0.13.3",
     "@solidjs/start": "^1.0.0",
+    "@thisbeyond/solid-dnd": "^0.7.5",
     "@unocss/reset": "^0.59.4",
     "codemirror": "^6.0.1",
     "fuqr": "^0.0.6",

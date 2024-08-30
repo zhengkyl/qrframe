@@ -3,6 +3,7 @@ import { Blocks } from "./presets/Blocks";
 import { Bubbles } from "./presets/Bubbles";
 import { Camo } from "./presets/Camo";
 import { Circle } from "./presets/Circle";
+import { Dots } from "./presets/Dots";
 import { Drawing } from "./presets/Drawing";
 import { Glass } from "./presets/Glass";
 import { Halftone } from "./presets/Halftone";
@@ -24,6 +25,7 @@ export const PRESET_CODE = {
   Tile,
   Drawing,
   Halftone,
+  Dots,
   Minimal,
   Blocks,
   Bubbles,

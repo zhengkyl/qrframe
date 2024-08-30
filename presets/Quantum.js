@@ -62,10 +62,8 @@ function splitmix32(a) {
 
 export function renderSVG(qr, params) {
   const rand = splitmix32(params["Seed"]);
-  function range(min, max) {
-    const t = Math.trunc(100 * (rand() * (max - min) + min)) / 100;
-    return t;
-  }
+  const range = (min, max) =>
+    Math.trunc(100 * (rand() * (max - min) + min)) / 100;
 
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
@@ -128,7 +126,7 @@ export function renderSVG(qr, params) {
     visitArray[y * matrixWidth + x] = true;
     dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="${range(0.3, 0.5)}"/>`;
   }
-  function visit(x, y, center) {
+  function visit(x, y) {
     visitArray[y * matrixWidth + x] = true;
     dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="0.2"/>`;
   }

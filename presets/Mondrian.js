@@ -11,7 +11,7 @@ export const paramsSchema = {
       type: "Color",
     },
     resizable: true,
-    default: ["#ad1010","#172fce","#b39906"]
+    default: ["#860909","#0e21a0","#95800f"]
   },
   Background: {
     type: "Color",
@@ -23,9 +23,9 @@ export const paramsSchema = {
   },
   "Line thickness": {
     type: "number",
-    min: 0,
+    min: -10,
     max: 10,
-    default: 4,
+    default: 2,
   },
   Seed: {
     type: "number",

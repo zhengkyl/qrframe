@@ -27,6 +27,9 @@ I'm working on more examples.
     <td>
       <img src="./examples/tile.png"/>
     </td>
+    <td>
+      <img src="./examples/dots.svg" width="300"/>
+    </td>
     <tr>
     </tr>
     <tr>

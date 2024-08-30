@@ -13,6 +13,7 @@ import type { Params } from "~/lib/params";
 import { FlatButton } from "../Button";
 import { clearToasts, toastError } from "../ErrorToasts";
 import { unwrap } from "solid-js/store";
+import { SplitButton } from "../SplitButton";
 
 function download(href: string, name: string) {
   const a = document.createElement("a");
@@ -64,12 +65,7 @@ export default function QrPreview(props: Props) {
  *  Running the effect in the ref function caused double rendering for future mounts.
  */
 function RenderedQrCode() {
-  const {
-    outputQr: _outputQr,
-    render,
-    params,
-    paramsSchema,
-  } = useQrContext();
+  const { outputQr: _outputQr, render, params, paramsSchema } = useQrContext();
   const outputQr = _outputQr as () => OutputQr;
 
   let svgParent: HTMLDivElement;
@@ -85,14 +81,14 @@ function RenderedQrCode() {
 
     // Track store without leaking extra params
     const paramsCopy: Params = {};
-    const unwrapped = unwrap(params)
+    const unwrapped = unwrap(params);
     Object.keys(paramsSchema()).forEach((key) => {
       paramsCopy[key] = unwrapped[key];
 
       // access to track
-      params[key]; 
+      params[key];
       if (Array.isArray(unwrapped[key])) {
-        params[key].forEach((_: any)=>{});
+        params[key].forEach((_: any) => {});
       }
     });
 
@@ -185,74 +181,74 @@ function RenderedQrCode() {
           {canvasDims().width}x{canvasDims().height} px
         </div>
       </Show>
-      <div class="px-2 grid grid-cols-2 gap-y-2 text-sm">
-        <div class="">
-          Version
-          <div class="font-bold text-base">
-            {outputQr().version} ({outputQr().version * 4 + 17}x
-            {outputQr().version * 4 + 17} matrix)
-          </div>
-        </div>
-        <div class="">
-          Error tolerance{" "}
-          <div class="font-bold text-base whitespace-pre">
-            {ECL_NAMES[outputQr().ecl]} ({ECL_LABELS[outputQr().ecl]})
-          </div>
-        </div>
-        <div class="">
-          Mask{" "}
-          <span class="font-bold text-base">{MASK_KEY[outputQr().mask]}</span>
-        </div>
-        <div class="">
-          Encoding{" "}
-          <span class="font-bold text-base">{MODE_KEY[outputQr().mode]}</span>
+      <div>
+        <div class="font-bold text-sm pb-2">Downloads</div>
+        <div class="grid grid-cols-2 gap-2">
+          <SplitButton
+            onClick={async (width, height) => {
+              if (render()?.type === "canvas") {
+                download(canvas.toDataURL("image/png"), `${filename()}.png`);
+              } else {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d")!;
+                canvas.width = width;
+                canvas.height = height;
+
+                const url = URL.createObjectURL(
+                  new Blob([svgParent.innerHTML], { type: "image/svg+xml" })
+                );
+                const img = new Image();
+                img.src = url;
+                await img.decode();
+                ctx.drawImage(img, 0, 0, width, height);
+
+                download(canvas.toDataURL("image/png"), `${filename()}.png`);
+                URL.revokeObjectURL(url);
+              }
+            }}
+          />
+          <Show when={render()?.type === "svg"}>
+            <FlatButton
+              class="inline-flex justify-center items-center gap-1 px-6 py-2"
+              onClick={async () => {
+                const url = URL.createObjectURL(
+                  new Blob([svgParent.innerHTML], { type: "image/svg+xml" })
+                );
+                download(url, `${filename()}.svg`);
+                URL.revokeObjectURL(url);
+              }}
+            >
+              <Download size={20} />
+              SVG
+            </FlatButton>
+          </Show>
         </div>
       </div>
-      <div class="flex gap-2">
-        <FlatButton
-          class="inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
-          onClick={async () => {
-            if (canvas != null) {
-              download(canvas.toDataURL("image/png"), `${filename()}.png`);
-            } else {
-              const canvas = document.createElement("canvas");
-              const ctx = canvas.getContext("2d")!;
-              // TODO allow adjust resolution/aspect ratio
-              const size = 300; //(outputQr().version * 4 + 17) * 10;
-              canvas.width = size;
-              canvas.height = size;
-
-              const url = URL.createObjectURL(
-                new Blob([svgParent.innerHTML], { type: "image/svg+xml" })
-              );
-              const img = new Image();
-              img.src = url;
-              await img.decode();
-              ctx.drawImage(img, 0, 0, size, size);
-
-              download(canvas.toDataURL("image/png"), `${filename()}.png`);
-              URL.revokeObjectURL(url);
-            }
-          }}
-        >
-          <Download size={20} />
-          Download PNG
-        </FlatButton>
-        <Show when={render()?.type === "svg"}>
-          <FlatButton
-            class="inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
-            onClick={async () => {
-              const url = URL.createObjectURL(
-                new Blob([svgParent.innerHTML], { type: "image/svg+xml" })
-              );
-              download(url, `${filename()}.svg`);
-              URL.revokeObjectURL(url);
-            }}
-          >
-            <Download size={20} />
-            Download SVG
-          </FlatButton>
-        </Show>
+      <div>
+        <div class="font-bold text-sm pb-2">QR Metadata</div>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="">
+            Version
+            <div class="font-bold text-base">
+              {outputQr().version} ({outputQr().version * 4 + 17}x
+              {outputQr().version * 4 + 17} matrix)
+            </div>
+          </div>
+          <div class="">
+            Error tolerance{" "}
+            <div class="font-bold text-base whitespace-pre">
+              {ECL_NAMES[outputQr().ecl]} ({ECL_LABELS[outputQr().ecl]})
+            </div>
+          </div>
+          <div class="">
+            Mask{" "}
+            <span class="font-bold text-base">{MASK_KEY[outputQr().mask]}</span>
+          </div>
+          <div class="">
+            Encoding{" "}
+            <span class="font-bold text-base">{MODE_KEY[outputQr().mode]}</span>
+          </div>
+        </div>
       </div>
     </>
   );

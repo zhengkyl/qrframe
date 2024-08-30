@@ -1,28 +1,66 @@
 import { Select as KSelect } from "@kobalte/core/select";
 import ChevronsUpDown from "lucide-solid/icons/chevrons-up-down";
-import Check from "lucide-solid/icons/check";
+import { createSignal } from "solid-js";
+import { FilledDot } from "./svg";
 
-type Props<T extends string> = {
-  options: T[];
-  value: T;
-  setValue: (v: T) => void;
+type Props = {
+  options: string[];
+  value: string;
+  setValue: (v: string) => void;
 };
 
-export function Select<T extends string>(props: Props<T>) {
+export function Select(props: Props) {
+  // props.value changes on focus/highlight for quick preview
+  // but the old value should be restored on esc/unfocus
+  const [retainedValue, setRetainedValue] = createSignal(props.value);
   return (
     <KSelect
-      value={props.value}
-      onChange={(v) => v != null && props.setValue(v)}
+      value={retainedValue()}
+      onChange={(v) => {
+        if (v != null) {
+          props.setValue(v);
+          setRetainedValue(v);
+        }
+      }}
+      onOpenChange={(isOpen) => {
+        if (!isOpen && props.value !== retainedValue()) {
+          props.setValue(retainedValue());
+        }
+      }}
+      // @ts-expect-error e is typed wtf
+      onKeyDown={(e) => {
+        const index = props.options.indexOf(props.value);
+        switch (e.key) {
+          case "ArrowDown":
+            props.setValue(
+              props.options[Math.min(index + 1, props.options.length - 1)]
+            );
+            break;
+          case "ArrowUp":
+            props.setValue(props.options[Math.max(index - 1, 0)]);
+            break;
+          case "Home":
+            props.setValue(props.options[0]);
+            break;
+          case "End":
+            props.setValue(props.options[props.options.length - 1]);
+            break;
+        }
+      }}
       class="w-[160px]"
       options={props.options}
+      gutter={4}
       itemComponent={(itemProps) => (
         <KSelect.Item
-          class="flex justify-between items-center pl-2 pr-1 py-2 rounded select-none data-[highlighted]:(bg-fore-base/10 outline-none)"
+          class="flex justify-between items-center p-2 rounded select-none data-[highlighted]:(bg-fore-base/10 outline-none)"
           item={itemProps.item}
+          onMouseEnter={() => {
+            props.setValue(itemProps.item.key);
+          }}
         >
           <KSelect.Label>{itemProps.item.rawValue}</KSelect.Label>
           <KSelect.ItemIndicator>
-            <Check class="h-4 w-4" />
+            <FilledDot size={20} class="-me-1"/>
           </KSelect.ItemIndicator>
         </KSelect.Item>
       )}
@@ -32,61 +70,11 @@ export function Select<T extends string>(props: Props<T>) {
           {(state) => state.selectedOption() as string}
         </KSelect.Value>
         <KSelect.Icon>
-          <ChevronsUpDown class="h-4 w-4" />
+          <ChevronsUpDown size={16}/>
         </KSelect.Icon>
       </KSelect.Trigger>
       <KSelect.Portal>
-        <KSelect.Content class="bg-back-base rounded-md border p-1">
-          <KSelect.Listbox />
-        </KSelect.Content>
-      </KSelect.Portal>
-    </KSelect>
-  );
-}
-
-type GroupedProps<T extends string> = {
-  options: { label: string; options: T[] }[];
-  value: T;
-  setValue: (v: T) => void;
-};
-
-export function GroupedSelect<T extends string>(props: GroupedProps<T>) {
-  return (
-    <KSelect
-      value={props.value}
-      onChange={(v) => v != null && props.setValue(v)}
-      class="w-full"
-      options={props.options}
-      optionGroupChildren="options"
-      sectionComponent={(props) => {
-        return (
-          <KSelect.Section class="px-2 pt-2 pb-2 text-fore-subtle text-xs">{props.section.rawValue.label}</KSelect.Section>
-        );
-      }}
-      itemComponent={(itemProps) => {
-        return (
-          <KSelect.Item
-            class="leading-tight flex justify-between items-center pl-2 pr-1 py-2 rounded select-none data-[highlighted]:(bg-fore-base/10 outline-none)"
-            item={itemProps.item}
-          >
-            <KSelect.Label>{itemProps.item.rawValue}</KSelect.Label>
-            <KSelect.ItemIndicator>
-              <Check class="h-4 w-4" />
-            </KSelect.ItemIndicator>
-          </KSelect.Item>
-        );
-      }}
-    >
-      <KSelect.Trigger class="leading-tight w-full inline-flex justify-between items-center rounded-md border pl-3 pr-2 py-2 focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) hover:bg-fore-base/5">
-        <KSelect.Value>
-          {(state) => state.selectedOption() as string}
-        </KSelect.Value>
-        <KSelect.Icon>
-          <ChevronsUpDown class="h-4 w-4" />
-        </KSelect.Icon>
-      </KSelect.Trigger>
-      <KSelect.Portal>
-        <KSelect.Content class="bg-back-base rounded-md border p-1 z-1">
+        <KSelect.Content class="leading-tight bg-back-base rounded-md border p-1">
           <KSelect.Listbox />
         </KSelect.Content>
       </KSelect.Portal>
