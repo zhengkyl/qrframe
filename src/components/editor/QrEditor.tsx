@@ -29,6 +29,7 @@ import { Settings } from "./Settings";
 import { clearToasts, toastError } from "../ErrorToasts";
 import Minus from "lucide-solid/icons/minus";
 import Plus from "lucide-solid/icons/plus";
+import { ParamsEditor } from "./ParamsEditor";
 
 type Props = {
   class?: string;
@@ -55,7 +56,6 @@ export function Editor(props: Props) {
     setInputQr,
     paramsSchema,
     setParamsSchema,
-    params,
     setParams,
     renderKey,
     setRenderKey,
@@ -429,79 +429,7 @@ export function Editor(props: Props) {
               </Preview>
             </div>
           </div>
-          <div class="flex flex-col gap-2 mb-4">
-            <For each={Object.entries(paramsSchema())}>
-              {([label, { type, ...props }]) => {
-                if (type === "Array") {
-                  return (
-                    <div>
-                      <div class="grid grid-cols-[144px_1fr] justify-items-end gap-y-2">
-                        <div class="text-sm py-2 w-36">{label}</div>
-                        <div class="flex gap-1">
-                          <Show when={props.resizable}>
-                            <FlatButton
-                              class="p-1.5"
-                              onClick={() =>
-                                setParams(label, (prev: any[]) =>
-                                  prev.slice(0, -1)
-                                )
-                              }
-                            >
-                              <Minus />
-                            </FlatButton>
-                            <FlatButton
-                              class="p-1.5"
-                              onClick={() =>
-                                setParams(label, (prev: any[]) => [
-                                  ...prev,
-                                  props.props.default,
-                                ])
-                              }
-                            >
-                              <Plus />
-                            </FlatButton>
-                          </Show>
-                        </div>
-                        <Index each={params[label]}>
-                          {(v, i) => (
-                            <>
-                              <div class="text-sm py-2 pl-4 w-full text-left">
-                                {i}
-                              </div>
-                              <Dynamic
-                                component={
-                                  PARAM_COMPONENTS[
-                                    props.props
-                                      .type as keyof typeof PARAM_COMPONENTS
-                                  ]
-                                }
-                                {...props.props}
-                                value={v()}
-                                setValue={(v: any) => setParams(label, i, v)}
-                              />
-                            </>
-                          )}
-                        </Index>
-                      </div>
-                    </div>
-                  );
-                }
-                return (
-                  <>
-                    <div class="flex justify-between">
-                      <div class="text-sm py-2 w-36 shrink-0">{label}</div>
-                      <Dynamic
-                        component={PARAM_COMPONENTS[type]}
-                        {...props}
-                        value={params[label]}
-                        setValue={(v: any) => setParams(label, v)}
-                      />
-                    </div>
-                  </>
-                );
-              }}
-            </For>
-          </div>
+          <ParamsEditor/>
           <CodeEditor
             initialValue={code()}
             onSave={(code, updateThumbnail) => {

@@ -56,7 +56,7 @@ export function NumberInput(props: Props) {
         </Slider.Track>
       </Slider>
       <NumberField
-        class="relative rounded-md focus-within:(ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) hover:bg-fore-base/5"
+        class="relative rounded-md focus-within:(ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) bg-back-base hover:bg-fore-base/5"
         minValue={props.min}
         maxValue={props.max}
         rawValue={focused() ? rawValue() : props.value}

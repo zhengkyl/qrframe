@@ -1,21 +1,21 @@
 import { Button } from "@kobalte/core/button";
-import { DropdownMenu } from "@kobalte/core/dropdown-menu";
 import { NumberField } from "@kobalte/core/number-field";
+import { Popover } from "@kobalte/core/popover";
 import ChevronDown from "lucide-solid/icons/chevron-down";
 import Download from "lucide-solid/icons/download";
 import { createSignal } from "solid-js";
 import { FillButton } from "./Button";
 
 type Props = {
-  onClick: (width: number, height: number) => void;
+  onClick: (width, height) => void;
 };
 export function SplitButton(props: Props) {
   const [customWidth, setCustomWidth] = createSignal(1000);
   const [customHeight, setCustomHeight] = createSignal(1000);
 
-  const onClick = (width: number, height: number) => {
+  const onClick = (width, height) => {
     props.onClick(width, height);
-    setOpen(false)
+    setOpen(false);
   };
   const [open, setOpen] = createSignal(false);
   return (
@@ -24,31 +24,24 @@ export function SplitButton(props: Props) {
         <Download size={20} />
         PNG
       </Button>
-      <DropdownMenu gutter={4} open={open()} onOpenChange={setOpen}>
-        <DropdownMenu.Trigger
-          class="dropdown-menu__trigger border rounded-md rounded-s-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2"
-        >
-          <DropdownMenu.Icon class="block data-[expanded]:rotate-180 transition-transform">
-            <ChevronDown size={20} />
-          </DropdownMenu.Icon>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content class="dropdown-menu__content bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
+      <Popover gutter={4} open={open()} onOpenChange={setOpen}>
+        <Popover.Trigger class="group border rounded-md rounded-s-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2">
+          <ChevronDown
+            size={20}
+            class="block group-data-[expanded]:rotate-180 transition-transform"
+          />
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content class="bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
             <div class="flex flex-col gap-2">
               <div class="text-sm font-bold">Select size</div>
-              <FillButton
-                class="w-full p-2"
-                onClick={() => onClick(300, 300)}
-              >
+              <FillButton class="w-full p-2" onClick={() => onClick(300, 300)}>
                 300x300
               </FillButton>
-              <FillButton
-                class="w-full p-2"
-                onClick={() => onClick(500, 500)}
-              >
+              <FillButton class="w-full p-2" onClick={() => onClick(500, 500)}>
                 500x500
               </FillButton>
-              <DropdownMenu.Separator class="dropdown-menu__separator" />
+              <hr />
               <div class="text-sm font-bold">Custom</div>
               <div class="flex gap-2">
                 <MenuNumberInput
@@ -71,9 +64,9 @@ export function SplitButton(props: Props) {
                 Download custom
               </FillButton>
             </div>
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover>
     </div>
   );
 }
@@ -88,7 +81,7 @@ type NumberProps = {
 function MenuNumberInput(props: NumberProps) {
   const [rawValue, setRawValue] = createSignal(props.value);
 
-  const safeSetValue = (value: number) => {
+  const safeSetValue = (value) => {
     setRawValue(value);
     if (
       value < props.min ||

@@ -27,7 +27,6 @@ export function Select(props: Props) {
           props.setValue(retainedValue());
         }
       }}
-      // @ts-expect-error e is typed wtf
       onKeyDown={(e) => {
         const index = props.options.indexOf(props.value);
         switch (e.key) {
@@ -65,7 +64,7 @@ export function Select(props: Props) {
         </KSelect.Item>
       )}
     >
-      <KSelect.Trigger class="leading-tight w-full inline-flex justify-between items-center rounded-md border pl-3 pr-2 py-2 focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) hover:bg-fore-base/5">
+      <KSelect.Trigger class="leading-tight w-full inline-flex justify-between items-center rounded-md border pl-3 pr-2 py-2 focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) bg-back-base hover:bg-fore-base/5">
         <KSelect.Value>
           {(state) => state.selectedOption() as string}
         </KSelect.Value>

@@ -123,7 +123,6 @@ function parseField(value: any) {
         () => value.props.default
       );
     } else {
-      // @ts-expect-error adding default, type validated above
       value.default = PARAM_DEFAULTS[value.type];
     }
   }

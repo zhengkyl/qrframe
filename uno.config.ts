@@ -13,6 +13,7 @@ export default defineConfig({
       back: {
         base: "#0e0f0f",
         subtle: "#1a1b1c",
+        distinct: "#3d3e3e"
       },
     },
     animation: {
