@@ -9,23 +9,23 @@ export const paramsSchema = {
     default: 2,
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   Finder: {
-    type: "Color",
+    type: "color",
     default: "#131d87",
   },
   Horizontal: {
-    type: "Color",
+    type: "color",
     default: "#dc9c07",
   },
   Vertical: {
-    type: "Color",
+    type: "color",
     default: "#d21313",
   },
   Cross: {
-    type: "Color",
+    type: "color",
     default: "#131d87",
   },
   "Horizontal thickness": {

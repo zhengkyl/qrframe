@@ -1,7 +1,7 @@
 export const Halftone = `// Halftone is a misnomer, but that's what this type of QR code is known as
 export const paramsSchema = {
   Image: {
-    type: "File",
+    type: "file",
   },
   Contrast: {
     type: "number",
@@ -34,11 +34,11 @@ export const paramsSchema = {
     default: 2,
   },
   Foreground: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
 };
@@ -75,7 +75,7 @@ export async function renderCanvas(qr, params, canvas) {
       "https://upload.wikimedia.org/wikipedia/commons/1/14/The_Widow_%28Boston_Public_Library%29_%28cropped%29.jpg"
     ).then((res) => res.blob());
   }
-  const image = await createImageBitmap(file)
+  const image = await createImageBitmap(file);
 
   const pixelWidth = matrixWidth + 2 * margin;
   const canvasSize = pixelWidth * unit;

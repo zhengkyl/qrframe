@@ -1,35 +1,35 @@
 import { ColorInput } from "~/components/ColorInput";
-import { ImageInput } from "~/components/ImageInput";
+import { FileInput } from "~/components/ImageInput";
 import { NumberInput } from "~/components/NumberInput";
 import { Select } from "~/components/Select";
 import { Switch } from "~/components/Switch";
 
-const PARAM_TYPES = ["boolean", "number", "Color", "Select", "File", "Array"];
+const PARAM_TYPES = ["boolean", "number", "color", "select", "file", "array"];
 
 export const PARAM_COMPONENTS = {
   boolean: Switch,
   number: NumberInput,
-  Color: ColorInput,
-  Select: Select,
-  File: ImageInput,
+  color: ColorInput,
+  select: Select,
+  file: FileInput,
 };
 
 export const PARAM_DEFAULTS = {
   boolean: false,
   number: 0,
-  Color: "#000000",
-  // Select: //default is first option
-  File: null,
-  Array: [],
+  color: "#000000",
+  // select: //default is first option
+  file: null,
+  array: [],
 };
 
 type PARAM_VALUE_TYPES = {
   boolean: boolean;
   number: number;
-  Color: string;
-  Select: any;
-  File: File | null;
-  Array: any[];
+  color: string;
+  select: any;
+  file: File | null;
+  array: any[];
 };
 
 export type Params = {
@@ -94,7 +94,7 @@ function parseField(value: any) {
     !PARAM_TYPES.includes(value.type)
   ) {
     return null;
-  } else if (value.type === "Select") {
+  } else if (value.type === "select") {
     if (
       !("options" in value) ||
       !Array.isArray(value.options) ||
@@ -102,7 +102,7 @@ function parseField(value: any) {
     ) {
       return null;
     }
-  } else if (value.type === "Array") {
+  } else if (value.type === "array") {
     if (!("props" in value)) {
       return null;
     }
@@ -115,9 +115,9 @@ function parseField(value: any) {
 
   // === undefined b/c null is a valid default value for ImageInput
   if (value.default === undefined) {
-    if (value.type === "Select") {
+    if (value.type === "select") {
       value.default = value.options[0];
-    } else if (value.type === "Array") {
+    } else if (value.type === "array") {
       value.default = Array.from(
         { length: value.defaultLength ?? 1 },
         () => value.props.default

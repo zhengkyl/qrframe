@@ -1,10 +1,10 @@
 export const paramsSchema = {
   Foreground: {
-    type: "Color",
+    type: "color",
     default: "#1c4a1a",
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#e3d68a",
   },
   Margin: {

@@ -7,20 +7,23 @@ import { createSignal } from "solid-js";
 import { FillButton } from "./Button";
 
 type Props = {
-  onClick: (width, height) => void;
+  onClick: (resizeWidth, resizeHeight) => void;
 };
 export function SplitButton(props: Props) {
   const [customWidth, setCustomWidth] = createSignal(1000);
   const [customHeight, setCustomHeight] = createSignal(1000);
 
-  const onClick = (width, height) => {
-    props.onClick(width, height);
+  const onClick = (resizeWidth, resizeHeight) => {
+    props.onClick(resizeWidth, resizeHeight);
     setOpen(false);
   };
   const [open, setOpen] = createSignal(false);
   return (
     <div class="leading-tight flex">
-      <Button class="border border-e-none rounded-md rounded-e-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) inline-flex justify-center items-center gap-1 flex-1 px-6 py-2">
+      <Button
+        class="border border-e-none rounded-md rounded-e-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) inline-flex justify-center items-center gap-1 flex-1 px-6 py-2"
+        onClick={() => onClick(0, 0)}
+      >
         <Download size={20} />
         PNG
       </Button>

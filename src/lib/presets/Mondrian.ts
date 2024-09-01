@@ -6,26 +6,26 @@ export const Mondrian = `export const paramsSchema = {
     default: 2,
   },
   Foreground: {
-    type: "Array",
+    type: "array",
     props: {
-      type: "Color",
+      type: "color",
     },
     resizable: true,
-    default: ["#ad1010","#172fce","#b39906"]
+    default: ["#860909", "#0e21a0", "#95800f"],
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   Lines: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   "Line thickness": {
     type: "number",
-    min: 0,
+    min: -10,
     max: 10,
-    default: 4,
+    default: 2,
   },
   Seed: {
     type: "number",
@@ -62,7 +62,9 @@ export function renderSVG(qr, params) {
   svg += \`<rect width="\${size}" height="\${size}" fill="\${params["Lines"]}"/>\`;
 
   let lightLayer = \`<path fill="\${params["Background"]}" d="\`;
-  const darkLayers = params["Foreground"].map((color) => \`<path fill="\${color}" d="\`)
+  const darkLayers = params["Foreground"].map(
+    (color) => \`<path fill="\${color}" d="\`
+  );
 
   const visited = Array.from({ length: matrixWidth * matrixWidth }).fill(false);
   const matrix = Array.from({ length: matrixWidth * matrixWidth }).fill(0);
@@ -127,7 +129,7 @@ export function renderSVG(qr, params) {
       }
     }
   }
-  darkLayers.forEach((layer) => svg += layer + \`"/>\`)
+  darkLayers.forEach((layer) => (svg += layer + \`"/>\`));
   svg += lightLayer + \`"/>\`;
   svg += \`</svg>\`;
 

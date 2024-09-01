@@ -8,7 +8,7 @@ export const paramsSchema = {
     default: 2,
   },
   "Fill style": {
-    type: "Select",
+    type: "select",
     options: [
       "Hachure",
       "Solid",
@@ -21,7 +21,7 @@ export const paramsSchema = {
     default: "Zigzag",
   },
   Fill: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   "Fill weight": {
@@ -37,7 +37,7 @@ export const paramsSchema = {
     default: 4,
   },
   Stroke: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   "Stroke width": {
@@ -63,7 +63,7 @@ export const paramsSchema = {
     default: 1,
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#222222",
   },
   Seed: {

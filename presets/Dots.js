@@ -20,21 +20,21 @@ export const paramsSchema = {
     default: 1.3,
   },
   Foreground: {
-    type: "Array",
+    type: "array",
     resizable: true,
     props: {
-      type: "Color",
+      type: "color",
     },
     default: ["#f7158b", "#02d1fd", "#1f014b"],
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   // See browser compatibility issues here
   // https://developer.mozilla.org/en-US/docs/Web/CSS/mix-blend-mode
   "Mix blend mode": {
-    type: "Select",
+    type: "select",
     options: [
       "normal",
       "multiply",

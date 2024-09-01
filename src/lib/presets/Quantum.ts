@@ -9,15 +9,15 @@ export const paramsSchema = {
     default: 2,
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   Foreground: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   "Finder pattern": {
-    type: "Select",
+    type: "select",
     options: ["Atom", "Planet"],
   },
   Particles: {

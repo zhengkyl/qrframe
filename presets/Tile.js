@@ -18,15 +18,15 @@ export const paramsSchema = {
     default: 6,
   },
   Foreground: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   Grout: {
-    type: "Color",
+    type: "color",
     default: "#b3b8fd",
   },
 };

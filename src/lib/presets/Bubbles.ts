@@ -9,27 +9,27 @@ export const paramsSchema = {
     default: 2,
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   Finder: {
-    type: "Color",
+    type: "color",
     default: "#141e92",
   },
   "Large circle": {
-    type: "Color",
+    type: "color",
     default: "#10a8e9",
   },
   "Medium circle": {
-    type: "Color",
+    type: "color",
     default: "#1aa8cc",
   },
   "Small circle": {
-    type: "Color",
+    type: "color",
     default: "#0f8bdd",
   },
   "Tiny circle": {
-    type: "Color",
+    type: "color",
     default: "#012c8f",
   },
   "Randomize circle size": {

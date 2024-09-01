@@ -1,15 +1,15 @@
 export const Neon = `export const paramsSchema = {
   Foreground: {
-    type: "Array" ,
+    type: "array",
     props: {
-       type: "Color",
+      type: "color",
     },
     resizable: true,
-    default: [ "#fb51dd", "#f2cffa", "#aefdfd", "#54a9fe" ]
+    default: ["#fb51dd", "#f2cffa", "#aefdfd", "#54a9fe"],
   },
   Background: {
-     type: "Color",
-      default: "#101529"
+    type: "color",
+    default: "#101529",
   },
   Margin: {
     type: "number",
@@ -18,7 +18,7 @@ export const Neon = `export const paramsSchema = {
     default: 4,
   },
   "Quiet zone": {
-    type: "Select",
+    type: "select",
     options: ["Minimal", "Full"],
   },
   Invert: {

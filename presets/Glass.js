@@ -6,11 +6,11 @@ export const paramsSchema = {
     default: 2,
   },
   Foreground: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#fcb9ff",
   },
   Shapes: {
@@ -40,7 +40,7 @@ export const paramsSchema = {
     default: 0.3,
   },
   "QR layer": {
-    type: "Select",
+    type: "select",
     options: ["Above", "Below"],
   },
   Seed: {

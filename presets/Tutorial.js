@@ -7,11 +7,11 @@ export const paramsSchema = {
     default: 2,
   },
   Foreground: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
 };
@@ -39,3 +39,28 @@ export function renderSVG(qr, params) {
 
   return svg;
 }
+
+// export function renderCanvas(qr, params, canvas) {
+//   const matrixWidth = qr.version * 4 + 17;
+//   const margin = params["Margin"];
+//   const fg = params["Foreground"];
+//   const bg = params["Background"];
+//   const unit = 10;
+//   const size = (matrixWidth + 2 * margin) * unit;
+//   canvas.width = size;
+//   canvas.height = size;
+
+//   const ctx = canvas.getContext("2d");
+//   ctx.fillStyle = bg;
+//   ctx.fillRect(0, 0, size, size)
+
+//   ctx.fillStyle = fg;
+//   for (let y = 0; y < matrixWidth; y++) {
+//     for (let x = 0; x < matrixWidth; x++) {
+//       const module = qr.matrix[y * matrixWidth + x];
+//       if (module & 1) {
+//         ctx.fillRect((x + margin) * unit, (y + margin) * unit, unit, unit)
+//       }
+//     }
+//   }
+// }

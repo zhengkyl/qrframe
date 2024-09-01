@@ -23,7 +23,7 @@ export function ParamsEditor() {
     <div class="flex flex-col gap-2 mb-4">
       <For each={Object.entries(paramsSchema())}>
         {([label, { type, ...other }]) => {
-          if (type === "Array") {
+          if (type === "array") {
             return <ArrayParam label={label} other={other} />;
           }
           return (

@@ -1,4 +1,5 @@
 import { Alien } from "./presets/Alien";
+import { Basic } from "./presets/Basic";
 import { Blocks } from "./presets/Blocks";
 import { Bubbles } from "./presets/Bubbles";
 import { Camo } from "./presets/Camo";
@@ -11,11 +12,10 @@ import { Minimal } from "./presets/Minimal";
 import { Mondrian } from "./presets/Mondrian";
 import { Neon } from "./presets/Neon";
 import { Quantum } from "./presets/Quantum";
-import { Square } from "./presets/Square";
 import { Tile } from "./presets/Tile";
 
 export const PRESET_CODE = {
-  Square,
+  Basic,
   Circle,
   Camo,
   Neon,

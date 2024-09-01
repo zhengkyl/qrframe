@@ -9,15 +9,15 @@ export const paramsSchema = {
     default: 2,
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   Dots: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   Lines: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   Seed: {

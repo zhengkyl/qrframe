@@ -185,14 +185,34 @@ function RenderedQrCode() {
         <div class="font-bold text-sm pb-2">Downloads</div>
         <div class="grid grid-cols-2 gap-2">
           <SplitButton
-            onClick={async (width, height) => {
+            onClick={async (resizeWidth, resizeHeight) => {
+              let outCanvas;
               if (render()?.type === "canvas") {
-                download(canvas.toDataURL("image/png"), `${filename()}.png`);
+                if (resizeWidth === 0 && resizeHeight === 0) {
+                  outCanvas = canvas;
+                } else {
+                  const bmp = await createImageBitmap(canvas, {
+                    // resizeQuality unsupported in ff 8/31/24
+                    // https://developer.mozilla.org/en-US/docs/Web/API/createImageBitmap
+                    resizeQuality: "pixelated",
+                    resizeWidth,
+                    resizeHeight,
+                  });
+                  outCanvas = document.createElement("canvas");
+                  outCanvas.width = resizeWidth;
+                  outCanvas.height = resizeHeight;
+                  const ctx = outCanvas.getContext("bitmaprenderer")!;
+                  ctx.transferFromImageBitmap(bmp);
+                }
               } else {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d")!;
-                canvas.width = width;
-                canvas.height = height;
+                if (resizeWidth === 0 && resizeHeight === 0) {
+                  resizeWidth = 300;
+                  resizeHeight = 300;
+                }
+                outCanvas = document.createElement("canvas");
+                outCanvas.width = resizeWidth;
+                outCanvas.height = resizeHeight;
+                const ctx = outCanvas.getContext("2d")!;
 
                 const url = URL.createObjectURL(
                   new Blob([svgParent.innerHTML], { type: "image/svg+xml" })
@@ -200,11 +220,22 @@ function RenderedQrCode() {
                 const img = new Image();
                 img.src = url;
                 await img.decode();
-                ctx.drawImage(img, 0, 0, width, height);
-
-                download(canvas.toDataURL("image/png"), `${filename()}.png`);
+                ctx.drawImage(img, 0, 0, resizeWidth, resizeHeight);
                 URL.revokeObjectURL(url);
               }
+
+              outCanvas.toBlob((blob) => {
+                if (blob == null) {
+                  toastError(
+                    "Failed to create image",
+                    "idk bro this shouldn't happen"
+                  );
+                  return;
+                }
+                const url = URL.createObjectURL(blob);
+                download(url, `${filename()}.png`);
+                URL.revokeObjectURL(url);
+              });
             }}
           />
           <Show when={render()?.type === "svg"}>

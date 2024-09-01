@@ -13,23 +13,23 @@ export const paramsSchema = {
     default: 0,
   },
   Foreground: {
-    type: "Color",
+    type: "color",
     default: "#000000",
   },
   Background: {
-    type: "Color",
+    type: "color",
     default: "#ffffff",
   },
   "Finder pattern": {
-    type: "Select",
+    type: "select",
     options: ["Default", "Circle", "Square"],
   },
   "Alignment pattern": {
-    type: "Select",
+    type: "select",
     options: ["Default", "Circle", "Square"],
   },
   "Scale direction": {
-    type: "Select",
+    type: "select",
     options: ["None", "Center", "Edge"],
   },
   Seed: {

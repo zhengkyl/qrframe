@@ -1,18 +1,8 @@
 import Pencil from "lucide-solid/icons/pencil";
 import Trash2 from "lucide-solid/icons/trash-2";
-import {
-  For,
-  Index,
-  Show,
-  batch,
-  createSignal,
-  onMount,
-  type JSX,
-} from "solid-js";
+import { For, Show, batch, createSignal, onMount, type JSX } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Dynamic } from "solid-js/web";
 import {
-  PARAM_COMPONENTS,
   defaultParams,
   deepEqualObj,
   parseParamsSchema,
@@ -27,9 +17,8 @@ import { TextInput, TextareaInput } from "../TextInput";
 import { CodeEditor } from "./CodeEditor";
 import { Settings } from "./Settings";
 import { clearToasts, toastError } from "../ErrorToasts";
-import Minus from "lucide-solid/icons/minus";
-import Plus from "lucide-solid/icons/plus";
 import { ParamsEditor } from "./ParamsEditor";
+import { Tutorial } from "~/lib/presets/Tutorial";
 
 type Props = {
   class?: string;
@@ -62,7 +51,7 @@ export function Editor(props: Props) {
     setRender,
   } = useQrContext();
 
-  const [code, setCode] = createSignal(PRESET_CODE.Square);
+  const [code, setCode] = createSignal(PRESET_CODE.Basic);
   const [funcKeys, _setFuncKeys] = createStore<string[]>([]);
   const [thumbs, setThumbs] = createStore<Thumbs>({} as Thumbs);
 
@@ -413,9 +402,7 @@ export function Editor(props: Props) {
                 )}
               </For>
               <Preview
-                onClick={() =>
-                  createAndSelectFunc("custom", PRESET_CODE.Square)
-                }
+                onClick={() => createAndSelectFunc("custom", Tutorial)}
                 label="Create new"
                 active={false}
               >
@@ -429,7 +416,7 @@ export function Editor(props: Props) {
               </Preview>
             </div>
           </div>
-          <ParamsEditor/>
+          <ParamsEditor />
           <CodeEditor
             initialValue={code()}
             onSave={(code, updateThumbnail) => {
