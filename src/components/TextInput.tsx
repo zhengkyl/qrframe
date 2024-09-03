@@ -21,10 +21,10 @@ export function TextareaInput(props: TextareaProps) {
 type InputProps = {
   placeholder?: string;
   defaultValue: string;
-  onChange: (s: string) => void;
   onInput: (s: string) => void;
   ref?: HTMLInputElement;
   class?: string;
+  onKeyDown?: (e: KeyboardEvent) => void
 };
 
 /** UNCONTROLLED */
@@ -38,8 +38,8 @@ export function TextInput(props: InputProps) {
       type="text"
       value={props.defaultValue}
       placeholder={props.placeholder}
-      onChange={(e) => props.onChange(e.target.value)}
       onInput={(e) => props.onInput(e.target.value)}
+      onKeyDown={props.onKeyDown}
     />
   );
 }

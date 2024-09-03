@@ -6,13 +6,13 @@ type Props = {
   onClick?: () => void;
   onMouseDown?: () => void;
   children: JSX.Element;
-  tooltip?: string;
+  title?: string;
   disabled?: boolean;
 };
 export function FlatButton(props: Props) {
   return (
     <Button
-      title={props.tooltip}
+      title={props.title}
       classList={{
         "leading-tight border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(pointer-events-none opacity-50)":
           true,
@@ -30,7 +30,7 @@ export function FlatButton(props: Props) {
 export function FillButton(props: Props) {
   return (
     <Button
-      title={props.tooltip}
+      title={props.title}
       classList={{
         "leading-tight bg-fore-base text-back-base border rounded-md hover:bg-fore-base/90 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(pointer-events-none opacity-50)":
           true,

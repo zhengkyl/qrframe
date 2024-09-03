@@ -1,26 +1,18 @@
 import { Dialog } from "@kobalte/core/dialog";
 import X from "lucide-solid/icons/x";
-import { createSignal, type JSX } from "solid-js";
+import { type JSX } from "solid-js";
+import { FlatButton } from "./Button";
 
 type Props = {
-  triggerTitle: string;
-  triggerChildren: JSX.Element;
   title: string;
   children: (close: () => void) => JSX.Element;
   onOpenAutoFocus?: (event: Event) => void;
+  open: boolean;
+  setOpen: (b: boolean) => void;
 };
-
-export function IconButtonDialog(props: Props) {
-  const [open, setOpen] = createSignal(false);
-
+export function ControlledDialog(props: Props) {
   return (
-    <Dialog open={open()} onOpenChange={setOpen}>
-      <Dialog.Trigger
-        title={props.triggerTitle}
-        class="border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(pointer-events-none opacity-50) p-2"
-      >
-        {props.triggerChildren}
-      </Dialog.Trigger>
+    <Dialog open={props.open} onOpenChange={props.setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay class="fixed inset-0 z-10 bg-black/20" />
         <div class="fixed inset-0 z-10 flex justify-center items-center">
@@ -36,10 +28,25 @@ export function IconButtonDialog(props: Props) {
                 <X />
               </Dialog.CloseButton>
             </div>
-            {props.children(() => setOpen(false))}
+            {props.children(() => props.setOpen(false))}
           </Dialog.Content>
         </div>
       </Dialog.Portal>
     </Dialog>
+  );
+}
+
+type ButtonProps = {
+  title: string;
+  children: JSX.Element;
+  onClick?: () => void;
+};
+// Dialog.Trigger toggles the open state, so
+// it cannot be used with onClick that modifies the open state
+export function DialogButton(props: ButtonProps) {
+  return (
+    <FlatButton title={props.title} class="p-2" onClick={props.onClick}>
+      {props.children}
+    </FlatButton>
   );
 }

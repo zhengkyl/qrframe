@@ -15,6 +15,7 @@ import { vim } from "@replit/codemirror-vim";
 import { Button } from "@kobalte/core/button";
 import { debounce } from "~/lib/util";
 import { Switch } from "../Switch";
+import { AllowPasteDialog } from "./AllowPasteDialog";
 
 type Props = {
   onSave: (s: string, thumbnail: boolean) => void;
@@ -22,11 +23,13 @@ type Props = {
 };
 
 const VIM_MODE_KEY = "vimMode";
+const ALLOW_PASTE_KEY = "allowPaste";
 
 export function CodeEditor(props: Props) {
   let parent: HTMLDivElement;
   let view: EditorView;
   let modeComp = new Compartment();
+  let allowPaste;
 
   const [vimMode, _setVimMode] = createSignal(false);
   const setVimMode = (v: boolean) => {
@@ -60,7 +63,22 @@ export function CodeEditor(props: Props) {
           return true;
         },
       },
+      {
+        key: "Mod-v",
+        run: () => {
+          if (allowPaste) return false;
+          setShowDialog(true);
+          return true;
+        },
+      },
     ]),
+    EditorView.domEventHandlers({
+      paste() {
+        if (allowPaste) return false;
+        setShowDialog(true);
+        return true;
+      },
+    }),
     javascript(),
     oneDarkTheme,
     syntaxHighlighting(oneDarkHighlightStyle),
@@ -87,6 +105,8 @@ export function CodeEditor(props: Props) {
         effects: modeComp.reconfigure(vim()),
       });
     }
+
+    allowPaste = localStorage.getItem(ALLOW_PASTE_KEY) === "true";
   });
 
   // Track props.initialValue
@@ -121,9 +141,20 @@ export function CodeEditor(props: Props) {
   });
 
   const [showCode, setShowCode] = createSignal(false);
+  const [showDialog, setShowDialog] = createSignal(false);
 
   return (
     <div>
+      <AllowPasteDialog
+        open={showDialog()}
+        setClosed={() => {
+          setShowDialog(false);
+        }}
+        onAllow={() => {
+          allowPaste = true;
+          localStorage.setItem(ALLOW_PASTE_KEY, "true");
+        }}
+      />
       <div class="flex justify-between pb-2 h-11">
         <Switch label="Show code" value={showCode()} setValue={setShowCode} />
         <Show when={showCode()}>

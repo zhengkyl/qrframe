@@ -14,6 +14,10 @@ export const Basic = `export const paramsSchema = {
     type: "color",
     default: "#ffffff",
   },
+  Shape: {
+    type: "select",
+    options: ["Square-Circle", "Diamond-Squircle"],
+  },
   Roundness: {
     type: "number",
     min: 0,
@@ -39,6 +43,10 @@ export const Basic = `export const paramsSchema = {
     step: 0.01,
     default: 0.25,
   },
+  "Show data behind logo": {
+    type: "boolean",
+    default: true,
+  },
 };
 
 const Module = {
@@ -57,16 +65,16 @@ const Module = {
   SeparatorOFF: 12,
 };
 
-// unformatted floats can bloat file size
-const fmt = (n) => n.toFixed(2).replace(/\.00$/, "");
-
 export async function renderSVG(qr, params) {
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
   const fg = params["Foreground"];
   const bg = params["Background"];
+  const defaultShape = params["Shape"] === "Square-Circle";
   const roundness = params["Roundness"];
   const file = params["Logo"];
+  const logoRatio = params["Logo size"];
+  const showLogoData = params["Show data behind logo"];
 
   const size = matrixWidth + 2 * margin;
   let svg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="\${-margin} \${-margin} \${size} \${size}">\`;
@@ -77,38 +85,61 @@ export async function renderSVG(qr, params) {
   const lgRadius = 3.5 * roundness;
   const mdRadius = 2.5 * roundness;
   const smRadius = 1.5 * roundness;
-  const lgSide = fmt(7 - 2 * lgRadius);
-  const mdSide = fmt(5 - 2 * mdRadius);
-  const smSide = fmt(3 - 2 * smRadius);
-
-  const corner = (radius, xDir, yDir, cw) =>
-    \`a\${fmt(radius)},\${fmt(radius)} 0,0,\${cw ? "1" : "0"} \${fmt(xDir * radius)},\${fmt(yDir * radius)}\`;
 
   for (const [x, y] of [
     [0, 0],
     [matrixWidth - 7, 0],
     [0, matrixWidth - 7],
   ]) {
-    svg += \`M\${fmt(x + lgRadius)},\${y}h\${lgSide}\${corner(lgRadius, 1, 1, true)}v\${lgSide}\${corner(lgRadius, -1, 1, true)}h-\${lgSide}\${corner(lgRadius, -1, -1, true)}v-\${lgSide}\${corner(lgRadius, 1, -1, true)}\`;
-
-    svg += \`M\${fmt(x + 1 + mdRadius)},\${y + 1}\${corner(mdRadius, -1, 1, false)}v\${mdSide}\${corner(mdRadius, 1, 1, false)}h\${mdSide}\${corner(mdRadius, 1, -1, false)}v-\${mdSide}\${corner(mdRadius, -1, -1, false)}\`;
-
-    svg += \`M\${fmt(x + 2 + smRadius)},\${y + 2}h\${smSide}\${corner(smRadius, 1, 1, true)}v\${smSide}\${corner(smRadius, -1, 1, true)}h-\${smSide}\${corner(smRadius, -1, -1, true)}v-\${smSide}\${corner(smRadius, 1, -1, true)}\`;
+    if (defaultShape) {
+      svg += roundedRect(x, y, 7, lgRadius, true);
+      svg += roundedRect(x + 1, y + 1, 5, mdRadius, false);
+      svg += roundedRect(x + 2, y + 2, 3, smRadius, true);
+    } else {
+      svg += squircle(x, y, 7, lgRadius, true);
+      svg += squircle(x + 1, y + 1, 5, mdRadius, false);
+      svg += squircle(x + 2, y + 2, 3, smRadius, true);
+    }
   }
   svg += \`"/>\`;
 
   const dataSize = params["Data size"];
-  const dataRadius = fmt((roundness * dataSize) / 2);
+  const dataRadius = (roundness * dataSize) / 2;
   const dataOffset = (1 - dataSize) / 2;
+  if (!defaultShape) svg += \`<path d="\`;
+
+  const logoInner = Math.floor(((1 - logoRatio) * size) / 2 - margin);
+  const logoUpper = matrixWidth - logoInner;
+
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
+      if (
+        !showLogoData &&
+        x >= logoInner &&
+        y >= logoInner &&
+        x < logoUpper &&
+        y < logoUpper
+      ) {
+        continue;
+      }
       const module = qr.matrix[y * matrixWidth + x];
-      if (module & 1) {
-        if (module === Module.FinderON) continue;
-        svg += \`<rect x="\${fmt(x + dataOffset)}" y="\${fmt(y + dataOffset)}" width="\${dataSize}" height="\${dataSize}" rx="\${dataRadius}"/>\`;
+      if (!(module & 1)) continue;
+      if (module === Module.FinderON) continue;
+
+      if (defaultShape) {
+        svg += \`<rect x="\${fmt(x + dataOffset)}" y="\${fmt(y + dataOffset)}" width="\${dataSize}" height="\${dataSize}" rx="\${fmt(dataRadius)}"/>\`;
+      } else {
+        svg += squircle(
+          x + dataOffset,
+          y + dataOffset,
+          dataSize,
+          dataRadius,
+          true
+        );
       }
     }
   }
+  if (!defaultShape) svg += \`"/>\`;
   svg += \`</g>\`;
 
   if (file != null) {
@@ -116,12 +147,51 @@ export async function renderSVG(qr, params) {
     const b64 = btoa(
       Array.from(bytes, (byte) => String.fromCodePoint(byte)).join("")
     );
-    const logoSize = fmt(params["Logo size"] * size);
-    const logoOffset = fmt(((1 - params["Logo size"]) * size) / 2 - margin);
+    const logoSize = fmt(logoRatio * size);
+    const logoOffset = fmt(((1 - logoRatio) * size) / 2 - margin);
     svg += \`<image x="\${logoOffset}" y="\${logoOffset}" width="\${logoSize}" height="\${logoSize}" href="data:\${file.type};base64,\${b64}"/>\`;
   }
 
   svg += \`</svg>\`;
   return svg;
+}
+
+// reduce file bloat from floating point math
+const fmt = (n) => n.toFixed(2).replace(/.00$/, "");
+
+function squircle(x, y, width, handle, cw) {
+  const half = fmt(width / 2);
+
+  if (handle === 0) {
+    return cw ? \`M\${fmt(x + width / 2)},\${fmt(y)}l\${half},\${half}l-\${half},\${half}l-\${half},-\${half}z\` :
+     \`M\${fmt(x + width / 2)},\${fmt(y)}l-\${half},\${half}l\${half},\${half}l\${half},-\${half}z\`
+  }
+
+  const h = fmt(handle);
+  const hInv1 = fmt(half - handle);
+  const hInv2 = fmt(-(half - handle));
+  return cw
+    ? \`M\${fmt(x + width / 2)},\${fmt(y)}c\${h},0 \${half},\${hInv1} \${half},\${half}s\${hInv2},\${half} -\${half},\${half}s-\${half},\${hInv2} -\${half},-\${half}s\${hInv1},-\${half} \${half},-\${half}\`
+    : \`M\${fmt(x + width / 2)},\${fmt(y)}c-\${h},0 -\${half},\${hInv1} -\${half},\${half}s\${hInv1},\${half} \${half},\${half}s\${half},\${hInv2} \${half},-\${half}s\${hInv2},-\${half} -\${half},-\${half}\`;
+}
+
+function roundedRect(x, y, width, radius, cw) {
+  if (radius === 0) {
+    return cw
+      ? \`M\${fmt(x)},\${fmt(y)}h\${width}v\${width}h-\${width}z\`
+      : \`M\${fmt(x)},\${fmt(y)}v\${width}h\${width}v-\${width}z\`;
+  }
+  
+  if (radius === width / 2) {
+    const r = fmt(radius);
+    const cwFlag = cw ? "1" : "0";
+    return \`M\${fmt(x + radius)},\${fmt(y)}a\${r},\${r} 0,0,\${cwFlag} 0,\${width}a\${r},\${r} 0,0,\${cwFlag} \${0},-\${width}\`;
+  }
+
+  const r = fmt(radius);
+  const side = fmt(width - 2 * radius);
+  return cw
+    ? \`M\${fmt(x + radius)},\${fmt(y)}h\${side}a\${r},\${r} 0,0,1 \${r},\${r}v\${side}a\${r},\${r} 0,0,1 -\${r},\${r}h-\${side}a\${r},\${r} 0,0,1 -\${r},-\${r}v-\${side}a\${r},\${r} 0,0,1 \${r},-\${r}\`
+    : \`M\${fmt(x + radius)},\${fmt(y)}a\${r},\${r} 0,0,0 -\${r},\${r}v\${side}a\${r},\${r} 0,0,0 \${r},\${r}h\${side}a\${r},\${r} 0,0,0 \${r},-\${r}v-\${side}a\${r},\${r} 0,0,0 -\${r},-\${r}\`;
 }
 `

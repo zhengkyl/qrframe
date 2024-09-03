@@ -12,13 +12,14 @@ import { PRESET_CODE } from "~/lib/presets";
 import { useQrContext, type RenderType } from "~/lib/QrContext";
 import { FillButton, FlatButton } from "../Button";
 import { Collapsible } from "../Collapsible";
-import { IconButtonDialog } from "../Dialog";
+import { DialogButton, ControlledDialog } from "../Dialog";
 import { TextInput, TextareaInput } from "../TextInput";
 import { CodeEditor } from "./CodeEditor";
 import { Settings } from "./Settings";
 import { clearToasts, toastError } from "../ErrorToasts";
 import { ParamsEditor } from "./ParamsEditor";
 import { Tutorial } from "~/lib/presets/Tutorial";
+import { ContentMenuTrigger, ContextMenuProvider } from "../ContextMenu";
 
 type Props = {
   class?: string;
@@ -54,6 +55,12 @@ export function Editor(props: Props) {
   const [code, setCode] = createSignal(PRESET_CODE.Basic);
   const [funcKeys, _setFuncKeys] = createStore<string[]>([]);
   const [thumbs, setThumbs] = createStore<Thumbs>({} as Thumbs);
+
+  // Dialog open state must be separate from render state,
+  // to allow animating in/out of existence
+  const [renameOpen, setRenameOpen] = createSignal(false);
+  const [deleteOpen, setDeleteOpen] = createSignal(false);
+  const [dialogKey, setDialogKey] = createSignal<string>("");
 
   let thumbWorker: Worker | null = null;
   const timeoutIdMap = new Map<NodeJS.Timeout, string>();
@@ -283,6 +290,104 @@ export function Editor(props: Props) {
         <Settings />
       </Collapsible>
       <Collapsible trigger="Render" defaultOpen>
+        <ControlledDialog
+          open={renameOpen()}
+          setOpen={setRenameOpen}
+          title={`Rename ${dialogKey()}`}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          {(close) => {
+            const key = dialogKey();
+            const [rename, setRename] = createSignal(key);
+            const [duplicate, setDuplicate] = createSignal(false);
+
+            let ref: HTMLInputElement;
+            onMount(() => ref.focus());
+
+            const onSubmit = () => {
+              if (rename() === key) return close();
+
+              if (funcKeys.includes(rename())) {
+                setDuplicate(true);
+                return;
+              }
+
+              const thumb = thumbs[key];
+              localStorage.setItem(rename(), code());
+              localStorage.setItem(`${rename()}_thumb`, thumb);
+
+              localStorage.removeItem(key);
+              localStorage.removeItem(`${key}_thumb`);
+
+              setThumbs(rename(), thumb);
+              setThumbs(key, undefined!);
+
+              setFuncKeys(funcKeys.indexOf(key), rename());
+
+              setRenderKey(rename());
+              close();
+            };
+            return (
+              <>
+                <TextInput
+                  class="mt-2"
+                  ref={ref!}
+                  defaultValue={rename()}
+                  onInput={(s) => {
+                    if (duplicate()) setDuplicate(false);
+                    setRename(s);
+                  }}
+                  placeholder={key}
+                  onKeyDown={(e) => e.key === "Enter" && onSubmit()}
+                />
+                <div class="absolute p-1 text-sm text-red-600">
+                  <Show when={duplicate()}>{rename()} already exists.</Show>
+                </div>
+                <FillButton
+                  class="px-3 py-2 float-right mt-4"
+                  // input onChange runs after focus lost, so onMouseDown is too early
+                  onClick={onSubmit}
+                >
+                  Confirm
+                </FillButton>
+              </>
+            );
+          }}
+        </ControlledDialog>
+        <ControlledDialog
+          open={deleteOpen()}
+          // This is controlled, so it will never be called with true
+          setOpen={setDeleteOpen}
+          title={`Delete ${dialogKey()}`}
+        >
+          {(close) => {
+            const key = dialogKey();
+            return (
+              <>
+                <p class="mb-4 text-sm">
+                  Are you sure you want to delete this function?
+                </p>
+                <div class="flex justify-end gap-2">
+                  <FillButton
+                    onMouseDown={() => {
+                      localStorage.removeItem(key);
+                      localStorage.removeItem(`${key}_thumb`);
+                      setThumbs(key, undefined!);
+
+                      setFuncKeys((keys) => keys.filter((k) => k !== key));
+
+                      setExistingKey(funcKeys[0]);
+                      close();
+                    }}
+                  >
+                    Confirm
+                  </FillButton>
+                  <FlatButton onMouseDown={close}>Cancel</FlatButton>
+                </div>
+              </>
+            );
+          }}
+        </ControlledDialog>
         <div class="py-4">
           <div class="mb-4 h-[180px] md:(h-unset)">
             <div class="flex justify-between">
@@ -292,115 +397,52 @@ export function Editor(props: Props) {
               <div class="flex gap-2">
                 <div class="flex items-center font-bold">{renderKey()}</div>
                 <Show when={!presetKeys.includes(renderKey())}>
-                  <IconButtonDialog
-                    title={`Rename ${renderKey()}`}
-                    triggerTitle="Rename"
-                    triggerChildren={<Pencil class="w-5 h-5" />}
-                    onOpenAutoFocus={(e) => e.preventDefault()}
-                  >
-                    {(close) => {
-                      const [rename, setRename] = createSignal(renderKey());
-                      const [duplicate, setDuplicate] = createSignal(false);
-
-                      let ref: HTMLInputElement;
-                      onMount(() => ref.focus());
-                      return (
-                        <>
-                          <TextInput
-                            class="mt-2"
-                            ref={ref!}
-                            defaultValue={rename()}
-                            onChange={setRename}
-                            onInput={() => duplicate() && setDuplicate(false)}
-                            placeholder={renderKey()}
-                          />
-                          <div class="absolute p-1 text-sm text-red-600">
-                            <Show when={duplicate()}>
-                              {rename()} already exists.
-                            </Show>
-                          </div>
-                          <FillButton
-                            class="px-3 py-2 float-right mt-4"
-                            // input onChange runs after focus lost, so onMouseDown is too early
-                            onClick={() => {
-                              if (rename() === renderKey()) return close();
-
-                              if (funcKeys.includes(rename())) {
-                                setDuplicate(true);
-                                return;
-                              }
-
-                              localStorage.removeItem(renderKey());
-                              localStorage.removeItem(`${renderKey()}_thumb`);
-
-                              const thumb = thumbs[renderKey()];
-                              localStorage.setItem(rename(), code());
-                              localStorage.setItem(`${rename()}_thumb`, thumb);
-                              setThumbs(rename(), thumb);
-                              setThumbs(renderKey(), undefined!);
-
-                              setFuncKeys(
-                                funcKeys.indexOf(renderKey()),
-                                rename()
-                              );
-
-                              setRenderKey(rename());
-                              close();
-                            }}
-                          >
-                            Confirm
-                          </FillButton>
-                        </>
-                      );
+                  <DialogButton
+                    title="Rename"
+                    onClick={() => {
+                      batch(() => {
+                        setDialogKey(renderKey());
+                        setRenameOpen(true);
+                      });
                     }}
-                  </IconButtonDialog>
-                  <IconButtonDialog
-                    title={`Delete ${renderKey()}`}
-                    triggerTitle="Delete"
-                    triggerChildren={<Trash2 class="w-5 h-5" />}
                   >
-                    {(close) => (
-                      <>
-                        <p class="mb-4 text-sm">
-                          Are you sure you want to delete this function?
-                        </p>
-                        <div class="flex justify-end gap-2">
-                          <FillButton
-                            onMouseDown={() => {
-                              localStorage.removeItem(renderKey());
-                              localStorage.removeItem(`${renderKey()}_thumb`);
-                              setThumbs(renderKey(), undefined!);
-
-                              setFuncKeys((keys) =>
-                                keys.filter((key) => key !== renderKey())
-                              );
-
-                              setExistingKey(funcKeys[0]);
-                              close();
-                            }}
-                          >
-                            Confirm
-                          </FillButton>
-                          <FlatButton onMouseDown={close}>Cancel</FlatButton>
-                        </div>
-                      </>
-                    )}
-                  </IconButtonDialog>
+                    <Pencil class="w-5 h-5" />
+                  </DialogButton>
+                  <DialogButton
+                    title="Delete"
+                    onClick={() => {
+                      batch(() => {
+                        setDialogKey(renderKey());
+                        setDeleteOpen(true);
+                      });
+                    }}
+                  >
+                    <Trash2 class="w-5 h-5" />
+                  </DialogButton>
                 </Show>
               </div>
             </div>
             <div class="flex gap-3 pt-2 pb-4 md:(flex-wrap static ml-0 px-0 overflow-x-visible) absolute max-w-full overflow-x-auto -ml-6 px-6">
-              <For each={funcKeys}>
-                {(key) => (
-                  <Preview
-                    onClick={() => setExistingKey(key)}
-                    label={key}
-                    active={renderKey() === key}
-                  >
-                    <img class="rounded-sm" src={thumbs[key]} />
-                  </Preview>
-                )}
-              </For>
+              <ContextMenuProvider
+                disabled={isPreset(dialogKey())}
+                onRename={() => setRenameOpen(true)}
+                onDelete={() => setDeleteOpen(true)}
+              >
+                <For each={funcKeys}>
+                  {(key) => (
+                    <ContentMenuTrigger>
+                      <Preview
+                        onContextMenu={() => setDialogKey(key)}
+                        onClick={() => setExistingKey(key)}
+                        label={key}
+                        active={renderKey() === key}
+                      >
+                        <img class="rounded-sm" src={thumbs[key]} />
+                      </Preview>
+                    </ContentMenuTrigger>
+                  )}
+                </For>
+              </ContextMenuProvider>
               <Preview
                 onClick={() => createAndSelectFunc("custom", Tutorial)}
                 label="Create new"
@@ -438,12 +480,14 @@ type PreviewProps = {
   children: JSX.Element;
   onClick: () => void;
   active: boolean;
+  onContextMenu?: () => void;
 };
 function Preview(props: PreviewProps) {
   return (
     <button
       class="rounded-sm focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
       onClick={props.onClick}
+      onContextMenu={props.onContextMenu}
     >
       <div
         classList={{

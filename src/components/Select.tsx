@@ -46,7 +46,7 @@ export function Select(props: Props) {
             break;
         }
       }}
-      class="w-[160px]"
+      class="min-w-40"
       options={props.options}
       gutter={4}
       itemComponent={(itemProps) => (
@@ -64,7 +64,7 @@ export function Select(props: Props) {
         </KSelect.Item>
       )}
     >
-      <KSelect.Trigger class="leading-tight w-full inline-flex justify-between items-center rounded-md border pl-3 pr-2 py-2 focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) bg-back-base hover:bg-fore-base/5">
+      <KSelect.Trigger class="leading-tight w-full inline-flex justify-between items-center gap-1 rounded-md border pl-3 pr-2 py-2 focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) bg-back-base hover:bg-fore-base/5">
         <KSelect.Value>
           {(state) => state.selectedOption() as string}
         </KSelect.Value>
