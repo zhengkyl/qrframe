@@ -1,5 +1,5 @@
 import { ContextMenu } from "@kobalte/core/context-menu";
-import { For, type JSX } from "solid-js";
+import { type JSX } from "solid-js";
 
 type Props = {
   children: JSX.Element;
@@ -52,9 +52,5 @@ type TriggerProps = {
 };
 
 export function ContentMenuTrigger(props: TriggerProps) {
-  return (
-    <ContextMenu.Trigger onClick={() => console.log("cte")}>
-      {props.children}
-    </ContextMenu.Trigger>
-  );
+  return <ContextMenu.Trigger>{props.children}</ContextMenu.Trigger>;
 }

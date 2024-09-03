@@ -16,7 +16,6 @@ import { DialogButton, ControlledDialog } from "../Dialog";
 import { TextInput, TextareaInput } from "../TextInput";
 import { CodeEditor } from "./CodeEditor";
 import { Settings } from "./Settings";
-import { clearToasts, toastError } from "../ErrorToasts";
 import { ParamsEditor } from "./ParamsEditor";
 import { Tutorial } from "~/lib/presets/Tutorial";
 import { ContentMenuTrigger, ContextMenuProvider } from "../ContextMenu";
@@ -50,6 +49,7 @@ export function Editor(props: Props) {
     renderKey,
     setRenderKey,
     setRender,
+    setError,
   } = useQrContext();
 
   const [code, setCode] = createSignal(PRESET_CODE.Basic);
@@ -175,7 +175,7 @@ export function Editor(props: Props) {
       }
 
       const { type, url, parsedParamsSchema } = await importCode(code);
-      clearToasts();
+      setError(null)
 
       // batched b/c trigger rendering effect
       batch(() => {
@@ -197,7 +197,7 @@ export function Editor(props: Props) {
       }
     } catch (e) {
       console.error("e", e!.toString());
-      toastError("Invalid code", e!.toString());
+      setError(e!.toString())
     }
   };
 

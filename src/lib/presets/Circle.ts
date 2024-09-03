@@ -4,7 +4,7 @@ export const Circle = `export const paramsSchema = {
     min: 0,
     max: 20,
     step: 0.1,
-    default: 5,
+    default: 8,
   },
   "Radius offset": {
     type: "number",
@@ -20,6 +20,12 @@ export const Circle = `export const paramsSchema = {
     type: "color",
     default: "#ffffff",
   },
+  "Frame thickness": {
+    type: "number",
+    min: 0,
+    max: 10,
+    step: 0.1,
+  },
   "Finder pattern": {
     type: "select",
     options: ["Default", "Circle", "Square"],
@@ -28,9 +34,23 @@ export const Circle = `export const paramsSchema = {
     type: "select",
     options: ["Default", "Circle", "Square"],
   },
-  "Scale direction": {
+  Logo: {
+    type: "file",
+    accept: ".jpeg, .jpg, .png, .svg",
+  },
+  "Logo size": {
+    type: "number",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.25,
+  },
+  "Show data behind logo": {
+    type: "boolean",
+  },
+  "Pixel size": {
     type: "select",
-    options: ["None", "Center", "Edge"],
+    options: ["None", "Center", "Edge", "Random"],
   },
   Seed: {
     type: "number",
@@ -68,18 +88,45 @@ function splitmix32(a) {
   };
 }
 
-export function renderSVG(qr, params) {
+const fmt = (n) => n.toFixed(2).replace(/.00$/, "");
+
+export async function renderSVG(qr, params) {
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"];
   const fg = params["Foreground"];
   const bg = params["Background"];
   const rOffset = params["Radius offset"];
+  const file = params["Logo"];
+  const logoRatio = params["Logo size"];
+  const showLogoData = params["Show data behind logo"];
   const rand = splitmix32(params["Seed"]);
+  const range = (min, max) => rand() * (max - min) + min;
 
   const size = matrixWidth + 2 * margin;
 
   let svg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="\${-margin} \${-margin} \${size} \${size}">\`;
   svg += \`<rect x="\${-margin}" y="\${-margin}" width="\${size}" height="\${size}" fill="\${bg}"/>\`;
+
+  // nearest odd number
+  let diameter = Math.round(Math.sqrt(2) * matrixWidth) + 2 * rOffset;
+  if (!(diameter & 1)) diameter += 1;
+
+  const frameThick = params["Frame thickness"];
+  if (frameThick) {
+    const frameR = diameter / 2 + 1 + frameThick / 2;
+    svg += \`<circle cx="\${matrixWidth / 2}" cy="\${matrixWidth / 2}" r="\${frameR}" fill="none" stroke="\${fg}" stroke-width="\${frameThick}"/>\`;
+    if (rOffset < -1) {
+      const c = matrixWidth / 2;
+      const offset = (frameR * Math.sqrt(2)) / 2;
+      const r = (-rOffset + 1) * Math.max(frameThick / 2, 1);
+      svg += \`<circle cx="\${c - offset}" cy="\${c - offset}" r="\${r}" fill="\${bg}"/>\`;
+      svg += \`<circle cx="\${c + offset}" cy="\${c - offset}" r="\${r}" fill="\${bg}"/>\`;
+      svg += \`<circle cx="\${c - offset}" cy="\${c + offset}" r="\${r}" fill="\${bg}"/>\`;
+      if (rOffset < -2) {
+        svg += \`<circle cx="\${c + offset}" cy="\${c + offset}" r="\${r}" fill="\${bg}"/>\`;
+      }
+    }
+  }
 
   if (params["Finder pattern"] !== "Default") {
     for (const [x, y] of [
@@ -98,16 +145,25 @@ export function renderSVG(qr, params) {
   svg += \`<path fill="\${fg}" d="\`;
 
   const maxDist = Math.sqrt(2) * (matrixWidth / 2);
+  const lower = Math.min(-(diameter - matrixWidth) / 2, 0);
+  const upper = Math.max(diameter - lower, matrixWidth);
 
-  // nearest odd number
-  let diameter = Math.round(Math.sqrt(2) * matrixWidth) + 2 * rOffset;
-  if (!(diameter & 1)) diameter += 1;
+  const logoInner = Math.floor(((1 - logoRatio) * size) / 2 - margin);
+  const logoUpper = matrixWidth - logoInner;
+  for (let y = lower; y < upper; y++) {
+    for (let x = lower; x < upper; x++) {
+      if (
+        file &&
+        !showLogoData &&
+        x >= logoInner &&
+        y >= logoInner &&
+        x < logoUpper &&
+        y < logoUpper
+      ) {
+        continue;
+      }
 
-  const overflow = (diameter - matrixWidth) / 2;
-  for (let y = -overflow; y < diameter - overflow; y++) {
-    for (let x = -overflow; x < diameter - overflow; x++) {
       // Quiet zone around qr
-
       const xRange1 = x >= -1 && x < 8;
       const yRange1 = y >= -1 && y < 8;
       const yRange2 = y > matrixWidth - 9 && y <= matrixWidth;
@@ -164,23 +220,37 @@ export function renderSVG(qr, params) {
       }
 
       let ratio;
-      switch (params["Scale direction"]) {
+      switch (params["Pixel size"]) {
         case "Center":
           ratio = 1 - dist / maxDist + 0.8;
           break;
         case "Edge":
           ratio = dist / maxDist + 0.8;
           break;
+        case "Random":
+          ratio = range(0.8, 1.2);
+          break;
         default:
           ratio = 1;
       }
 
-      const radius = Math.trunc(100 * 0.5 * ratio) / 100;
+      const radius = fmt(0.5 * ratio);
 
       svg += \`M\${x + 0.5},\${y + 0.5 - radius}a\${radius},\${radius} 0,0,0 0,\${2 * radius}a\${radius},\${radius} 0,0,0 0,\${-2 * radius}\`;
     }
   }
-  svg += \`"/></svg>\`;
+  svg += \`"/>\`;
+
+  if (file != null) {
+    const bytes = await file.bytes();
+    const b64 = btoa(
+      Array.from(bytes, (byte) => String.fromCodePoint(byte)).join("")
+    );
+    const logoSize = fmt(logoRatio * size);
+    const logoOffset = fmt(((1 - logoRatio) * size) / 2 - margin);
+    svg += \`<image x="\${logoOffset}" y="\${logoOffset}" width="\${logoSize}" height="\${logoSize}" href="data:\${file.type};base64,\${b64}"/>\`;
+  }
+  svg += \`</svg>\`;
 
   return svg;
 }

@@ -139,7 +139,7 @@ export function renderSVG(qr, params) {
         if (
           !visited(x + 1, y) &&
           !visited(x + 2, y) &&
-          !visited(x + 1, y + 1) &&
+          !visited(x, y + 1) &&
           !visited(x + 2, y + 1)
         ) {
           crossLayer += `<g>`;
@@ -159,7 +159,7 @@ export function renderSVG(qr, params) {
         x < matrixWidth - 1 &&
         matrix(x + 1, y) & matrix(x, y + 1) & matrix(x + 1, y + 1) & 1
       ) {
-        if (!visited(x + 1, y) && !visited(x + 1, y + 1)) {
+        if (!visited(x + 1, y) && !visited(x + 1, y + 1) && !visited(x, y + 1)) {
           crossLayer += `<g>`;
           crossLayer += `<line x1="${x + co}" y1="${y + co}" x2="${x + 2 - co}" y2="${y + 2 - co}"/>`;
           crossLayer += `<line x1="${x + 2 - co}" y1="${y + co}" x2="${x + co}" y2="${y + 2 - co}"/>`;

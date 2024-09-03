@@ -65,7 +65,14 @@ export default function QrPreview(props: Props) {
  *  Running the effect in the ref function caused double rendering for future mounts.
  */
 function RenderedQrCode() {
-  const { outputQr: _outputQr, render, params, paramsSchema } = useQrContext();
+  const {
+    outputQr: _outputQr,
+    render,
+    params,
+    paramsSchema,
+    error,
+    setError,
+  } = useQrContext();
   const outputQr = _outputQr as () => OutputQr;
 
   let svgParent: HTMLDivElement;
@@ -136,18 +143,18 @@ function RenderedQrCode() {
       switch (e.data.type) {
         case "svg":
           svgParent.innerHTML = e.data.svg;
-          clearToasts();
+          setError(null);
           break;
         case "canvas":
           canvas
             .getContext("bitmaprenderer")!
             .transferFromImageBitmap(e.data.bitmap);
           setCanvasDims({ width: canvas.width, height: canvas.height });
-          clearToasts();
+          setError(null);
           break;
         case "error":
-          toastError("Render failed", e.data.error.toString());
           console.error(e.data.error);
+          setError(e.data.error.toString());
           break;
         // case "canceled":
         //   break;
@@ -164,6 +171,9 @@ function RenderedQrCode() {
   return (
     <>
       <div class="checkboard aspect-[1/1] border rounded-md relative overflow-hidden">
+        <Show when={error()}>
+          <div class="absolute w-full h-full bg-back-base/50 p-2">{error()}</div>
+        </Show>
         <Switch>
           <Match when={render()?.type === "svg"}>
             <div ref={svgParent!}></div>

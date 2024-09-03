@@ -18,6 +18,10 @@ export const Basic = `export const paramsSchema = {
     type: "select",
     options: ["Square-Circle", "Diamond-Squircle"],
   },
+  Frame: {
+    type: "select",
+    options: ["None", "Corners"],
+  },
   Roundness: {
     type: "number",
     min: 0,
@@ -25,7 +29,7 @@ export const Basic = `export const paramsSchema = {
     step: 0.01,
     default: 0,
   },
-  "Data size": {
+  "Pixel size": {
     type: "number",
     min: 0.5,
     max: 1.5,
@@ -45,7 +49,6 @@ export const Basic = `export const paramsSchema = {
   },
   "Show data behind logo": {
     type: "boolean",
-    default: true,
   },
 };
 
@@ -81,6 +84,20 @@ export async function renderSVG(qr, params) {
   svg += \`<rect x="\${-margin}" y="\${-margin}" width="\${size}" height="\${size}" fill="\${bg}"/>\`;
 
   svg += \`<g fill="\${fg}">\`;
+
+  if (params["Frame"] === "Corners") {
+    const bracketRadius = 2.2 * roundness;
+    const bracketStraight = 5 + margin / 2 - bracketRadius;
+    svg += brackets(
+      -margin / 2,
+      -margin / 2,
+      size - margin,
+      bracketRadius,
+      bracketStraight,
+      fg
+    );
+  }
+
   svg += \`<path d="\`;
   const lgRadius = 3.5 * roundness;
   const mdRadius = 2.5 * roundness;
@@ -103,10 +120,11 @@ export async function renderSVG(qr, params) {
   }
   svg += \`"/>\`;
 
-  const dataSize = params["Data size"];
+  const dataSize = params["Pixel size"];
   const dataRadius = (roundness * dataSize) / 2;
   const dataOffset = (1 - dataSize) / 2;
-  if (!defaultShape) svg += \`<path d="\`;
+
+  if (!defaultShape || !roundness) svg += \`<path d="\`;
 
   const logoInner = Math.floor(((1 - logoRatio) * size) / 2 - margin);
   const logoUpper = matrixWidth - logoInner;
@@ -114,6 +132,7 @@ export async function renderSVG(qr, params) {
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       if (
+        file &&
         !showLogoData &&
         x >= logoInner &&
         y >= logoInner &&
@@ -127,7 +146,11 @@ export async function renderSVG(qr, params) {
       if (module === Module.FinderON) continue;
 
       if (defaultShape) {
-        svg += \`<rect x="\${fmt(x + dataOffset)}" y="\${fmt(y + dataOffset)}" width="\${dataSize}" height="\${dataSize}" rx="\${fmt(dataRadius)}"/>\`;
+        if (roundness) {
+          svg += \`<rect x="\${fmt(x + dataOffset)}" y="\${fmt(y + dataOffset)}" width="\${dataSize}" height="\${dataSize}" rx="\${fmt(dataRadius)}"/>\`;
+        } else {
+          svg += \`M\${x + dataOffset},\${y + dataOffset}h\${dataSize}v\${dataSize}h-\${dataSize}z\`;
+        }
       } else {
         svg += squircle(
           x + dataOffset,
@@ -139,7 +162,7 @@ export async function renderSVG(qr, params) {
       }
     }
   }
-  if (!defaultShape) svg += \`"/>\`;
+  if (!defaultShape || !roundness) svg += \`"/>\`;
   svg += \`</g>\`;
 
   if (file != null) {
@@ -163,8 +186,9 @@ function squircle(x, y, width, handle, cw) {
   const half = fmt(width / 2);
 
   if (handle === 0) {
-    return cw ? \`M\${fmt(x + width / 2)},\${fmt(y)}l\${half},\${half}l-\${half},\${half}l-\${half},-\${half}z\` :
-     \`M\${fmt(x + width / 2)},\${fmt(y)}l-\${half},\${half}l\${half},\${half}l\${half},-\${half}z\`
+    return cw
+      ? \`M\${fmt(x + width / 2)},\${fmt(y)}l\${half},\${half}l-\${half},\${half}l-\${half},-\${half}z\`
+      : \`M\${fmt(x + width / 2)},\${fmt(y)}l-\${half},\${half}l\${half},\${half}l\${half},-\${half}z\`;
   }
 
   const h = fmt(handle);
@@ -181,7 +205,7 @@ function roundedRect(x, y, width, radius, cw) {
       ? \`M\${fmt(x)},\${fmt(y)}h\${width}v\${width}h-\${width}z\`
       : \`M\${fmt(x)},\${fmt(y)}v\${width}h\${width}v-\${width}z\`;
   }
-  
+
   if (radius === width / 2) {
     const r = fmt(radius);
     const cwFlag = cw ? "1" : "0";
@@ -193,5 +217,22 @@ function roundedRect(x, y, width, radius, cw) {
   return cw
     ? \`M\${fmt(x + radius)},\${fmt(y)}h\${side}a\${r},\${r} 0,0,1 \${r},\${r}v\${side}a\${r},\${r} 0,0,1 -\${r},\${r}h-\${side}a\${r},\${r} 0,0,1 -\${r},-\${r}v-\${side}a\${r},\${r} 0,0,1 \${r},-\${r}\`
     : \`M\${fmt(x + radius)},\${fmt(y)}a\${r},\${r} 0,0,0 -\${r},\${r}v\${side}a\${r},\${r} 0,0,0 \${r},\${r}h\${side}a\${r},\${r} 0,0,0 \${r},-\${r}v-\${side}a\${r},\${r} 0,0,0 -\${r},-\${r}\`;
+}
+
+function brackets(x, y, width, radius, straight, stroke) {
+  const bracket = radius + straight;
+  const side = fmt(width - 2 * bracket);
+  const r = fmt(radius);
+
+  const cap = radius === 0 ? "square" : "round";
+
+  let svg = \`<path fill="none" stroke="\${stroke}" stroke-linecap="\${cap}" d="\`;
+  svg += \`M\${x},\${fmt(y + bracket)}\`;
+  svg += \`v-\${straight}a\${r},\${r} 0,0,1 \${r},-\${r}h\${straight}m\${side},0\`;
+  svg += \`h\${straight}a\${r},\${r} 0,0,1 \${r},\${r}v\${straight}m0,\${side}\`;
+  svg += \`v\${straight}a\${r},\${r} 0,0,1 -\${r},\${r}h-\${straight}m-\${side},0\`;
+  svg += \`h-\${straight}a\${r},\${r} 0,0,1 -\${r},-\${r}v-\${straight}\`;
+  svg += \`"/>\`;
+  return svg;
 }
 `

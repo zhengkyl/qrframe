@@ -114,7 +114,6 @@ function MenuNumberInput(props: NumberProps) {
         class="w-20 text-sm rounded-md px-3 py-2 border bg-transparent focus:outline-none"
         onFocus={[setFocused, true]}
         onBlur={[setFocused, false]}
-        onFocusOut={() => console.log("focout")}
       />
     </NumberField>
   );

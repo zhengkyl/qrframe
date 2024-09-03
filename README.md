@@ -71,6 +71,19 @@ I'm working on more examples.
       <td>
         <img src="./examples/alien.svg" width="300"/>
       </td>
+    <tr>
+      <th colspan="3">Boring options are available</th>
+    </tr>
+    <tr>
+      <td>
+        <img src="./examples/boring1.png"/>
+      </td>
+      <td>
+        <img src="./examples/boring2.png"/>
+      </td>
+      <td>
+        <img src="./examples/boring3.png"/>
+      </td>
     </tr>
 
   </tbody>
@@ -88,8 +101,8 @@ I'm working on more examples.
   - Define arbitrary UI parameters in code
   - Supports SVG and PNG
   - All code runs _directly_ in browser in a web worker with no restrictions.
-    - There is no sandbox, whitelist, blacklist, or anything besides a 5s timeout to stop infinite loops. 
-    - Generated SVGs are not sanitized. This is an impossible task and attempting it breaks perfectly fine SVGs, makes debugging harder, and adds latency to previewing changes. 
+    - There is no sandbox, whitelist, blacklist, or anything besides a 5s timeout to stop infinite loops.
+    - Generated SVGs are not sanitized. This is an impossible task and attempting it breaks perfectly fine SVGs, makes debugging harder, and adds latency to previewing changes.
     - These should be non-issues, but even if you copy-and-paste and run malware there's no secrets to leak.
 
 ## Use existing presets
