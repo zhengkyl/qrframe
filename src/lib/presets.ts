@@ -8,6 +8,7 @@ import { Dots } from "./presets/Dots";
 import { Drawing } from "./presets/Drawing";
 import { Glass } from "./presets/Glass";
 import { Halftone } from "./presets/Halftone";
+import { Layers } from "./presets/Layers";
 import { Minimal } from "./presets/Minimal";
 import { Mondrian } from "./presets/Mondrian";
 import { Neon } from "./presets/Neon";
@@ -25,6 +26,7 @@ export const PRESET_CODE = {
   Tile,
   Drawing,
   Halftone,
+  Layers,
   Dots,
   Minimal,
   Blocks,

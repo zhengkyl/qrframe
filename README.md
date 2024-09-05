@@ -39,6 +39,12 @@ I'm working on more examples.
       <td>
         <img src="./examples/neon.svg" width="300"/>
       </td>
+      <td>
+        <img src="./examples/layers1.svg" width="300"/>
+      </td>
+      <td>
+        <img src="./examples/layers2.svg" width="300"/>
+      </td>
     </tr>
     <tr>
       <th colspan="3">Import external libs, fetch external files, etc </th>

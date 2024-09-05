@@ -48,9 +48,6 @@ importers:
       '@thisbeyond/solid-dnd':
         specifier: ^0.7.5
         version: 0.7.5(solid-js@1.8.17)
-      '@tiagotrindade/solid-colorful':
-        specifier: ^1.0.2
-        version: 1.0.2(solid-js@1.8.17)
       '@unocss/reset':
         specifier: ^0.59.4
         version: 0.59.4
@@ -63,9 +60,6 @@ importers:
       lucide-solid:
         specifier: ^0.378.0
         version: 0.378.0(solid-js@1.8.17)
-      solid-color:
-        specifier: link:/home/zhengkyl/fd/solid-color
-        version: link:../solid-color
       solid-js:
         specifier: ^1.8.17
         version: 1.8.17
@@ -1093,11 +1087,6 @@ packages:
     engines: {node: '>=18.0.0', pnpm: '>=8.6.0'}
     peerDependencies:
       solid-js: ^1.5
-
-  '@tiagotrindade/solid-colorful@1.0.2':
-    resolution: {integrity: sha512-ccyv857xkMZ8It8vkdMetH7KenjSWtfF62QYOf34Y80eTLbBhg6k7oTVvU0BJFLePv4f3NFuyrKdr14EPVyS6Q==}
-    peerDependencies:
-      solid-js: '*'
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -3974,10 +3963,6 @@ snapshots:
       tslib: 2.6.2
 
   '@thisbeyond/solid-dnd@0.7.5(solid-js@1.8.17)':
-    dependencies:
-      solid-js: 1.8.17
-
-  '@tiagotrindade/solid-colorful@1.0.2(solid-js@1.8.17)':
     dependencies:
       solid-js: 1.8.17
 
