@@ -27,9 +27,12 @@ export function AllowPasteDialog(props: Props) {
               <p>Using code you don't understand could be dangerous.</p>
               <p>
                 There are no secrets or passwords that can be leaked from this
-                website, but you may be trolled. The page may break, you could
-                be redirected to another URL, or any number of things could
-                happen.
+                website, but any number of things could happen. The page may
+                break, you could be redirected to another URL, or get absolutely
+                memed on.
+              </p>
+              <p>
+                In case you need to delete a preset without running its code, you can right click on it.
               </p>
               <p>Do you accept these risks?</p>
             </div>

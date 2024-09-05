@@ -175,7 +175,7 @@ export function Editor(props: Props) {
       }
 
       const { type, url, parsedParamsSchema } = await importCode(code);
-      setError(null)
+      setError(null);
 
       // batched b/c trigger rendering effect
       batch(() => {
@@ -197,7 +197,7 @@ export function Editor(props: Props) {
       }
     } catch (e) {
       console.error("e", e!.toString());
-      setError(e!.toString())
+      setError(e!.toString());
     }
   };
 
@@ -391,9 +391,7 @@ export function Editor(props: Props) {
         <div class="py-4">
           <div class="mb-4 h-[180px] md:(h-unset)">
             <div class="flex justify-between">
-              <div class="text-sm py-2 border border-transparent">
-                Render function
-              </div>
+              <div class="text-sm py-2 border border-transparent">Presets</div>
               <div class="flex gap-2">
                 <div class="flex items-center font-bold">{renderKey()}</div>
                 <Show when={!presetKeys.includes(renderKey())}>

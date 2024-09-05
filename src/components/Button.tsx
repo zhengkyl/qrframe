@@ -1,5 +1,5 @@
 import { Button } from "@kobalte/core/button";
-import { type JSX } from "solid-js";
+import { type JSX, type Ref } from "solid-js";
 
 type Props = {
   class?: string;
@@ -8,6 +8,7 @@ type Props = {
   children: JSX.Element;
   title?: string;
   disabled?: boolean;
+  ref?: Ref<HTMLButtonElement>;
 };
 export function FlatButton(props: Props) {
   return (
@@ -21,6 +22,7 @@ export function FlatButton(props: Props) {
       onMouseDown={props.onMouseDown}
       onClick={props.onClick}
       disabled={props.disabled}
+      ref={props.ref}
     >
       {props.children}
     </Button>

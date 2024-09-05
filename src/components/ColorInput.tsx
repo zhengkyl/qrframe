@@ -1,21 +1,44 @@
+import { createEffect } from "solid-js";
+import Coloris from "@melloware/coloris";
+import "../coloris.css";
+
+Coloris.init();
+
 type Props = {
   value: string;
   setValue: (c: string) => void;
 };
-export function ColorInput(props: Props) {
+
+export default function ColorInput(props: Props) {
+  let input: HTMLInputElement;
+  createEffect(() => {
+    if (props.value !== input.value) {
+      input.value = props.value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  });
+
   return (
-    <label class="border rounded-md font-mono inline-flex items-center py-1.5 px-2 gap-1 cursor-pointer bg-back-base hover:bg-fore-base/5 focus-within:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)">
-      {props.value}
+    <div class="w-full">
       <input
-        class="w-0 h-0"
-        type="color"
-        value={props.value}
-        onInput={(e) => props.setValue(e.target.value)}
+        class="text-white pl-9 font-mono w-full bg-back-subtle leading-none px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
+        type="text"
+        // @ts-expect-error i'm right
+        on:input={(e) => {
+          props.setValue(e.target.value);
+        }}
+        ref={(ref) => {
+          ref.value = props.value;
+          Coloris({
+            el: ref,
+            alpha: true,
+            formatToggle: true,
+            theme: "large",
+            themeMode: "auto",
+          });
+          input = ref;
+        }}
       />
-      <div
-        class="rounded-sm border w-6 h-6"
-        style={{ background: props.value }}
-      ></div>
-    </label>
+    </div>
   );
 }

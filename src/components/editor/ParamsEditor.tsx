@@ -52,8 +52,12 @@ function ArrayParam({ label, other }) {
   const idFromIndex = (i) => i + 1;
   const indexFromId = (k) => k - 1;
   const [activeId, setActiveId] = createSignal(null);
+  const [dragging, setDragging] = createSignal(false);
 
-  const onDragStart = ({ draggable }) => setActiveId(draggable.id);
+  const onDragStart = ({ draggable }) => {
+    setActiveId(draggable.id);
+    setDragging(true);
+  };
   const onDragEnd = ({ draggable, droppable }) => {
     const fromIndex = indexFromId(draggable.id);
     const toIndex = indexFromId(droppable.id);
@@ -64,6 +68,7 @@ function ArrayParam({ label, other }) {
         return updatedItems;
       });
     }
+    setDragging(false);
   };
   return (
     <div class="grid grid-cols-[144px_1fr] justify-items-end gap-y-2">
@@ -135,15 +140,18 @@ function ArrayParam({ label, other }) {
         </SortableProvider>
         <DragOverlay>
           <div class="flex w-full justify-end items-center">
-            <Dynamic
-              component={
-                PARAM_COMPONENTS[
-                  other.props.type as keyof typeof PARAM_COMPONENTS
-                ]
-              }
-              {...other.props}
-              value={params[label][indexFromId(activeId()!)]}
-            />
+            <Show when={dragging()}>
+              <Dynamic
+                component={
+                  PARAM_COMPONENTS[
+                    other.props.type as keyof typeof PARAM_COMPONENTS
+                  ]
+                }
+                {...other.props}
+                value={params[label][indexFromId(activeId()!)]}
+                test={true}
+              />
+            </Show>
             <div class="px-1 cursor-move">
               <GripVertical />
             </div>
