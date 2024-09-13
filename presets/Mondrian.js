@@ -1,3 +1,5 @@
+import { Module, getSeededRand } from "REPLACE_URL/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -35,20 +37,8 @@ export const paramsSchema = {
   },
 };
 
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 export function renderSVG(qr, params) {
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
   const margin = params["Margin"];
 
   const unit = 20;
@@ -90,7 +80,7 @@ export function renderSVG(qr, params) {
       if (visited[y * matrixWidth + x]) continue;
 
       let layer = "";
-      const on = module & 1;
+      const on = module & Module.ON;
       visited[y * matrixWidth + x] = true;
 
       let width = 1;
@@ -98,7 +88,7 @@ export function renderSVG(qr, params) {
 
       while (
         x + width < matrixWidth &&
-        (matrix[y * matrixWidth + x + width] & 1) === on &&
+        (matrix[y * matrixWidth + x + width] & Module.ON) === on &&
         !visited[y * matrixWidth + x + width]
       ) {
         visited[y * matrixWidth + x + width] = true;
@@ -107,7 +97,7 @@ export function renderSVG(qr, params) {
 
       outer: while (y + height < matrixWidth) {
         for (let i = 0; i < width; i++) {
-          if ((matrix[(y + height) * matrixWidth + x + i] & 1) !== on) {
+          if ((matrix[(y + height) * matrixWidth + x + i] & Module.ON) !== on) {
             break outer;
           }
         }

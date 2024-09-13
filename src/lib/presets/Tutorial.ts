@@ -1,4 +1,5 @@
-export const Tutorial = `export const paramsSchema = {
+export const Tutorial = `import { Module } from "https://qrframe.kylezhe.ng/utils.js";
+export const paramsSchema = {
   Margin: {
     type: "number",
     min: 0,
@@ -30,7 +31,7 @@ export function renderSVG(qr, params) {
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = qr.matrix[y * matrixWidth + x];
-      if (module & 1) {
+      if (module & Module.ON) {
         svg += \`M\${x},\${y}h1v1h-1z\`;
       }
     }
@@ -58,7 +59,7 @@ export function renderSVG(qr, params) {
 //   for (let y = 0; y < matrixWidth; y++) {
 //     for (let x = 0; x < matrixWidth; x++) {
 //       const module = qr.matrix[y * matrixWidth + x];
-//       if (module & 1) {
+//       if (module & Module.ON) {
 //         ctx.fillRect((x + margin) * unit, (y + margin) * unit, unit, unit)
 //       }
 //     }

@@ -1,4 +1,5 @@
-export const Halftone = `// Halftone is a misnomer, but that's what this type of QR code is known as
+export const Halftone = `import { Module } from "https://qrframe.kylezhe.ng/utils.js";
+
 export const paramsSchema = {
   Image: {
     type: "file",
@@ -43,22 +44,6 @@ export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
 export async function renderCanvas(qr, params, canvas) {
   const unit = 3;
   const pixel = 1;
@@ -90,7 +75,7 @@ export async function renderCanvas(qr, params, canvas) {
     for (let y = 0; y < matrixWidth; y++) {
       for (let x = 0; x < matrixWidth; x++) {
         const module = qr.matrix[y * matrixWidth + x];
-        if (module & 1) {
+        if (module & Module.ON) {
           const px = x + margin;
           const py = y + margin;
           ctx.fillRect(px * unit, py * unit, unit, unit);
@@ -149,7 +134,7 @@ export async function renderCanvas(qr, params, canvas) {
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = qr.matrix[y * matrixWidth + x];
-      if (module & 1) {
+      if (module & Module.ON) {
         ctx.fillStyle = fg;
       } else {
         ctx.fillStyle = bg;
@@ -158,11 +143,10 @@ export async function renderCanvas(qr, params, canvas) {
       const px = x + margin;
       const py = y + margin;
 
-      const type = module | 1;
       if (
-        type === Module.FinderON ||
-        (alignment && type === Module.AlignmentON) ||
-        (timing && type === Module.TimingON)
+        module & Module.FINDER ||
+        (alignment && module & Module.ALIGNMENT) ||
+        (timing && module & Module.TIMING)
       ) {
         ctx.fillRect(px * unit, py * unit, unit, unit);
       } else {

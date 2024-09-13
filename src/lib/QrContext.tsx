@@ -7,16 +7,7 @@ import {
   type JSX,
   type Setter,
 } from "solid-js";
-import {
-  ECL,
-  Mode,
-  Mask,
-  QrError,
-  Module,
-  QrOptions,
-  Version,
-  get_matrix,
-} from "fuqr";
+import { ECL, Mode, Mask, QrError, QrOptions, Version, generate } from "fuqr";
 import { createStore, type SetStoreFunction } from "solid-js/store";
 import { type Params, type ParamsSchema } from "./params";
 import { clearToasts, toastError } from "~/components/ErrorToasts";
@@ -37,7 +28,7 @@ export type OutputQr = Readonly<{
   ecl: ECL;
   mode: Mode;
   mask: Mask;
-  matrix: ReadonlyArray<Module>;
+  matrix: Uint8Array;
 }>;
 
 export const QrContext = createContext<{
@@ -102,10 +93,10 @@ export function QrContextProvider(props: { children: JSX.Element }) {
   const outputQr = createMemo(() => {
     // can't skip first render, b/c need to track deps
     try {
-      // NOTE: WASM ptrs (QrOptions, Version, Matrix) become null after leaving scope
+      // NOTE: WASM ptrs (QrOptions, Version) become null after leaving scope
       // They can't be reused or stored
 
-      let qrOptions = new QrOptions()
+      const qrOptions = new QrOptions()
         .min_version(new Version(inputQr.minVersion))
         .strict_version(inputQr.strictVersion)
         .min_ecl(inputQr.minEcl)
@@ -113,18 +104,10 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         .mask(inputQr.mask!) // null instead of undefined (wasm-pack type)
         .mode(inputQr.mode!); // null instead of undefined (wasm-pack type)
 
-      let m = get_matrix(inputQr.text, qrOptions);
-
-      // outputQr is passed as param to renderFunc
-      // must either freeze or pass new copy for each render
-      return Object.freeze({
+      return  {
         text: inputQr.text,
-        matrix: Object.freeze(m.value),
-        version: m.version["0"],
-        ecl: m.ecl,
-        mode: m.mode,
-        mask: m.mask,
-      });
+        ...generate(inputQr.text, qrOptions),
+      };
     } catch (e) {
       return e as QrError;
     }

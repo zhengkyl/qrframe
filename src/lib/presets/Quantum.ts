@@ -1,5 +1,7 @@
 export const Quantum = `// Based on QRBTF's A1P style
 // https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRNormal.tsx
+import { Module, getSeededRand } from "https://qrframe.kylezhe.ng/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -32,36 +34,8 @@ export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 export function renderSVG(qr, params) {
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
   const range = (min, max) =>
     Math.trunc(100 * (rand() * (max - min) + min)) / 100;
 
@@ -112,7 +86,7 @@ export function renderSVG(qr, params) {
   let dotsLayer = \`<g fill="\${fg}">\`;
 
   function on(x, y) {
-    return (qr.matrix[y * matrixWidth + x] & 1) === 1;
+    return (qr.matrix[y * matrixWidth + x] & Module.ON) !== 0;
   }
 
   const visitArray = Array.from({ length: matrixWidth * matrixWidth }).fill(
@@ -134,7 +108,7 @@ export function renderSVG(qr, params) {
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = qr.matrix[y * matrixWidth + x];
-      if ((module | 1) === Module.FinderON) continue;
+      if (module & Module.FINDER) continue;
 
       if (params["Particles"] && y < matrixWidth - 2 && x < matrixWidth - 2) {
         let xCross = false;

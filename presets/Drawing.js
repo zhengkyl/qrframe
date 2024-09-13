@@ -1,3 +1,4 @@
+import { Module, getSeededRand } from "REPLACE_URL/utils.js";
 import rough from "https://esm.sh/roughjs";
 
 export const paramsSchema = {
@@ -74,34 +75,6 @@ export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 const domMock = {
   ownerDocument: {
     createElementNS: (_ns, tagName) => {
@@ -148,7 +121,7 @@ export function renderSVG(qr, params) {
           x === matrixWidth - 1 ||
           y === matrixWidth - 1
         ) {
-          matrix.push(Module.DataOFF);
+          matrix.push(0);
         } else {
           matrix.push(qr.matrix[(y - 1) * (matrixWidth - 2) + x - 1]);
         }
@@ -172,8 +145,8 @@ export function renderSVG(qr, params) {
   let baseY;
 
   const on = params["Invert"]
-    ? (x, y) => (matrix[y * matrixWidth + x] & 1) === 0
-    : (x, y) => (matrix[y * matrixWidth + x] & 1) === 1;
+    ? (x, y) => (matrix[y * matrixWidth + x] & Module.ON) === 0
+    : (x, y) => (matrix[y * matrixWidth + x] & Module.ON) !== 0;
 
   function goRight(x, y, shape, cw) {
     let sx = x;

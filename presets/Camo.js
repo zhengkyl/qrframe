@@ -1,3 +1,5 @@
+import { Module, getSeededRand } from "REPLACE_URL/utils.js";
+
 export const paramsSchema = {
   Foreground: {
     type: "color",
@@ -30,36 +32,8 @@ export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 export function renderSVG(qr, params) {
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
   const margin = params["Margin"];
   const quietZone = params["Quiet zone"];
   const fg = params["Foreground"];
@@ -68,18 +42,18 @@ export function renderSVG(qr, params) {
   const qrWidth = qr.version * 4 + 17;
   const matrixWidth = qrWidth + 2 * margin;
 
-  const newMatrix = Array(matrixWidth * matrixWidth).fill(Module.DataOFF);
+  const newMatrix = Array(matrixWidth * matrixWidth).fill(0);
   const visited = new Uint16Array(matrixWidth * matrixWidth);
 
   // Copy qr to matrix with margin and randomly set pixels in margin
   for (let y = 0; y < margin - quietZone; y++) {
     for (let x = 0; x < matrixWidth; x++) {
-      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.ON;
     }
   }
   for (let y = margin - quietZone; y < margin + qrWidth + quietZone; y++) {
     for (let x = 0; x < margin - quietZone; x++) {
-      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.ON;
     }
     if (y >= margin && y < margin + qrWidth) {
       for (let x = margin; x < matrixWidth - margin; x++) {
@@ -88,12 +62,28 @@ export function renderSVG(qr, params) {
       }
     }
     for (let x = margin + qrWidth + quietZone; x < matrixWidth; x++) {
-      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.ON;
     }
   }
   for (let y = margin + qrWidth + quietZone; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
-      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.ON;
+    }
+  }
+  if (quietZone === 0 && margin > 0) {
+    for (let x = margin; x < margin + 7; x++) {
+      newMatrix[(margin - 1) * matrixWidth + x] = 0;
+      newMatrix[(margin - 1) * matrixWidth + x + qrWidth - 7] = 0;
+    }
+    for (let y = margin; y < margin + 7; y++) {
+      newMatrix[y * matrixWidth + margin - 1] = 0;
+      newMatrix[y * matrixWidth + matrixWidth - margin] = 0;
+    }
+    for (let y = margin + qrWidth - 7; y < margin + qrWidth; y++) {
+      newMatrix[y * matrixWidth + margin - 1] = 0;
+    }
+    for (let x = margin; x < margin + 7; x++) {
+      newMatrix[(matrixWidth - margin) * matrixWidth + x] = 0;
     }
   }
 
@@ -108,8 +98,8 @@ export function renderSVG(qr, params) {
   let baseY;
 
   const on = params["Invert"]
-    ? (x, y) => (newMatrix[y * matrixWidth + x] & 1) === 0
-    : (x, y) => (newMatrix[y * matrixWidth + x] & 1) === 1;
+    ? (x, y) => (newMatrix[y * matrixWidth + x] & Module.ON) === 0
+    : (x, y) => (newMatrix[y * matrixWidth + x] & Module.ON) !== 0;
 
   function goRight(x, y, path, cw) {
     let sx = x;

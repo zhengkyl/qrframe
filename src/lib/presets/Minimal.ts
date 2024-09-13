@@ -1,4 +1,6 @@
-export const Minimal = `export const paramsSchema = {
+export const Minimal = `import { Module } from "https://qrframe.kylezhe.ng/utils.js";
+
+export const paramsSchema = {
   Margin: {
     type: "number",
     min: 0,
@@ -14,22 +16,6 @@ export const Minimal = `export const paramsSchema = {
   Background: {
     type: "boolean",
   },
-};
-
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
 };
 
 export function renderSVG(qr, params) {
@@ -66,11 +52,11 @@ export function renderSVG(qr, params) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = qr.matrix[y * matrixWidth + x];
 
-      if ((module | 1) === Module.FinderON) {
+      if (module & Module.FINDER) {
         continue;
       }
 
-      if (module & 1) {
+      if (module & Module.ON) {
         const sx = x * unit + offset;
         const sy = y * unit + offset;
         svg += \`M\${sx},\${sy}h\${dataSize}v\${dataSize}h-\${dataSize}z\`;

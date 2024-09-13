@@ -1,4 +1,6 @@
-export const Neon = `export const paramsSchema = {
+export const Neon = `import { Module, getSeededRand } from "https://qrframe.kylezhe.ng/utils.js";
+
+export const paramsSchema = {
   Foreground: {
     type: "array",
     props: {
@@ -51,36 +53,8 @@ export const Neon = `export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 export function renderSVG(qr, params) {
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
   const margin = params["Margin"];
   const colors = params["Foreground"];
   const bg = params["Background"];
@@ -88,18 +62,18 @@ export function renderSVG(qr, params) {
   const qrWidth = qr.version * 4 + 17;
   const matrixWidth = qrWidth + 2 * margin;
 
-  const newMatrix = Array(matrixWidth * matrixWidth).fill(Module.DataOFF);
+  const newMatrix = Array(matrixWidth * matrixWidth).fill(0);
   const visited = new Uint16Array(matrixWidth * matrixWidth);
 
   // Copy qr to matrix with margin and randomly set pixels in margin
   for (let y = 0; y < margin - 1; y++) {
     for (let x = 0; x < matrixWidth; x++) {
-      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.ON;
     }
   }
   for (let y = margin - 1; y < margin + qrWidth + 1; y++) {
     for (let x = 0; x < margin - 1; x++) {
-      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.ON;
     }
     if (y >= margin && y < margin + qrWidth) {
       for (let x = margin; x < matrixWidth - margin; x++) {
@@ -108,30 +82,28 @@ export function renderSVG(qr, params) {
       }
     }
     for (let x = margin + qrWidth + 1; x < matrixWidth; x++) {
-      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.ON;
     }
   }
   for (let y = margin + qrWidth + 1; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
-      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[y * matrixWidth + x] = Module.ON;
     }
   }
   if (params["Quiet zone"] === "Minimal") {
     for (let x = margin + 8; x < matrixWidth - margin - 8; x++) {
-      if (rand() > 0.5)
-        newMatrix[(margin - 1) * matrixWidth + x] = Module.DataON;
+      if (rand() > 0.5) newMatrix[(margin - 1) * matrixWidth + x] = Module.ON;
     }
     for (let y = margin + 8; y < matrixWidth - margin; y++) {
       if (y < matrixWidth - margin - 8) {
-        if (rand() > 0.5)
-          newMatrix[y * matrixWidth + margin - 1] = Module.DataON;
+        if (rand() > 0.5) newMatrix[y * matrixWidth + margin - 1] = Module.ON;
       }
       if (rand() > 0.5)
-        newMatrix[y * matrixWidth + matrixWidth - margin] = Module.DataON;
+        newMatrix[y * matrixWidth + matrixWidth - margin] = Module.ON;
     }
     for (let x = margin + 8; x < matrixWidth - margin + 1; x++) {
       if (rand() > 0.5)
-        newMatrix[(matrixWidth - margin) * matrixWidth + x] = Module.DataON;
+        newMatrix[(matrixWidth - margin) * matrixWidth + x] = Module.ON;
     }
   }
 
@@ -156,8 +128,8 @@ export function renderSVG(qr, params) {
   let baseY;
 
   const on = params["Invert"]
-    ? (x, y) => (newMatrix[y * matrixWidth + x] & 1) === 0
-    : (x, y) => (newMatrix[y * matrixWidth + x] & 1) === 1;
+    ? (x, y) => (newMatrix[y * matrixWidth + x] & Module.ON) === 0
+    : (x, y) => (newMatrix[y * matrixWidth + x] & Module.ON) !== 0;
 
   function goRight(x, y, shape, cw) {
     let sx = x;
@@ -303,7 +275,7 @@ export function renderSVG(qr, params) {
     for (let x = 0; x < matrixWidth; x++) {
       if (visited[y * matrixWidth + x]) continue;
 
-      if ((newMatrix[y * matrixWidth + x] | 1) === Module.FinderON) {
+      if (newMatrix[y * matrixWidth + x] & Module.FINDER) {
         thin = params["Finder thickness"];
         offset = (unit - thin) / 2;
       } else {

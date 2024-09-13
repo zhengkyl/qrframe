@@ -11,7 +11,7 @@ import {
 } from "~/lib/options";
 import type { Params } from "~/lib/params";
 import { FlatButton } from "../Button";
-import { clearToasts, toastError } from "../ErrorToasts";
+import { toastError } from "../ErrorToasts";
 import { unwrap } from "solid-js/store";
 import { SplitButton } from "../SplitButton";
 
@@ -36,7 +36,7 @@ export default function QrPreview(props: Props) {
       <Show
         when={typeof outputQr() !== "number"}
         fallback={
-          <div class="aspect-[1/1] border rounded-md flex justify-center items-center">
+          <div class="aspect-[1/1] border rounded-md p-2">
             <Switch>
               <Match when={outputQr() === QrError.ExceedsMaxCapacity}>
                 Data exceeds max capacity
@@ -170,10 +170,7 @@ function RenderedQrCode() {
 
   return (
     <>
-      <div class="checkboard aspect-[1/1] border rounded-md relative overflow-hidden">
-        <Show when={error()}>
-          <div class="absolute w-full h-full bg-back-base/50 p-2">{error()}</div>
-        </Show>
+      <div class="checkboard aspect-[1/1] border rounded-md grid [&>*]:[grid-area:1/1] overflow-hidden">
         <Switch>
           <Match when={render()?.type === "svg"}>
             <div ref={svgParent!}></div>
@@ -185,6 +182,9 @@ function RenderedQrCode() {
             ></canvas>
           </Match>
         </Switch>
+        <Show when={error()}>
+          <div class="bg-back-base/50 p-2">{error()}</div>
+        </Show>
       </div>
       <Show when={render()?.type === "canvas"}>
         <div class="text-center">

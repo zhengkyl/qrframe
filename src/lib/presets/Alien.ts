@@ -1,5 +1,7 @@
 export const Alien = `// Based on QRBTF's Line style
 // https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRLine.tsx
+import { Module, getSeededRand } from "https://qrframe.kylezhe.ng/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -28,36 +30,8 @@ export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 export function renderSVG(qr, params) {
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
   const rangeStr = (min, max) => (rand() * (max - min) + min).toFixed(2);
 
   const matrixWidth = qr.version * 4 + 17;
@@ -117,9 +91,9 @@ export function renderSVG(qr, params) {
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = matrix(x, y);
-      if ((module | 1) === Module.FinderON) continue;
+      if (module & Module.FINDER) continue;
 
-      if (!(module & 1)) continue;
+      if (!(module & Module.ON)) continue;
       dotsLayer += \`<circle cx="\${x + 0.5}" cy="\${y + 0.5}" r="\${rangeStr(0.2, 0.4)}"/>\`;
 
       if (!visited1(x, y)) {
@@ -128,7 +102,7 @@ export function renderSVG(qr, params) {
         while (
           nx < matrixWidth &&
           ny < matrixWidth &&
-          matrix(nx, ny) & 1 &&
+          matrix(nx, ny) & Module.ON &&
           !visited1(nx, ny)
         ) {
           setVisited1(nx, ny);
@@ -146,7 +120,7 @@ export function renderSVG(qr, params) {
         while (
           nx >= 0 &&
           ny < matrixWidth &&
-          matrix(nx, ny) & 1 &&
+          matrix(nx, ny) & Module.ON &&
           !visited2(nx, ny)
         ) {
           setVisited2(nx, ny);

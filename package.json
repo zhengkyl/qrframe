@@ -2,7 +2,7 @@
   "name": "qrframe",
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev",
+    "dev": "nr presets dev && vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
     "presets": "node updatePresets"
@@ -22,7 +22,7 @@
     "@thisbeyond/solid-dnd": "^0.7.5",
     "@unocss/reset": "^0.59.4",
     "codemirror": "^6.0.1",
-    "fuqr": "^0.0.6",
+    "fuqr": "^0.0.7",
     "lucide-solid": "^0.378.0",
     "solid-js": "^1.8.17",
     "unocss": "^0.59.4",

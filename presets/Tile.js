@@ -1,3 +1,5 @@
+import { Module } from "REPLACE_URL/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -31,22 +33,6 @@ export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
 export function renderSVG(qr, params) {
   const unit = 16;
   const gap = 2;
@@ -60,9 +46,7 @@ export function renderSVG(qr, params) {
   const bg = params["Background"];
   const grout = params["Grout"];
 
-  const newMatrix = Array.from({ length: matrixWidth * matrixWidth }).fill(
-    Module.DataOFF
-  );
+  const newMatrix = Array.from({ length: matrixWidth * matrixWidth }).fill(0);
 
   const start = margin;
   const end = matrixWidth - 1 - margin;
@@ -72,29 +56,29 @@ export function renderSVG(qr, params) {
     for (let x = 0; x < matrixWidth; x++) {
       // outer square
       if (y === start - outer && x >= start - outer && x <= end + outer) {
-        newMatrix[y * matrixWidth + x] = Module.DataON;
+        newMatrix[y * matrixWidth + x] = Module.ON;
       } else if (
         (x === start - outer || x === end + outer) &&
         y >= start - outer + 1 &&
         y <= end + outer - 1
       ) {
-        newMatrix[y * matrixWidth + x] = Module.DataON;
-        newMatrix[y * matrixWidth + x] = Module.DataON;
+        newMatrix[y * matrixWidth + x] = Module.ON;
+        newMatrix[y * matrixWidth + x] = Module.ON;
       } else if (y === end + outer && x >= start - outer && x <= end + outer) {
-        newMatrix[y * matrixWidth + x] = Module.DataON;
+        newMatrix[y * matrixWidth + x] = Module.ON;
       }
       // inner square
       else if (y === start - inner && x >= start - inner && x <= end + inner) {
-        newMatrix[y * matrixWidth + x] = Module.DataON;
+        newMatrix[y * matrixWidth + x] = Module.ON;
       } else if (
         (x === start - inner || x === end + inner) &&
         y >= start - inner + 1 &&
         y <= end + inner - 1
       ) {
-        newMatrix[y * matrixWidth + x] = Module.DataON;
-        newMatrix[y * matrixWidth + x] = Module.DataON;
+        newMatrix[y * matrixWidth + x] = Module.ON;
+        newMatrix[y * matrixWidth + x] = Module.ON;
       } else if (y === end + inner && x >= start - inner && x <= end + inner) {
-        newMatrix[y * matrixWidth + x] = Module.DataON;
+        newMatrix[y * matrixWidth + x] = Module.ON;
       }
       // qr code w/ quiet zone
       else if (
@@ -121,16 +105,16 @@ export function renderSVG(qr, params) {
         x < end + outer
       ) {
         if ((x + y) & 1) {
-          newMatrix[y * matrixWidth + x] = Module.DataON;
+          newMatrix[y * matrixWidth + x] = Module.ON;
         }
         // outside squares
       } else {
         if (x % 4 && y % 4) {
           if ((x % 8 < 4 && y % 8 < 4) || (x % 8 > 4 && y % 8 > 4)) {
-            newMatrix[y * matrixWidth + x] = Module.DataON;
+            newMatrix[y * matrixWidth + x] = Module.ON;
           }
         } else {
-          newMatrix[y * matrixWidth + x] = Module.DataON;
+          newMatrix[y * matrixWidth + x] = Module.ON;
         }
       }
     }
@@ -146,8 +130,8 @@ export function renderSVG(qr, params) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = newMatrix[y * matrixWidth + x];
       let tiles;
-      if (module & 1) {
-        if (module === Module.FinderON) {
+      if (module & Module.ON) {
+        if (module & Module.FINDER) {
           svg += `M${x * unit},${y * unit}h${unit}v${unit}h-${unit}z`;
           continue;
         }
@@ -161,7 +145,7 @@ export function renderSVG(qr, params) {
         const ny = y * unit + offset + dy * (tile + gap);
         for (let dx = 0; dx < tiles; dx++) {
           const nx = x * unit + offset + dx * (tile + gap);
-          if (module & 1) {
+          if (module & Module.ON) {
             svg += `M${nx},${ny}h${tile}v${tile}h-${tile}z`;
           } else {
             layer += `M${nx},${ny}h${tile}v${tile}h-${tile}z`;

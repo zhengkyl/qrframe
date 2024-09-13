@@ -1,6 +1,9 @@
 import { promises as fs } from "fs";
 import path from "path";
 
+const dev = process.argv[2] === "dev";
+const url = dev ? "http://localhost:3000" : "https://qrframe.kylezhe.ng";
+
 async function convertTsToJs(inputDir, outputDir) {
   try {
     // Ensure output directory exists
@@ -15,6 +18,7 @@ async function convertTsToJs(inputDir, outputDir) {
 
       let code = await fs.readFile(inputPath, "utf-8");
 
+      code = code.replace("REPLACE_URL", url);
       code = code.replaceAll("`", "\\`");
       code = code.replaceAll("${", "\\${");
 
@@ -23,10 +27,10 @@ async function convertTsToJs(inputDir, outputDir) {
         `export const ${file.slice(0, -3)} = \`${code.slice(0, -1)}\n\`\n`,
         "utf-8"
       );
-      console.log(`Converted and formatted: ${inputPath} -> ${outputPath}`);
+      if (!dev) console.log(`Converted and formatted: ${inputPath} -> ${outputPath}`);
     }
 
-    console.log("Conversion and formatting completed successfully.");
+    if (!dev) console.log("Conversion and formatting completed successfully.");
   } catch (error) {
     console.error("An error occurred:", error);
   }

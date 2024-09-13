@@ -1,4 +1,6 @@
-export const Dots = `export const paramsSchema = {
+export const Dots = `import { Module, getSeededRand } from "https://qrframe.kylezhe.ng/utils.js";
+
+export const paramsSchema = {
   Margin: {
     type: "number",
     min: 0,
@@ -64,38 +66,10 @@ export const Dots = `export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 export function renderSVG(qr, params) {
   const unit = params["Density"];
 
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
   const rangeStr = (min, max) => (rand() * (max - min) + min).toFixed(2);
   const matrixWidth = qr.version * 4 + 17;
   const margin = params["Margin"] * unit;
@@ -119,9 +93,9 @@ export function renderSVG(qr, params) {
       const qx = Math.floor((x + center) / unit);
       const qy = Math.floor((y + center) / unit);
       if (qx >= 0 && qx < matrixWidth && qy >= 0 && qy < matrixWidth) {
-        if (qr.matrix[qy * matrixWidth + qx] & 1) {
+        if (qr.matrix[qy * matrixWidth + qx] & Module.ON) {
           const rad =
-            qr.matrix[qy * matrixWidth + qx] === Module.FinderON
+            qr.matrix[qy * matrixWidth + qx] & Module.FINDER
               ? params["Finder clarity"]
               : dotRadius;
           svg += \`<circle cx="\${(center + x).toFixed(2)}" cy="\${(center + y).toFixed(2)}" r="\${rad}" />\`;

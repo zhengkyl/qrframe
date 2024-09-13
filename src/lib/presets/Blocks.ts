@@ -1,5 +1,7 @@
 export const Blocks = `// Based on QRBTF's DSJ style
 // https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRDsj.tsx
+import { Module } from "https://qrframe.kylezhe.ng/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -49,22 +51,6 @@ export const paramsSchema = {
     step: 0.1,
     default: 0.7,
   },
-};
-
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
 };
 
 export function renderSVG(qr, params) {
@@ -122,8 +108,8 @@ export function renderSVG(qr, params) {
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = matrix(x, y);
-      if ((module | 1) === Module.FinderON) continue;
-      if (!(module & 1)) continue;
+      if (module & Module.FINDER) continue;
+      if (!(module & Module.ON)) continue;
       if (visited(x, y)) continue;
       setVisited(x, y);
 
@@ -157,9 +143,13 @@ export function renderSVG(qr, params) {
       if (
         y < matrixWidth - 1 &&
         x < matrixWidth - 1 &&
-        matrix(x + 1, y) & matrix(x, y + 1) & matrix(x + 1, y + 1) & 1
+        matrix(x + 1, y) & matrix(x, y + 1) & matrix(x + 1, y + 1) & Module.ON
       ) {
-        if (!visited(x + 1, y) && !visited(x + 1, y + 1) && !visited(x, y + 1)) {
+        if (
+          !visited(x + 1, y) &&
+          !visited(x + 1, y + 1) &&
+          !visited(x, y + 1)
+        ) {
           crossLayer += \`<g>\`;
           crossLayer += \`<line x1="\${x + co}" y1="\${y + co}" x2="\${x + 2 - co}" y2="\${y + 2 - co}"/>\`;
           crossLayer += \`<line x1="\${x + 2 - co}" y1="\${y + co}" x2="\${x + co}" y2="\${y + 2 - co}"/>\`;
@@ -173,7 +163,7 @@ export function renderSVG(qr, params) {
       }
 
       let ny = y + 1;
-      while (ny < matrixWidth && matrix(x, ny) & 1 && !visited(x, ny)) {
+      while (ny < matrixWidth && matrix(x, ny) & Module.ON && !visited(x, ny)) {
         ny++;
       }
       if (ny - y > 2) {
@@ -186,7 +176,7 @@ export function renderSVG(qr, params) {
       }
 
       let nx = x + 1;
-      while (nx < matrixWidth && matrix(nx, y) & 1 && !visited(nx, y)) {
+      while (nx < matrixWidth && matrix(nx, y) & Module.ON && !visited(nx, y)) {
         setVisited(nx, y);
         nx++;
       }

@@ -1,4 +1,6 @@
-export const Basic = `export const paramsSchema = {
+export const Basic = `import { Module } from "https://qrframe.kylezhe.ng/utils.js";
+
+export const paramsSchema = {
   Margin: {
     type: "number",
     min: 0,
@@ -50,22 +52,6 @@ export const Basic = `export const paramsSchema = {
   "Show data behind logo": {
     type: "boolean",
   },
-};
-
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
 };
 
 export async function renderSVG(qr, params) {
@@ -142,8 +128,8 @@ export async function renderSVG(qr, params) {
         continue;
       }
       const module = qr.matrix[y * matrixWidth + x];
-      if (!(module & 1)) continue;
-      if (module === Module.FinderON) continue;
+      if (!(module & Module.ON)) continue;
+      if (module & Module.FINDER) continue;
 
       if (defaultShape) {
         if (roundness) {

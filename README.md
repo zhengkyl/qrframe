@@ -122,14 +122,16 @@ A preset must export `paramsSchema` and either `renderSVG` or `renderCanvas`
 This schema defines the UI components whose values are passed into `renderSVG` or `renderCanvas` via the `params` object.
 
 All properties besides `type` are optional, except
+
 - type `select` must have a nonempty options array
 - type `array` must have a valid `props` value.
 
 In this example, `default` is set explicitly to the implicit default value.
+
 ```js
 export const paramsSchema = {
   Example1: {
-    type: "number"
+    type: "number",
     min: 0,
     max: 10,
     step: 0.1,
@@ -141,29 +143,29 @@ export const paramsSchema = {
   },
   Example3: {
     type: "color",
-    default: "#000000"
+    default: "#000000", // css color string (hex/rgba/hsla)
   },
   Example4: {
     type: "select",
-    options: ["I'm feeling", 22]
-    default: "I'm feeling",
+    options: ["I'm feeling", 22],
+    default: "I'm feeling", // first option
   },
   Example5: {
     type: "file",
-    accept: ".jpeg, .jpg, .png"
+    accept: ".jpeg, .jpg, .png",
     default: null,
   },
   Example6: {
     type: "array",
     props: {
-      type: "number" // any type except "array"
+      type: "number", // any type except "array"
       // corresponding props
     },
     resizable: true,
     defaultLength: 5, // overridden by default
     default: [], // overrides defaultLength
-  }
-}
+  },
+};
 ```
 
 ## `renderSVG` and `renderCanvas`
@@ -180,27 +182,24 @@ type renderCanvas = (qr: Qr, params: Params, canvas: OffscreenCanvas) => void;
 
 ```ts
 type Qr = {
-  matrix: Module[] // see below
+  matrix: Uint8Array; // see below
   version: number; // 1- 40
-  mask: number; // 0 - 8,
+  mask: number; // 0 - 7,
   ecl: number; // 0 - 3, Low, Medium, Quartile, High
   mode: number; // 0 - 2, Numeric, Alphanumeric, Byte
 };
 
-enum Module {
-  DataOFF = 0,
-  DataON = 1,
-  FinderOFF = 2,
-  FinderON = 3,
-  AlignmentOFF = 4,
-  AlignmentON = 5,
-  TimingOFF = 6,
-  TimingON = 7,
-  FormatOFF = 8,
-  FormatON = 9,
-  VersionOFF = 10,
-  VersionON = 11,
-  SeparatorOFF = 12,
-}
+// bit flags for each u8 in matrix
+const Module = {
+  ON: 1 << 0,
+  DATA: 1 << 1,
+  FINDER: 1 << 2,
+  ALIGNMENT: 1 << 3,
+  TIMING: 1 << 4,
+  FORMAT: 1 << 5,
+  VERSION: 1 << 6,
+  MODIFIER: 1 << 7,
+};
 ```
 
+`MODIFIER` is set for Finder and Alignment centers, Format and Version copy.

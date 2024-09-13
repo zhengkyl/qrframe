@@ -1,3 +1,5 @@
+import { Module, getSeededRand } from "REPLACE_URL/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -51,20 +53,8 @@ export const paramsSchema = {
   },
 };
 
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 export function renderSVG(qr, params) {
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
   const margin = params["Margin"];
 
   const unit = 4;
@@ -245,7 +235,7 @@ export function renderSVG(qr, params) {
 
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
-      if (matrix[y * matrixWidth + x] & 1) {
+      if (matrix[y * matrixWidth + x] & Module.ON) {
         qrLayer += `M${x * unit},${y * unit}h${unit}v${unit}h-${unit}z`;
       }
 

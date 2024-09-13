@@ -1,5 +1,7 @@
 export const Bubbles = `// Based on QRBTF's Bubble style
 // https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRBubble.tsx
+import { Module, getSeededRand } from "https://qrframe.kylezhe.ng/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -43,36 +45,8 @@ export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 export function renderSVG(qr, params) {
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
 
   const rangeStr = params["Randomize circle size"]
     ? (min, max) => (rand() * (max - min) + min).toFixed(2)
@@ -116,7 +90,7 @@ export function renderSVG(qr, params) {
   for (let y = 0; y < matrixWidth; y++) {
     for (let x = 0; x < matrixWidth; x++) {
       const module = matrix(x, y);
-      if ((module | 1) === Module.FinderON) continue;
+      if (module & Module.FINDER) continue;
       if (visited(x, y)) continue;
 
       if (
@@ -140,13 +114,16 @@ export function renderSVG(qr, params) {
         setVisited(x + 1, y + 2);
         continue;
       }
-      if (!(module & 1)) continue;
+      if (!(module & Module.ON)) continue;
       setVisited(x, y);
 
       if (
         y < matrixWidth - 1 &&
         x < matrixWidth - 1 &&
-        matrix(x + 1, y) & matrix(x, y + 1) & matrix(x + 1, y + 1) & 1 &&
+        matrix(x + 1, y) &
+          matrix(x, y + 1) &
+          matrix(x + 1, y + 1) &
+          Module.ON &&
         !visited(x + 1, y) &&
         !visited(x + 1, y + 1)
       ) {
@@ -156,12 +133,20 @@ export function renderSVG(qr, params) {
         setVisited(x + 1, y + 1);
         continue;
       }
-      if (x < matrixWidth - 1 && matrix(x + 1, y) & 1 && !visited(x + 1, y)) {
+      if (
+        x < matrixWidth - 1 &&
+        matrix(x + 1, y) & Module.ON &&
+        !visited(x + 1, y)
+      ) {
         layer3 += \`<circle cx="\${x + 1}" cy="\${y + 0.5}" r="\${rangeStr(0.4, 0.6)}"/>\`;
         setVisited(x + 1, y);
         continue;
       }
-      if (y < matrixWidth - 1 && matrix(x, y + 1) & 1 && !visited(x, y + 1)) {
+      if (
+        y < matrixWidth - 1 &&
+        matrix(x, y + 1) & Module.ON &&
+        !visited(x, y + 1)
+      ) {
         layer3 += \`<circle cx="\${x + 0.5}" cy="\${y + 1}" r="\${rangeStr(0.3, 0.5)}"/>\`;
         setVisited(x, y + 1);
         continue;

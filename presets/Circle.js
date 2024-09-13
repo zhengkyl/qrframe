@@ -1,3 +1,5 @@
+import { Module, getSeededRand } from "REPLACE_URL/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",
@@ -60,34 +62,6 @@ export const paramsSchema = {
   },
 };
 
-const Module = {
-  DataOFF: 0,
-  DataON: 1,
-  FinderOFF: 2,
-  FinderON: 3,
-  AlignmentOFF: 4,
-  AlignmentON: 5,
-  TimingOFF: 6,
-  TimingON: 7,
-  FormatOFF: 8,
-  FormatON: 9,
-  VersionOFF: 10,
-  VersionON: 11,
-  SeparatorOFF: 12,
-};
-
-function splitmix32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x9e3779b9) | 0;
-    let t = a ^ (a >>> 16);
-    t = Math.imul(t, 0x21f0aaad);
-    t = t ^ (t >>> 15);
-    t = Math.imul(t, 0x735a2d97);
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
-  };
-}
-
 const fmt = (n) => n.toFixed(2).replace(/.00$/, "");
 
 export async function renderSVG(qr, params) {
@@ -99,7 +73,7 @@ export async function renderSVG(qr, params) {
   const file = params["Logo"];
   const logoRatio = params["Logo size"];
   const showLogoData = params["Show data behind logo"];
-  const rand = splitmix32(params["Seed"]);
+  const rand = getSeededRand(params["Seed"]);
   const range = (min, max) => rand() * (max - min) + min;
 
   const size = matrixWidth + 2 * margin;
@@ -183,26 +157,16 @@ export async function renderSVG(qr, params) {
 
       if (x >= 0 && x < matrixWidth && y >= 0 && y < matrixWidth) {
         const module = qr.matrix[y * matrixWidth + x];
-        if (!(module & 1)) continue;
+        if (!(module & Module.ON)) continue;
 
-        if (
-          params["Finder pattern"] !== "Default" &&
-          (module | 1) === Module.FinderON
-        ) {
+        if (params["Finder pattern"] !== "Default" && module & Module.FINDER) {
           continue;
         }
         if (
           params["Alignment pattern"] !== "Default" &&
-          module === Module.AlignmentON
+          module & Module.ALIGNMENT
         ) {
-          if (
-            !(
-              (qr.matrix[(y - 1) * matrixWidth + x] |
-                qr.matrix[y * matrixWidth + x + 1] |
-                qr.matrix[(y + 1) * matrixWidth + x]) &
-              1
-            )
-          ) {
+          if (module & Module.MODIFIER) {
             if (params["Alignment pattern"] === "Circle") {
               svg += `M${x + 0.5},${y - 2}a2.5,2.5 0,0,0 0,5a2.5,2.5 0,0,0 0,-5`;
               svg += `M${x + 0.5},${y - 1}a1.5,1.5 0,0,1 0,3a1.5,1.5 0,0,1 0,-3`;
