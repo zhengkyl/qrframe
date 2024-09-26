@@ -21,7 +21,7 @@ I'm working on more examples.
         <img src="./examples/mondrian.svg" width="300"/>
       </td>
       <td>
-        <img src="./examples/glass.svg" width="300"/>
+        <img src="./examples/wood.svg" width="300"/>
       </td>
     </tr>
     <tr>
@@ -32,7 +32,7 @@ I'm working on more examples.
         <img src="./examples/dots.svg" width="300"/>
       </td>
       <td>
-        <img src="./examples/camo.svg" width="300"/>
+        <img src="./examples/layers1.svg" width="300"/>
       </td>
     </tr>
     <tr>
@@ -40,7 +40,18 @@ I'm working on more examples.
         <img src="./examples/neon.svg" width="300"/>
       </td>
       <td>
-        <img src="./examples/layers1.svg" width="300"/>
+        <img src="./examples/camo.svg" width="300"/>
+      </td>
+      <td>
+        <img src="./examples/matrix.svg" width="300"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="./examples/glass.svg" width="300"/>
+      </td>
+      <td>
+        <img src="./examples/childhood.svg" width="300"/>
       </td>
       <td>
         <img src="./examples/layers2.svg" width="300"/>

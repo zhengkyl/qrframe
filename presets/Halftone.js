@@ -1,8 +1,15 @@
-import { Module } from "REPLACE_URL/utils.js";
+import { Module } from "https://qrframe.kylezhe.ng/utils.js";
 
 export const paramsSchema = {
   Image: {
     type: "file",
+  },
+  "Image scale": {
+    type: "number",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 1,
   },
   Contrast: {
     type: "number",
@@ -68,9 +75,9 @@ export async function renderCanvas(qr, params, canvas) {
   ctx.canvas.width = canvasSize;
   ctx.canvas.height = canvasSize;
 
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvasSize, canvasSize);
   if (params["QR background"]) {
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
     ctx.fillStyle = fg;
     for (let y = 0; y < matrixWidth; y++) {
       for (let x = 0; x < matrixWidth; x++) {
@@ -85,14 +92,17 @@ export async function renderCanvas(qr, params, canvas) {
   }
 
   ctx.filter = `brightness(${params["Brightness"]}) contrast(${params["Contrast"]})`;
-  ctx.drawImage(image, 0, 0, canvasSize, canvasSize);
+  const imgScale = params["Image scale"]
+  const imgSize = Math.floor(imgScale * canvasSize);
+  const imgOffset = Math.floor((canvasSize - imgSize) / 2)
+  ctx.drawImage(image, imgOffset, imgOffset,imgSize, imgSize);
   ctx.filter = "none";
 
   const imageData = ctx.getImageData(0, 0, canvasSize, canvasSize);
   const data = imageData.data;
 
-  for (let y = 0; y < canvasSize; y++) {
-    for (let x = 0; x < canvasSize; x++) {
+  for (let y = imgOffset; y < imgOffset + imgSize; y++) {
+    for (let x = imgOffset; x < imgOffset + imgSize; x++) {
       const i = (y * canvasSize + x) * 4;
 
       if (data[i + 3] === 0) continue;
