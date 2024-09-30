@@ -1,8 +1,10 @@
 # qrframe
 
-framework for making qr codes
+code-based qr code generator
 
 Blatantly inspired by [QRBTF](https://qrbtf.com) and [Anthony Fu's QR Toolkit](https://qrcode.antfu.me).
+
+[Here's a post I wrote about crafting QR codes](https://kylezhe.ng/posts/crafting_qr_codes) that goes into deeper detail about how they work and ways to make them pretty.
 
 ## Examples
 
