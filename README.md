@@ -9,9 +9,9 @@ Blatantly inspired by [QRBTF](https://qrbtf.com) and [Anthony Fu's QR Toolkit](h
 ## Examples
 
 > [!CAUTION]
-> These QR codes are not reliably scannable! Results may vary drastically based on device and scanner! Please only use for fun and entertainment!
+> These example QR codes may not be reliably scannable! Results may vary drastically based on device and scanner!
 
-I'm working on more examples.
+THIS PROJECT IS A TOOL TO MAKE DESIGNS, THESE ARE ONLY EXAMPLES
 
 <table>
   <tbody>
