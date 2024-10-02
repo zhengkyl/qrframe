@@ -1,4 +1,4 @@
-import { Module } from "https://qrframe.kylezhe.ng/utils.js";
+import { Module } from "REPLACE_URL/utils.js";
 
 export const paramsSchema = {
   Image: {

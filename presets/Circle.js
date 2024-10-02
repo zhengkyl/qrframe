@@ -206,7 +206,7 @@ export async function renderSVG(qr, params) {
   svg += `"/>`;
 
   if (file != null) {
-    const bytes = await file.bytes();
+    const bytes = new Uint8Array(await file.arrayBuffer());
     const b64 = btoa(
       Array.from(bytes, (byte) => String.fromCodePoint(byte)).join("")
     );
