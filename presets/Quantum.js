@@ -1,6 +1,6 @@
 // Based on QRBTF's A1P style
 // https://github.com/CPunisher/react-qrbtf/blob/master/src/components/QRNormal.tsx
-import { Module, getSeededRand } from "REPLACE_URL/utils.js";
+import { Module, getSeededRand } from "https://qrframe.kylezhe.ng/utils.js";
 
 export const paramsSchema = {
   Margin: {

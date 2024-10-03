@@ -1,4 +1,4 @@
-import { Module } from "REPLACE_URL/utils.js";
+import { Module } from "https://qrframe.kylezhe.ng/utils.js";
 
 export const paramsSchema = {
   Image: {
@@ -92,10 +92,10 @@ export async function renderCanvas(qr, params, canvas) {
   }
 
   ctx.filter = `brightness(${params["Brightness"]}) contrast(${params["Contrast"]})`;
-  const imgScale = params["Image scale"]
+  const imgScale = params["Image scale"];
   const imgSize = Math.floor(imgScale * canvasSize);
-  const imgOffset = Math.floor((canvasSize - imgSize) / 2)
-  ctx.drawImage(image, imgOffset, imgOffset,imgSize, imgSize);
+  const imgOffset = Math.floor((canvasSize - imgSize) / 2);
+  ctx.drawImage(image, imgOffset, imgOffset, imgSize, imgSize);
   ctx.filter = "none";
 
   const imageData = ctx.getImageData(0, 0, canvasSize, canvasSize);

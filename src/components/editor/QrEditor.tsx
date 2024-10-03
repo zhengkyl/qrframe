@@ -17,8 +17,9 @@ import { TextInput, TextareaInput } from "../TextInput";
 import { CodeEditor } from "./CodeEditor";
 import { Settings } from "./Settings";
 import { ParamsEditor } from "./ParamsEditor";
-import { Tutorial } from "~/lib/presets/Tutorial";
+import Tutorial from "../../../presets/Tutorial?raw";
 import { ContentMenuTrigger, ContextMenuProvider } from "../ContextMenu";
+import "virtual:blob-rewriter"
 
 type Props = {
   class?: string;

@@ -4,10 +4,12 @@ import UnoCSS from "unocss/vite";
 import wasmpack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
-  server: { preset: "vercel" },
+  server: {
+    preset: "vercel",
+  },
   ssr: true,
   vite: {
-    plugins: [UnoCSS(), wasmpack([], ["fuqr"])],
+    plugins: [UnoCSS(), wasmpack([], ["fuqr"]), blobRewriter()],
     resolve: {
       alias: {
         // https://christopher.engineering/en/blog/lucide-icons-with-vite-dev-server/
@@ -21,3 +23,40 @@ export default defineConfig({
     },
   },
 });
+
+// Rewrites imports inside blobs in dev mode
+function blobRewriter() {
+  const virtualModuleId = "virtual:blob-rewriter";
+  const resolvedVirtualModuleId = "\0" + virtualModuleId;
+  "help".replace(/test/, "help");
+
+  return {
+    name: "blob-rewriter",
+    resolveId(id) {
+      if (id === virtualModuleId) {
+        return resolvedVirtualModuleId;
+      }
+    },
+    load(id) {
+      if (id === resolvedVirtualModuleId) {
+        if (process.env.NODE_ENV !== 'development') {
+          return 'export {}'
+        }
+
+        return `
+          if (!import.meta.env.SSR) {
+            const originalBlob = window.Blob;
+            window.Blob = function(array, options) {
+              if (options.type === "text/javascript") {
+                array = array.map(item => {
+                  return item.replace("https://qrframe.kylezhe.ng", "http://localhost:3000");
+                });
+              }
+              return new originalBlob(array, options);
+            }
+          }
+        `;
+      }
+    },
+  };
+}

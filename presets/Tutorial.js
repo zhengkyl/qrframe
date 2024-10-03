@@ -1,4 +1,5 @@
-import { Module } from "REPLACE_URL/utils.js";
+import { Module } from "https://qrframe.kylezhe.ng/utils.js";
+
 export const paramsSchema = {
   Margin: {
     type: "number",

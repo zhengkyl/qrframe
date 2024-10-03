@@ -2,7 +2,7 @@
   "name": "qrframe",
   "type": "module",
   "scripts": {
-    "dev": "nr presets dev && vinxi dev",
+    "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
     "presets": "node updatePresets"

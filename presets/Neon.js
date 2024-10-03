@@ -1,4 +1,4 @@
-import { Module, getSeededRand } from "REPLACE_URL/utils.js";
+import { Module, getSeededRand } from "https://qrframe.kylezhe.ng/utils.js";
 
 export const paramsSchema = {
   Foreground: {
