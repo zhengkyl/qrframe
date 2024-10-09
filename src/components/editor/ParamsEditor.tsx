@@ -1,24 +1,20 @@
+import {
+  closestCenter, createSortable, DragDropProvider,
+  DragDropSensors,
+  DragOverlay,
+  SortableProvider, transformStyle, useDragDropContext
+} from "@thisbeyond/solid-dnd";
+import GripVertical from "lucide-solid/icons/grip-vertical";
 import Minus from "lucide-solid/icons/minus";
 import Plus from "lucide-solid/icons/plus";
 import { createSignal, For, Index, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { PARAM_COMPONENTS } from "~/lib/params";
-import { useQrContext } from "~/lib/QrContext";
+import { useRenderContext } from "~/lib/RenderContext";
 import { FlatButton } from "../Button";
-import { transformStyle, useDragDropContext } from "@thisbeyond/solid-dnd";
-import {
-  DragDropProvider,
-  DragDropSensors,
-  DragOverlay,
-  SortableProvider,
-  createSortable,
-  closestCenter,
-} from "@thisbeyond/solid-dnd";
-import GripVertical from "lucide-solid/icons/grip-vertical";
 
 export function ParamsEditor() {
-  const { paramsSchema, params, setParams } = useQrContext();
-
+  const { paramsSchema, params, setParams } = useRenderContext();
   return (
     <div class="flex flex-col gap-2 mb-4">
       <For each={Object.entries(paramsSchema())}>
@@ -46,7 +42,7 @@ export function ParamsEditor() {
 }
 
 function ArrayParam({ label, other }) {
-  const { params, setParams } = useQrContext();
+  const { params, setParams } = useRenderContext();
 
   // 0 is falsey and not a valid key
   const idFromIndex = (i) => i + 1;

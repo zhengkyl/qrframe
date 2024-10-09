@@ -1,10 +1,10 @@
-import { lazy } from "solid-js";
+import { clientOnly } from "@solidjs/start";
 import { FileInput } from "~/components/ImageInput";
 import { NumberInput } from "~/components/NumberInput";
 import { Select } from "~/components/Select";
 import { Switch } from "~/components/Switch";
 
-const ColorInput = lazy(() => import("~/components/ColorInput"));
+const ColorInput = clientOnly(() => import("~/components/ColorInput"));
 
 const PARAM_TYPES = ["boolean", "number", "color", "select", "file", "array"];
 

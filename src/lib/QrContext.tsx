@@ -1,16 +1,12 @@
 import {
   createContext,
   createMemo,
-  createSignal,
   useContext,
   type Accessor,
   type JSX,
-  type Setter,
 } from "solid-js";
 import { ECL, Mode, Mask, QrError, QrOptions, Version, generate } from "fuqr";
 import { createStore, type SetStoreFunction } from "solid-js/store";
-import { type Params, type ParamsSchema } from "./params";
-import { clearToasts, toastError } from "~/components/ErrorToasts";
 
 type InputQr = {
   text: string;
@@ -35,33 +31,7 @@ export const QrContext = createContext<{
   inputQr: InputQr;
   setInputQr: SetStoreFunction<InputQr>;
   outputQr: Accessor<OutputQr | QrError>;
-  render: Accessor<Render | null>;
-  setRender: Setter<Render | null>;
-  renderKey: Accessor<string>;
-  setRenderKey: Setter<string>;
-  params: Params;
-  setParams: SetStoreFunction<Params>;
-  paramsSchema: Accessor<ParamsSchema>;
-  setParamsSchema: Setter<ParamsSchema>;
-  error: Accessor<string | null>;
-  setError: Setter<string | null>;
 }>();
-
-export type RenderCanvas = (
-  qr: OutputQr,
-  params: Params,
-  ctx: CanvasRenderingContext2D
-) => void;
-
-export type RenderSVG = (qr: OutputQr, params: Params) => string;
-
-const renderTypes = ["svg", "canvas"] as const;
-export type RenderType = (typeof renderTypes)[number];
-
-type Render = {
-  type: RenderType;
-  url: string;
-};
 
 export function QrContextProvider(props: { children: JSX.Element }) {
   const [inputQr, setInputQr] = createStore<InputQr>({
@@ -73,22 +43,6 @@ export function QrContextProvider(props: { children: JSX.Element }) {
     mode: null,
     mask: null,
   });
-
-  const [renderKey, setRenderKey] = createSignal<string>("Square");
-  const [render, setRender] = createSignal<Render | null>(null);
-
-  const [paramsSchema, setParamsSchema] = createSignal<ParamsSchema>({});
-  const [params, setParams] = createStore({});
-
-  const [error, _setError] = createSignal<string | null>(null);
-  const setError = (e) => {
-    if (e == null) {
-      clearToasts();
-    } else {
-      toastError("Render failed", e);
-    }
-    _setError(e);
-  };
 
   const outputQr = createMemo(() => {
     // can't skip first render, b/c need to track deps
@@ -104,7 +58,7 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         .mask(inputQr.mask!) // null instead of undefined (wasm-pack type)
         .mode(inputQr.mode!); // null instead of undefined (wasm-pack type)
 
-      return  {
+      return {
         text: inputQr.text,
         ...generate(inputQr.text, qrOptions),
       };
@@ -119,16 +73,6 @@ export function QrContextProvider(props: { children: JSX.Element }) {
         inputQr,
         setInputQr,
         outputQr,
-        render,
-        setRender,
-        renderKey,
-        setRenderKey,
-        params,
-        setParams,
-        paramsSchema,
-        setParamsSchema,
-        error,
-        setError,
       }}
     >
       {props.children}

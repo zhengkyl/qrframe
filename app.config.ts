@@ -28,7 +28,6 @@ export default defineConfig({
 function blobRewriter() {
   const virtualModuleId = "virtual:blob-rewriter";
   const resolvedVirtualModuleId = "\0" + virtualModuleId;
-  "help".replace(/test/, "help");
 
   return {
     name: "blob-rewriter",
@@ -39,8 +38,8 @@ function blobRewriter() {
     },
     load(id) {
       if (id === resolvedVirtualModuleId) {
-        if (process.env.NODE_ENV !== 'development') {
-          return 'export {}'
+        if (process.env.NODE_ENV !== "development") {
+          return "export {}";
         }
 
         return `

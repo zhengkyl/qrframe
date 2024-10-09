@@ -15,6 +15,13 @@ export default function App() {
       <footer class="text-sm flex justify-center gap-4 px-4 py-8">
         <a
           class="font-semibold hover:text-fore-base/80 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
+          href="./bugs"
+          target="_blank"
+        >
+          report bugs
+        </a>
+        <a
+          class="font-semibold hover:text-fore-base/80 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
           href="https://kylezhe.ng/posts/crafting_qr_codes"
           target="_blank"
         >
