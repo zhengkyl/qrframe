@@ -1,10 +1,11 @@
 import {
   createContext,
-  createEffect, createSignal,
+  createEffect,
+  createSignal,
   useContext,
   type Accessor,
   type JSX,
-  type Setter
+  type Setter,
 } from "solid-js";
 import { createStore, unwrap, type SetStoreFunction } from "solid-js/store";
 import { type Params, type ParamsSchema } from "./params";
@@ -22,9 +23,9 @@ export const RenderContext = createContext<{
   setParamsSchema: Setter<ParamsSchema>;
   error: Accessor<string | null>;
   setError: Setter<string | null>;
-  svgParentRefs: Accessor<HTMLDivElement[]>;
+  svgParentRefs: HTMLDivElement[];
   addSvgParentRef: (ref: HTMLDivElement) => void;
-  canvasRefs: Accessor<HTMLCanvasElement[]>;
+  canvasRefs: HTMLCanvasElement[];
   addCanvasRef: (ref: HTMLCanvasElement) => void;
 }>();
 
@@ -63,17 +64,13 @@ export function RenderContextProvider(props: { children: JSX.Element }) {
     _setError(e);
   };
 
-  const [canvasDims, setCanvasDims] = createSignal({ width: 0, height: 0 });
-
-  const [canvasRefs, setCanvasRefs] = createSignal<HTMLCanvasElement[]>([]);
+  const canvasRefs: HTMLCanvasElement[] = [];
   const addCanvasRef = (ref) => {
-    console.log("add cnavas")
-    setCanvasRefs((prev) => [...prev.filter((old) => old.isConnected), ref]);
+    canvasRefs.push(ref);
   };
-  const [svgParentRefs, setSvgParentRefs] = createSignal<HTMLDivElement[]>([]);
+  const svgParentRefs: HTMLDivElement[] = [];
   const addSvgParentRef = (ref) => {
-    console.log("add svg")
-    setSvgParentRefs((prev) => [...prev.filter((old) => old.isConnected), ref]);
+    svgParentRefs.push(ref);
   };
 
   let worker: Worker | null = null;
@@ -143,20 +140,19 @@ export function RenderContextProvider(props: { children: JSX.Element }) {
 
       switch (e.data.type) {
         case "svg":
-          svgParentRefs().forEach((svgParent) => {
+          svgParentRefs.forEach((svgParent) => {
             svgParent.innerHTML = e.data.svg;
           });
           setError(null);
           break;
         case "canvas":
-          let first;
-          canvasRefs().forEach((canvas, i) => {
-            if (i === 0) {
+          let first: HTMLCanvasElement | null = null;
+          canvasRefs.forEach((canvas) => {
+            if (first == null) {
               first = canvas;
               canvas
                 .getContext("bitmaprenderer")!
                 .transferFromImageBitmap(e.data.bitmap);
-              setCanvasDims({ width: canvas.width, height: canvas.height });
             } else {
               canvas.getContext("2d")!.drawImage(first, 0, 0);
             }
@@ -187,8 +183,8 @@ export function RenderContextProvider(props: { children: JSX.Element }) {
         error,
         setError,
         svgParentRefs,
-        canvasRefs,
         addSvgParentRef,
+        canvasRefs,
         addCanvasRef,
       }}
     >

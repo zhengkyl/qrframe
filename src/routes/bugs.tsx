@@ -16,9 +16,9 @@ export default function Bugs() {
           .
         </p>
         <p>
-          Otherwise, you can just email me at kylezheng73
+          Otherwise, you can just email me at hi
           <AtSign class="inline h-4 w-4" />
-          gmail.com
+          kylezhe.ng
         </p>
       </div>
     </main>

@@ -1,6 +1,8 @@
 import { QrError } from "fuqr";
 import Download from "lucide-solid/icons/download";
-import { Match, Show, Switch } from "solid-js";
+import Share2 from "lucide-solid/icons/share-2";
+import Info from "lucide-solid/icons/info";
+import { Match, Show, Switch, type JSX } from "solid-js";
 import { useQrContext, type OutputQr } from "~/lib/QrContext";
 import {
   ECL_LABELS,
@@ -13,16 +15,18 @@ import { FlatButton } from "../Button";
 import { toastError } from "../ErrorToasts";
 import { SplitButton } from "../SplitButton";
 import { useRenderContext } from "~/lib/RenderContext";
+import { Popover } from "@kobalte/core/popover";
 
 type Props = {
-  class?: string;
+  classList: JSX.CustomAttributes<HTMLDivElement>["classList"];
+  compact: boolean;
 };
 
-export default function QrPreview(props: Props) {
+export function QrPreview(props: Props) {
   const { inputQr, outputQr } = useQrContext();
 
   return (
-    <div class={props.class}>
+    <div classList={props.classList}>
       <Show
         when={typeof outputQr() !== "number"}
         fallback={
@@ -41,16 +45,20 @@ export default function QrPreview(props: Props) {
           </div>
         }
       >
-        <RenderedQrCode />
-        <Metadata />
-        <DownloadButtons />
+        <div classList={{ "max-w-[300px] w-full self-center": props.compact }}>
+          <RenderedQrCode />
+        </div>
+        <DownloadButtons title={!props.compact} compact={props.compact} />
+        <Show when={!props.compact}>
+          <Metadata />
+        </Show>
       </Show>
     </div>
   );
 }
 
 function RenderedQrCode() {
-  const { render, addSvgParentRef, addCanvasRef, error } = useRenderContext();
+  const { render, error, addSvgParentRef, addCanvasRef } = useRenderContext();
   return (
     <>
       <div class="checkboard aspect-[1/1] border rounded-md grid [&>*]:[grid-area:1/1] overflow-hidden">
@@ -71,11 +79,6 @@ function RenderedQrCode() {
           <div class="bg-back-base/50 p-2">{error()}</div>
         </Show>
       </div>
-      {/* <Show when={render()?.type === "canvas"}>
-        <div class="text-center">
-          {canvasDims().width}x{canvasDims().height} px
-        </div>
-      </Show> */}
     </>
   );
 }
@@ -113,92 +116,157 @@ function Metadata() {
   );
 }
 
-function DownloadButtons() {
+type DownloadProps = {
+  title?: boolean;
+  compact: boolean;
+};
+
+function DownloadButtons(props: DownloadProps) {
   const { outputQr } = useQrContext() as { outputQr: () => OutputQr };
   const { render, svgParentRefs, canvasRefs } = useRenderContext();
 
-  const filename = () => {
-    const s = outputQr().text.slice(0, 32);
-    // : and / are not valid filename chars, so it looks bad
-    return s.startsWith("https://") ? s.slice(8, 28) : s.slice(0, 20);
+  const filename = () => outputQr().text.slice(0, 32);
+
+  const pngBlob = async (resizeWidth, resizeHeight) => {
+    // 10px per module assuming 2 module margin
+    const minWidth = (outputQr().version * 4 + 17 + 4) * 10;
+
+    let outCanvas: HTMLCanvasElement;
+    if (render()?.type === "canvas") {
+      if (resizeWidth === 0 && resizeHeight === 0) {
+        const size = Math.max(canvasRefs[0].width, minWidth);
+        resizeWidth = size;
+        resizeHeight = size;
+      }
+      // less blurry than ctx.drawImage w/ imageSmoothingEnabled = false
+      const bitmap = await createImageBitmap(canvasRefs[0], {
+        // resizeQuality not supported in ff, but output is passable
+        resizeQuality: "pixelated",
+        resizeWidth,
+        resizeHeight,
+      });
+      outCanvas = document.createElement("canvas");
+      outCanvas.width = resizeWidth;
+      outCanvas.height = resizeHeight;
+      const ctx = outCanvas.getContext("bitmaprenderer")!;
+      ctx.transferFromImageBitmap(bitmap);
+    } else {
+      if (resizeWidth === 0 && resizeHeight === 0) {
+        resizeWidth = minWidth;
+        resizeHeight = minWidth;
+      }
+      outCanvas = document.createElement("canvas");
+      outCanvas.width = resizeWidth;
+      outCanvas.height = resizeHeight;
+      const ctx = outCanvas.getContext("2d")!;
+
+      const url = URL.createObjectURL(
+        new Blob([svgParentRefs[0].innerHTML], {
+          type: "image/svg+xml",
+        })
+      );
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      ctx.drawImage(img, 0, 0, resizeWidth, resizeHeight);
+      URL.revokeObjectURL(url);
+    }
+
+    return new Promise((resolve) =>
+      outCanvas.toBlob(resolve)
+    ) as Promise<Blob | null>;
+  };
+
+  const downloadSvg = async () => {
+    const url = URL.createObjectURL(
+      new Blob([svgParentRefs[0].innerHTML], {
+        type: "image/svg+xml",
+      })
+    );
+    download(url, `${filename()}.svg`);
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div>
-      <div class="font-bold text-sm pb-2">Downloads</div>
-      <div class="grid grid-cols-2 gap-2">
+      <Show when={props.title}>
+        <div class="font-bold text-sm pb-2">Downloads</div>
+      </Show>
+      <div class={props.compact ? "flex gap-2" : "grid grid-cols-2 gap-2"}>
         <SplitButton
-          onClick={async (resizeWidth, resizeHeight) => {
-            let outCanvas;
-            if (render()?.type === "canvas") {
-              if (resizeWidth === 0 && resizeHeight === 0) {
-                canvasRefs()[0];
-              } else {
-                const bmp = await createImageBitmap(canvasRefs()[0], {
-                  // resizeQuality unsupported in ff 8/31/24
-                  // https://developer.mozilla.org/en-US/docs/Web/API/createImageBitmap
-                  resizeQuality: "pixelated",
-                  resizeWidth,
-                  resizeHeight,
-                });
-                outCanvas = document.createElement("canvas");
-                outCanvas.width = resizeWidth;
-                outCanvas.height = resizeHeight;
-                const ctx = outCanvas.getContext("bitmaprenderer")!;
-                ctx.transferFromImageBitmap(bmp);
-              }
-            } else {
-              if (resizeWidth === 0 && resizeHeight === 0) {
-                resizeWidth = 300;
-                resizeHeight = 300;
-              }
-              outCanvas = document.createElement("canvas");
-              outCanvas.width = resizeWidth;
-              outCanvas.height = resizeHeight;
-              const ctx = outCanvas.getContext("2d")!;
+          compact={props.compact}
+          onPng={async (resizeWidth, resizeHeight) => {
+            try {
+              const blob = await pngBlob(resizeWidth, resizeHeight);
+              if (blob == null) throw "toBlob returned null";
 
-              const url = URL.createObjectURL(
-                new Blob([svgParentRefs()[0].innerHTML], {
-                  type: "image/svg+xml",
-                })
-              );
-              const img = new Image();
-              img.src = url;
-              await img.decode();
-              ctx.drawImage(img, 0, 0, resizeWidth, resizeHeight);
-              URL.revokeObjectURL(url);
-            }
-
-            outCanvas.toBlob((blob) => {
-              if (blob == null) {
-                toastError(
-                  "Failed to create image",
-                  "idk bro this shouldn't happen"
-                );
-                return;
-              }
               const url = URL.createObjectURL(blob);
               download(url, `${filename()}.png`);
               URL.revokeObjectURL(url);
-            });
+            } catch (e) {
+              toastError("Failed to create image", e as string);
+              return;
+            }
           }}
+          onSvg={downloadSvg}
         />
-        <Show when={render()?.type === "svg"}>
+        <Show when={!props.compact && render()?.type === "svg"}>
           <FlatButton
-            class="inline-flex justify-center items-center gap-1 px-6 py-2"
-            onClick={async () => {
-              const url = URL.createObjectURL(
-                new Blob([svgParentRefs()[0].innerHTML], {
-                  type: "image/svg+xml",
-                })
-              );
-              download(url, `${filename()}.svg`);
-              URL.revokeObjectURL(url);
-            }}
+            class="flex-1 inline-flex justify-center items-center gap-1 px-3 py-2"
+            onClick={downloadSvg}
           >
             <Download size={20} />
             SVG
           </FlatButton>
+        </Show>
+        <Show when={props.compact}>
+          <FlatButton
+            class="inline-flex justify-center items-center gap-1 px-6 py-2"
+            title="Share"
+            onClick={async () => {
+              let blob;
+              try {
+                blob = await pngBlob(0, 0);
+                if (blob == null) throw "toBlob returned null";
+              } catch (e) {
+                toastError("Failed to create image", e as string);
+                return;
+              }
+              try {
+                const shareData = {
+                  files: [
+                    new File([blob], `${filename()}.png`, {
+                      type: "image/png",
+                    }),
+                  ],
+                };
+                navigator.share(shareData);
+              } catch (e) {
+                console.log(e);
+                toastError(
+                  "Native sharing failed",
+                  "Unsupported in this browser"
+                );
+              }
+            }}
+          >
+            <Share2 size={20} />
+          </FlatButton>
+        </Show>
+        <Show when={props.compact}>
+          <Popover gutter={4}>
+            <Popover.Trigger
+              class="border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2"
+              title="QR Metadata"
+            >
+              <Info size={20} />
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content class="z-50 bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
+                <Metadata />
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover>
         </Show>
       </div>
     </div>

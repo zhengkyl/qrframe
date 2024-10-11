@@ -3,29 +3,35 @@ import { NumberField } from "@kobalte/core/number-field";
 import { Popover } from "@kobalte/core/popover";
 import ChevronDown from "lucide-solid/icons/chevron-down";
 import Download from "lucide-solid/icons/download";
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { FillButton } from "./Button";
 
 type Props = {
-  onClick: (resizeWidth, resizeHeight) => void;
+  onPng: (resizeWidth, resizeHeight) => void;
+  onSvg: () => void;
+  compact: boolean;
 };
 export function SplitButton(props: Props) {
   const [customWidth, setCustomWidth] = createSignal(1000);
   const [customHeight, setCustomHeight] = createSignal(1000);
 
-  const onClick = (resizeWidth, resizeHeight) => {
-    props.onClick(resizeWidth, resizeHeight);
+  const onPng = (resizeWidth, resizeHeight) => {
+    props.onPng(resizeWidth, resizeHeight);
+    setOpen(false);
+  };
+  const onSvg = () => {
+    props.onSvg();
     setOpen(false);
   };
   const [open, setOpen] = createSignal(false);
   return (
-    <div class="leading-tight flex">
+    <div class="leading-tight flex flex-1">
       <Button
-        class="border border-e-none rounded-md rounded-e-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) inline-flex justify-center items-center gap-1 flex-1 px-6 py-2"
-        onClick={() => onClick(0, 0)}
+        class="border border-e-none rounded-md rounded-e-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
+        onClick={() => onPng(0, 0)}
       >
         <Download size={20} />
-        PNG
+        {props.compact ? "Download" : "PNG"}
       </Button>
       <Popover gutter={4} open={open()} onOpenChange={setOpen}>
         <Popover.Trigger class="group border rounded-md rounded-s-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2">
@@ -35,17 +41,35 @@ export function SplitButton(props: Props) {
           />
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content class="bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
+          <Popover.Content class="z-50 bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
             <div class="flex flex-col gap-2">
-              <div class="text-sm font-bold">Select size</div>
-              <FillButton class="w-full p-2" onClick={() => onClick(300, 300)}>
-                300x300
-              </FillButton>
-              <FillButton class="w-full p-2" onClick={() => onClick(500, 500)}>
-                500x500
-              </FillButton>
+              <Show
+                when={props.compact}
+                fallback={
+                  <>
+                    <div class="text-sm font-bold">Select size</div>
+                    <FillButton
+                      class="w-full p-2"
+                      onClick={() => onPng(300, 300)}
+                    >
+                      300x300
+                    </FillButton>
+                    <FillButton
+                      class="w-full p-2"
+                      onClick={() => onPng(500, 500)}
+                    >
+                      500x500
+                    </FillButton>
+                  </>
+                }
+              >
+                <div class="text-sm font-bold">Alternate file type</div>
+                <FillButton class="w-full p-2" onClick={onSvg}>
+                  SVG
+                </FillButton>
+              </Show>
               <hr />
-              <div class="text-sm font-bold">Custom</div>
+              <div class="text-sm font-bold">Custom size</div>
               <div class="flex gap-2">
                 <MenuNumberInput
                   min={1}
@@ -62,7 +86,7 @@ export function SplitButton(props: Props) {
               </div>
               <FillButton
                 class="w-full p-2"
-                onClick={() => onClick(customWidth(), customHeight())}
+                onClick={() => onPng(customWidth(), customHeight())}
               >
                 Download custom
               </FillButton>

@@ -22,13 +22,6 @@ export default function App() {
         </a>
         <a
           class="font-semibold hover:text-fore-base/80 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
-          href="https://kylezhe.ng/posts/crafting_qr_codes"
-          target="_blank"
-        >
-          blog post
-        </a>
-        <a
-          class="font-semibold hover:text-fore-base/80 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
           href="https://github.com/zhengkyl/qrframe"
           target="_blank"
         >
@@ -36,10 +29,10 @@ export default function App() {
         </a>
         <a
           class="font-semibold hover:text-fore-base/80 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
-          href="https://kylezhe.ng"
+          href="https://kylezhe.ng/posts/crafting_qr_codes"
           target="_blank"
         >
-          @zhengkyl
+          blog post
         </a>
       </footer>
     </>
