@@ -144,50 +144,54 @@ export function CodeEditor(props: Props) {
   const [showDialog, setShowDialog] = createSignal(false);
 
   return (
-    <div>
-      <AllowPasteDialog
-        open={showDialog()}
-        setClosed={() => {
-          setShowDialog(false);
-        }}
-        onAllow={() => {
-          allowPaste = true;
-          localStorage.setItem(ALLOW_PASTE_KEY, "true");
-        }}
-      />
-      <div class="flex justify-between pb-2 h-11">
-        <Switch label="Show code" value={showCode()} setValue={setShowCode} />
-        <Show when={showCode()}>
-          <label class="flex items-center gap-1 text-sm">
-            Vim mode
-            <input
-              class="h-4 w-4"
-              type="checkbox"
-              checked={vimMode()}
-              onChange={(e) => setVimMode(e.target.checked)}
-            />
-          </label>
-          <label class="flex items-center gap-1 text-sm">
-            Update thumbnail
-            <input
-              class="h-4 w-4"
-              type="checkbox"
-              checked={updateThumbnail()}
-              onChange={(e) => setUpdateThumbnail(e.target.checked)}
-            />
-          </label>
-          <Button
-            disabled={!dirty()}
-            onMouseDown={() =>
-              props.onSave(view.state.doc.toString(), updateThumbnail())
-            }
-            class="bg-green-700 border rounded-md hover:bg-green-700/90 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(bg-transparent text-fore-base pointer-events-none opacity-50) transition-colors px-3 min-w-150px"
-          >
-            {dirty() ? "Save" : "No changes"}
-          </Button>
-        </Show>
+    <>
+      <div class="py-2">
+        <Switch label="Code editor" value={showCode()} setValue={setShowCode} />
       </div>
-      <div ref={parent!} classList={{ hidden: !showCode() }}></div>
-    </div>
+      <div>
+        <AllowPasteDialog
+          open={showDialog()}
+          setClosed={() => {
+            setShowDialog(false);
+          }}
+          onAllow={() => {
+            allowPaste = true;
+            localStorage.setItem(ALLOW_PASTE_KEY, "true");
+          }}
+        />
+        <div class="flex justify-end gap-4 pb-2 h-11">
+          <Show when={showCode()}>
+            <label class="flex items-center gap-1 text-sm">
+              Vim mode
+              <input
+                class="h-4 w-4"
+                type="checkbox"
+                checked={vimMode()}
+                onChange={(e) => setVimMode(e.target.checked)}
+              />
+            </label>
+            <label class="flex items-center gap-1 text-sm">
+              Update thumbnail
+              <input
+                class="h-4 w-4"
+                type="checkbox"
+                checked={updateThumbnail()}
+                onChange={(e) => setUpdateThumbnail(e.target.checked)}
+              />
+            </label>
+            <Button
+              disabled={!dirty()}
+              onMouseDown={() =>
+                props.onSave(view.state.doc.toString(), updateThumbnail())
+              }
+              class="bg-green-700 border rounded-md hover:bg-green-700/90 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) disabled:(bg-transparent text-fore-base pointer-events-none opacity-50) transition-colors px-3 min-w-150px"
+            >
+              {dirty() ? "Save" : "No changes"}
+            </Button>
+          </Show>
+        </div>
+        <div ref={parent!} classList={{ hidden: !showCode() }}></div>
+      </div>
+    </>
   );
 }

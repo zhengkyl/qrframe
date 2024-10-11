@@ -22,8 +22,7 @@ export default function ColorInput(props: Props) {
     <div class="w-full">
       <input
         class="text-white pl-9 font-mono w-full bg-back-subtle leading-none px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base)"
-        type="text"
-        // @ts-expect-error i'm right
+        type="button"
         on:input={(e) => {
           props.setValue(e.target.value);
         }}
@@ -33,6 +32,7 @@ export default function ColorInput(props: Props) {
             el: ref,
             alpha: true,
             formatToggle: true,
+            focusInput: false,
             theme: "large",
             themeMode: "auto",
           });

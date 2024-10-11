@@ -240,12 +240,15 @@ function DownloadButtons(props: DownloadProps) {
                     }),
                   ],
                 };
+                if (!navigator.canShare(shareData)) {
+                  throw new Error();
+                }
                 navigator.share(shareData);
               } catch (e) {
                 console.log(e);
                 toastError(
                   "Native sharing failed",
-                  "Unsupported in this browser"
+                  "File sharing not supported by browser"
                 );
               }
             }}
