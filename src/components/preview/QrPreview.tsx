@@ -27,7 +27,7 @@ export function QrPreview(props: Props) {
 
   return (
     <div classList={props.classList} ref={props.ref}>
-      <div classList={{ "max-w-[300px] w-full self-center": props.compact }}>
+      <div classList={{ "max-w-[300px] md:max-w-full w-full self-center": props.compact }}>
         <Show
           when={output().state === QrState.Ready}
           fallback={

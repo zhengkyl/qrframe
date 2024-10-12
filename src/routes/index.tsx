@@ -4,7 +4,7 @@ import { Editor } from "~/components/editor/QrEditor";
 import { ErrorToasts } from "~/components/ErrorToasts";
 import { QrPreview } from "~/components/preview/QrPreview";
 import { RenderContextProvider } from "~/lib/RenderContext";
-import { createSignal, onCleanup } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 import { QrContextProvider } from "~/lib/QrContext";
 
 export default function Home() {
@@ -19,15 +19,13 @@ export default function Home() {
 
 function Temp() {
   // tracking mediaquery in js b/c rendering step draws to all mounted elements
-  let desktop;
-  if (isServer) {
-    desktop = () => false;
-  } else {
+  const [desktop, setDesktop] = createSignal(false);
+
+  onMount(() => {
     const mql = window.matchMedia("(min-width: 768px)");
-    const [matches, setMatches] = createSignal(mql.matches);
-    const callback = (e) => setMatches(e.matches);
+    const callback = (e) => setDesktop(e.matches);
     mql.addEventListener("change", callback);
-    desktop = matches;
+    setDesktop(mql.matches);
 
     const viewport = window.visualViewport!;
     let prevHeight = viewport.height;
@@ -47,7 +45,7 @@ function Temp() {
       mql.removeEventListener("change", callback);
       window.removeEventListener("resize", detectMobileKeyboard);
     });
-  }
+  });
 
   let qrPreview: HTMLDivElement;
   let textRef: HTMLTextAreaElement;
@@ -92,7 +90,7 @@ function Temp() {
             "py-4 rounded-b-[1rem] border-b shadow-2xl bg-back-base z-10 [transition:top]":
               !desktop(),
             sticky: !desktop() && !textFocused(),
-            "sticky flex-1 flex-grow-2 min-w-300px self-start py-8": desktop(),
+            "md:(sticky flex-1 flex-grow-2 min-w-300px self-start py-8)": true,
           }}
           compact={!desktop()}
         />
