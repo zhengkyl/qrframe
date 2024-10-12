@@ -3,6 +3,9 @@ import { debounce } from "~/lib/util";
 type TextareaProps = {
   setValue: (i: string) => void;
   placeholder?: string;
+  onFocus: () => void;
+  onBlur: () => void;
+  ref: HTMLTextAreaElement | ((el: HTMLTextAreaElement) => void);
 };
 
 /** No `value` prop b/c textarea cannot be controlled  */
@@ -13,6 +16,9 @@ export function TextareaInput(props: TextareaProps) {
       class="bg-back-subtle min-h-[41.6px] px-3 py-2 rounded-md border focus:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) placeholder:text-fore-subtle"
       onInput={(e) => onInput(e.target.value)}
       onChange={(e) => props.setValue(e.target.value)}
+      onFocus={props.onFocus}
+      onBlur={props.onBlur}
+      ref={props.ref}
       placeholder={props.placeholder}
     ></textarea>
   );
@@ -24,7 +30,7 @@ type InputProps = {
   onInput: (s: string) => void;
   ref?: HTMLInputElement;
   class?: string;
-  onKeyDown?: (e: KeyboardEvent) => void
+  onKeyDown?: (e: KeyboardEvent) => void;
 };
 
 /** UNCONTROLLED */

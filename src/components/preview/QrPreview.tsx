@@ -1,9 +1,8 @@
-import { QrError } from "fuqr";
 import Download from "lucide-solid/icons/download";
 import Share2 from "lucide-solid/icons/share-2";
 import Info from "lucide-solid/icons/info";
-import { Match, Show, Switch, type JSX } from "solid-js";
-import { useQrContext, type OutputQr } from "~/lib/QrContext";
+import { Match, onCleanup, Show, Switch, type JSX } from "solid-js";
+import { QrState, useQrContext } from "~/lib/QrContext";
 import {
   ECL_LABELS,
   ECL_NAMES,
@@ -20,48 +19,73 @@ import { Popover } from "@kobalte/core/popover";
 type Props = {
   classList: JSX.CustomAttributes<HTMLDivElement>["classList"];
   compact: boolean;
+  ref: HTMLDivElement;
 };
 
 export function QrPreview(props: Props) {
-  const { inputQr, outputQr } = useQrContext();
+  const { inputQr, output } = useQrContext();
 
   return (
-    <div classList={props.classList}>
-      <Show
-        when={typeof outputQr() !== "number"}
-        fallback={
-          <div class="aspect-[1/1] border rounded-md p-2">
-            <Switch>
-              <Match when={outputQr() === QrError.ExceedsMaxCapacity}>
-                Data exceeds max capacity
-              </Match>
-              <Match when={outputQr() === QrError.InvalidEncoding}>
-                {`Input cannot be encoded in ${
-                  // @ts-expect-error props.mode not null b/c InvalidEncoding requires mode
-                  MODE_NAMES[inputQr.mode + 1]
-                } mode`}
-              </Match>
-            </Switch>
-          </div>
-        }
-      >
-        <div classList={{ "max-w-[300px] w-full self-center": props.compact }}>
+    <div classList={props.classList} ref={props.ref}>
+      <div classList={{ "max-w-[300px] w-full self-center": props.compact }}>
+        <Show
+          when={output().state === QrState.Ready}
+          fallback={
+            <div class="checkerboard aspect-[1/1] border rounded-md p-2 text-black">
+              <Switch>
+                <Match when={output().state === QrState.Loading}>
+                  <svg
+                    viewBox="-12 -12 48 48"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z">
+                      <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        dur="0.75s"
+                        values="0 12 12;360 12 12"
+                        repeatCount="indefinite"
+                      />
+                    </path>
+                  </svg>
+                </Match>
+                <Match when={output().state === QrState.ExceedsMaxCapacity}>
+                  Data exceeds max capacity
+                </Match>
+                <Match when={output().state === QrState.InvalidEncoding}>
+                  {`Input cannot be encoded in ${
+                    // @ts-expect-error props.mode not null b/c InvalidEncoding requires mode
+                    MODE_NAMES[inputQr.mode + 1]
+                  } mode`}
+                </Match>
+              </Switch>
+            </div>
+          }
+        >
           <RenderedQrCode />
-        </div>
-        <DownloadButtons title={!props.compact} compact={props.compact} />
-        <Show when={!props.compact}>
-          <Metadata />
         </Show>
+      </div>
+      <DownloadButtons title={!props.compact} compact={props.compact} />
+      <Show when={!props.compact}>
+        <Metadata />
       </Show>
     </div>
   );
 }
 
 function RenderedQrCode() {
-  const { render, error, addSvgParentRef, addCanvasRef } = useRenderContext();
+  const { render, error, svgParentRefs, addSvgParentRef, canvasRefs, addCanvasRef } = useRenderContext();
+
+  let i = svgParentRefs.length
+  let j = canvasRefs.length
+  onCleanup(() => {
+    svgParentRefs.splice(i, 1)    
+    canvasRefs.splice(j, 1)    
+  })
+
   return (
     <>
-      <div class="checkboard aspect-[1/1] border rounded-md grid [&>*]:[grid-area:1/1] overflow-hidden">
+      <div class="checkerboard aspect-[1/1] border rounded-md grid [&>*]:[grid-area:1/1] overflow-hidden">
         <div
           classList={{
             hidden: render()?.type !== "svg",
@@ -84,34 +108,40 @@ function RenderedQrCode() {
 }
 
 function Metadata() {
-  const { outputQr } = useQrContext() as { outputQr: () => OutputQr };
+  const { output } = useQrContext();
 
   return (
     <div>
       <div class="font-bold text-sm pb-2">QR Metadata</div>
-      <div class="grid grid-cols-2 gap-2 text-sm">
-        <div class="">
-          Version
-          <div class="font-bold text-base">
-            {outputQr().version} ({outputQr().version * 4 + 17}x
-            {outputQr().version * 4 + 17} matrix)
+      <Show when={output().state === QrState.Ready}>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="">
+            Version
+            <div class="font-bold text-base">
+              {output().qr!.version} ({output().qr!.version * 4 + 17}x
+              {output().qr!.version * 4 + 17} matrix)
+            </div>
+          </div>
+          <div class="">
+            Error tolerance{" "}
+            <div class="font-bold text-base whitespace-pre">
+              {ECL_NAMES[output().qr!.ecl]} ({ECL_LABELS[output().qr!.ecl]})
+            </div>
+          </div>
+          <div class="">
+            Mask{" "}
+            <span class="font-bold text-base">
+              {MASK_KEY[output().qr!.mask]}
+            </span>
+          </div>
+          <div class="">
+            Encoding{" "}
+            <span class="font-bold text-base">
+              {MODE_KEY[output().qr!.mode]}
+            </span>
           </div>
         </div>
-        <div class="">
-          Error tolerance{" "}
-          <div class="font-bold text-base whitespace-pre">
-            {ECL_NAMES[outputQr().ecl]} ({ECL_LABELS[outputQr().ecl]})
-          </div>
-        </div>
-        <div class="">
-          Mask{" "}
-          <span class="font-bold text-base">{MASK_KEY[outputQr().mask]}</span>
-        </div>
-        <div class="">
-          Encoding{" "}
-          <span class="font-bold text-base">{MODE_KEY[outputQr().mode]}</span>
-        </div>
-      </div>
+      </Show>
     </div>
   );
 }
@@ -122,14 +152,14 @@ type DownloadProps = {
 };
 
 function DownloadButtons(props: DownloadProps) {
-  const { outputQr } = useQrContext() as { outputQr: () => OutputQr };
+  const { output } = useQrContext();
   const { render, svgParentRefs, canvasRefs } = useRenderContext();
 
-  const filename = () => outputQr().text.slice(0, 32);
+  const filename = () => output().qr!.text.slice(0, 32);
 
   const pngBlob = async (resizeWidth, resizeHeight) => {
     // 10px per module assuming 2 module margin
-    const minWidth = (outputQr().version * 4 + 17 + 4) * 10;
+    const minWidth = (output().qr!.version * 4 + 17 + 4) * 10;
 
     let outCanvas: HTMLCanvasElement;
     if (render()?.type === "canvas") {
@@ -187,6 +217,8 @@ function DownloadButtons(props: DownloadProps) {
     URL.revokeObjectURL(url);
   };
 
+  const disabled = () => output().state !== QrState.Ready;
+
   return (
     <div>
       <Show when={props.title}>
@@ -194,6 +226,7 @@ function DownloadButtons(props: DownloadProps) {
       </Show>
       <div class={props.compact ? "flex gap-2" : "grid grid-cols-2 gap-2"}>
         <SplitButton
+          disabled={disabled()}
           compact={props.compact}
           onPng={async (resizeWidth, resizeHeight) => {
             try {
@@ -213,6 +246,7 @@ function DownloadButtons(props: DownloadProps) {
         <Show when={!props.compact && render()?.type === "svg"}>
           <FlatButton
             class="flex-1 inline-flex justify-center items-center gap-1 px-3 py-2"
+            disabled={disabled()}
             onClick={downloadSvg}
           >
             <Download size={20} />
@@ -222,6 +256,7 @@ function DownloadButtons(props: DownloadProps) {
         <Show when={props.compact}>
           <FlatButton
             class="inline-flex justify-center items-center gap-1 px-6 py-2"
+            disabled={disabled()}
             title="Share"
             onClick={async () => {
               let blob;
@@ -259,7 +294,8 @@ function DownloadButtons(props: DownloadProps) {
         <Show when={props.compact}>
           <Popover gutter={4}>
             <Popover.Trigger
-              class="border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2"
+              class="border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2 disabled:(pointer-events-none opacity-50)"
+              disabled={disabled()}
               title="QR Metadata"
             >
               <Info size={20} />

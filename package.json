@@ -5,7 +5,8 @@
     "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
-    "presets": "node updatePresets"
+    "preview": "pnpm run build && npx wrangler pages dev",
+    "deploy": "pnpm run build && wrangler pages deploy"
   },
   "dependencies": {
     "@codemirror/commands": "^6.6.0",
@@ -29,9 +30,11 @@
     "vinxi": "^0.3.11"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241011.0",
     "@unocss/transformer-variant-group": "^0.59.4",
     "prettier": "^3.3.3",
-    "vite-plugin-wasm-pack": "^0.1.12"
+    "vite-plugin-wasm-pack": "^0.1.12",
+    "wrangler": "^3.80.4"
   },
   "pnpm": {
     "overrides": {

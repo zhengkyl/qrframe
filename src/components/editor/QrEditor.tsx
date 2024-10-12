@@ -25,6 +25,9 @@ import "virtual:blob-rewriter";
 
 type Props = {
   class?: string;
+  onTextFocus: () => void;
+  onTextBlur: () => void;
+  textRef: (ref: HTMLTextAreaElement) => void;
 };
 
 const FUNC_KEYS = "funcKeys";
@@ -288,6 +291,9 @@ export function Editor(props: Props) {
       <TextareaInput
         placeholder="https://qrframe.kylezhe.ng"
         setValue={(s) => setInputQr("text", s || "https://qrframe.kylezhe.ng")}
+        onFocus={props.onTextFocus}
+        onBlur={props.onTextBlur}
+        ref={props.textRef}
       />
       <Collapsible trigger="Data">
         <Settings />

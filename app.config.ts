@@ -5,7 +5,10 @@ import wasmpack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
   server: {
-    preset: "vercel",
+    preset: "cloudflare-pages",
+    rollupConfig: {
+      external: ["node:async_hooks"]
+    }
   },
   ssr: true,
   vite: {

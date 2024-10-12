@@ -1,7 +1,7 @@
 import { defineConfig } from "unocss";
 import transformerVariantGroup from "@unocss/transformer-variant-group";
 export default defineConfig({
-  blocklist: ["m55"],
+  blocklist: ["m55", "resize"],
   transformers: [transformerVariantGroup()],
   theme: {
     colors: {

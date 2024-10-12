@@ -4,7 +4,6 @@ dist
 .output
 .vercel
 .netlify
-netlify
 .vinxi
 
 # Environment
@@ -27,3 +26,7 @@ gitignore
 # System Files
 .DS_Store
 Thumbs.db
+
+# wrangler files
+.wrangler
+.dev.vars

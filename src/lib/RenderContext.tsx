@@ -10,7 +10,7 @@ import {
 import { createStore, unwrap, type SetStoreFunction } from "solid-js/store";
 import { type Params, type ParamsSchema } from "./params";
 import { clearToasts, toastError } from "~/components/ErrorToasts";
-import { useQrContext, type OutputQr } from "./QrContext";
+import { QrState, useQrContext, type OutputQr } from "./QrContext";
 
 export const RenderContext = createContext<{
   render: Accessor<Render | null>;
@@ -46,7 +46,7 @@ type Render = {
 };
 
 export function RenderContextProvider(props: { children: JSX.Element }) {
-  const { outputQr } = useQrContext();
+  const { output } = useQrContext();
 
   const [renderKey, setRenderKey] = createSignal<string>("Square");
   const [render, setRender] = createSignal<Render | null>(null);
@@ -82,6 +82,7 @@ export function RenderContextProvider(props: { children: JSX.Element }) {
   // I could expose multiple versions of the set functions
   // but that seems much less maintainable that this
   createEffect(async () => {
+    if (output().state !== QrState.Ready) return
     const r = render();
 
     // Track store without leaking extra params
@@ -119,7 +120,7 @@ export function RenderContextProvider(props: { children: JSX.Element }) {
     worker!.postMessage({
       type: r.type,
       url: r.url,
-      qr: outputQr(),
+      qr: output().qr,
       params: paramsCopy,
       timeoutId,
     });

@@ -10,6 +10,7 @@ type Props = {
   onPng: (resizeWidth, resizeHeight) => void;
   onSvg: () => void;
   compact: boolean;
+  disabled: boolean;
 };
 export function SplitButton(props: Props) {
   const [customWidth, setCustomWidth] = createSignal(1000);
@@ -27,14 +28,18 @@ export function SplitButton(props: Props) {
   return (
     <div class="leading-tight flex flex-1">
       <Button
-        class="border border-e-none rounded-md rounded-e-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) inline-flex justify-center items-center gap-1 flex-1 px-3 py-2"
+        class="border border-e-none rounded-md rounded-e-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) inline-flex justify-center items-center gap-1 flex-1 px-3 py-2 disabled:(pointer-events-none opacity-50)"
         onClick={() => onPng(0, 0)}
+        disabled={props.disabled}
       >
         <Download size={20} />
         {props.compact ? "Download" : "PNG"}
       </Button>
       <Popover gutter={4} open={open()} onOpenChange={setOpen}>
-        <Popover.Trigger class="group border rounded-md rounded-s-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2">
+        <Popover.Trigger
+          class="group border rounded-md rounded-s-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2 disabled:(pointer-events-none opacity-50)"
+          disabled={props.disabled}
+        >
           <ChevronDown
             size={20}
             class="block group-data-[expanded]:rotate-180 transition-transform"
