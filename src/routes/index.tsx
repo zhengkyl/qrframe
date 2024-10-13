@@ -1,11 +1,10 @@
-import { isServer, Portal } from "solid-js/web";
-
+import { createSignal, onCleanup, onMount } from "solid-js";
+import { Portal } from "solid-js/web";
 import { Editor } from "~/components/editor/QrEditor";
 import { ErrorToasts } from "~/components/ErrorToasts";
 import { QrPreview } from "~/components/preview/QrPreview";
-import { RenderContextProvider } from "~/lib/RenderContext";
-import { createSignal, onCleanup, onMount } from "solid-js";
 import { QrContextProvider } from "~/lib/QrContext";
+import { RenderContextProvider } from "~/lib/RenderContext";
 
 export default function Home() {
   return (
@@ -18,21 +17,13 @@ export default function Home() {
 }
 
 function Temp() {
-  // tracking mediaquery in js b/c rendering step draws to all mounted elements
-  const [desktop, setDesktop] = createSignal(false);
-
   onMount(() => {
-    const mql = window.matchMedia("(min-width: 768px)");
-    const callback = (e) => setDesktop(e.matches);
-    mql.addEventListener("change", callback);
-    setDesktop(mql.matches);
-
     const viewport = window.visualViewport!;
     let prevHeight = viewport.height;
     const detectMobileKeyboard = () => {
       const prev = prevHeight;
       prevHeight = viewport.height;
-      if (desktop() || !textFocused()) return;
+      if (!textFocused()) return;
       if (viewport.height === prev) return;
       if (viewport.height > prev) {
         // closing mobile keyboard
@@ -40,9 +31,7 @@ function Temp() {
       }
     };
     viewport.addEventListener("resize", detectMobileKeyboard);
-
     onCleanup(() => {
-      mql.removeEventListener("change", callback);
       window.removeEventListener("resize", detectMobileKeyboard);
     });
   });
@@ -55,12 +44,12 @@ function Temp() {
     setTextFocused(true);
   };
   const onBlur = () => {
-    if (!desktop()) {
-      // firefox scrolls input behind sticky QrPreview
-      // adding/removing sticky + this scroll + animation
-      // gives roughly equivalent ux as chrome default
-      const before = `${qrPreview.getBoundingClientRect().top}px`;
-      qrPreview.animate([{ top: before }, { top: 0 }], {
+    // firefox scrolls input behind sticky QrPreview
+    // adding/removing sticky + this scroll + animation
+    // gives roughly equivalent ux as chrome default
+    const before = qrPreview.getBoundingClientRect().top;
+    if (before !== 0) {
+      qrPreview.animate([{ top: `${before}px` }, { top: 0 }], {
         // slow animation to prevent bounce
         duration: 1000,
         easing: "ease-out",
@@ -86,13 +75,10 @@ function Temp() {
         <QrPreview
           ref={qrPreview!}
           classList={{
-            "top-0 flex flex-col gap-4 px-4": true,
-            "py-4 rounded-b-[1rem] border-b shadow-2xl bg-back-base z-10 [transition:top]":
-              !desktop(),
-            sticky: !desktop() && !textFocused(),
-            "md:(sticky flex-1 flex-grow-2 min-w-300px self-start py-8)": true,
+            "top-0 flex flex-col gap-4 p-4 rounded-b-[1rem] border-b shadow-2xl bg-back-base z-10 [transition:top] md:(sticky flex-1 flex-grow-2 min-w-300px self-start py-8 border-none shadow-none)":
+              true,
+            sticky: !textFocused(),
           }}
-          compact={!desktop()}
         />
       </div>
       <Portal>

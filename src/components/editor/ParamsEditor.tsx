@@ -125,7 +125,7 @@ function ArrayParam({ label, other }) {
                       value={v()}
                       setValue={(v: any) => setParams(label, i, v)}
                     />
-                    <div class="px-1 cursor-move" {...sortable.dragActivators}>
+                    <div class="px-1 cursor-move touch-none" {...sortable.dragActivators}>
                       <GripVertical />
                     </div>
                   </div>

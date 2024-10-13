@@ -498,7 +498,7 @@ function Preview(props: PreviewProps) {
     >
       <div
         classList={{
-          "h-24 w-24 rounded-sm checkboard": true,
+          "h-24 w-24 rounded-sm checkerboard": true,
           "ring-2 ring-fore-base ring-offset-4 ring-offset-back-base":
             props.active,
         }}

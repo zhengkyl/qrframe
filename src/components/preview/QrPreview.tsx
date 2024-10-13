@@ -18,7 +18,6 @@ import { Popover } from "@kobalte/core/popover";
 
 type Props = {
   classList: JSX.CustomAttributes<HTMLDivElement>["classList"];
-  compact: boolean;
   ref: HTMLDivElement;
 };
 
@@ -27,7 +26,7 @@ export function QrPreview(props: Props) {
 
   return (
     <div classList={props.classList} ref={props.ref}>
-      <div classList={{ "max-w-[300px] md:max-w-full w-full self-center": props.compact }}>
+      <div class="max-w-[300px] md:max-w-full w-full self-center">
         <Show
           when={output().state === QrState.Ready}
           fallback={
@@ -65,23 +64,28 @@ export function QrPreview(props: Props) {
           <RenderedQrCode />
         </Show>
       </div>
-      <DownloadButtons title={!props.compact} compact={props.compact} />
-      <Show when={!props.compact}>
-        <Metadata />
-      </Show>
+      <DownloadButtons />
+      <Metadata class="hidden md:block" />
     </div>
   );
 }
 
 function RenderedQrCode() {
-  const { render, error, svgParentRefs, addSvgParentRef, canvasRefs, addCanvasRef } = useRenderContext();
+  const {
+    render,
+    error,
+    svgParentRefs,
+    addSvgParentRef,
+    canvasRefs,
+    addCanvasRef,
+  } = useRenderContext();
 
-  let i = svgParentRefs.length
-  let j = canvasRefs.length
+  let i = svgParentRefs.length;
+  let j = canvasRefs.length;
   onCleanup(() => {
-    svgParentRefs.splice(i, 1)    
-    canvasRefs.splice(j, 1)    
-  })
+    svgParentRefs.splice(i, 1);
+    canvasRefs.splice(j, 1);
+  });
 
   return (
     <>
@@ -107,11 +111,14 @@ function RenderedQrCode() {
   );
 }
 
-function Metadata() {
-  const { output } = useQrContext();
+type MetadataProps = {
+  class?: string;
+};
 
+function Metadata(props: MetadataProps) {
+  const { output } = useQrContext();
   return (
-    <div>
+    <div class={props.class}>
       <div class="font-bold text-sm pb-2">QR Metadata</div>
       <Show when={output().state === QrState.Ready}>
         <div class="grid grid-cols-2 gap-2 text-sm">
@@ -146,20 +153,15 @@ function Metadata() {
   );
 }
 
-type DownloadProps = {
-  title?: boolean;
-  compact: boolean;
-};
-
-function DownloadButtons(props: DownloadProps) {
+function DownloadButtons() {
   const { output } = useQrContext();
   const { render, svgParentRefs, canvasRefs } = useRenderContext();
-
   const filename = () => output().qr!.text.slice(0, 32);
+  const disabled = () => output().state !== QrState.Ready;
 
   const pngBlob = async (resizeWidth, resizeHeight) => {
-    // 10px per module assuming 2 module margin
-    const minWidth = (output().qr!.version * 4 + 17 + 4) * 10;
+    // roughly 20px per module, ranges from 500 to 3620px
+    const minWidth = (output().qr!.version * 4 + 17 + 4) * 20;
 
     let outCanvas: HTMLCanvasElement;
     if (render()?.type === "canvas") {
@@ -217,17 +219,12 @@ function DownloadButtons(props: DownloadProps) {
     URL.revokeObjectURL(url);
   };
 
-  const disabled = () => output().state !== QrState.Ready;
-
   return (
     <div>
-      <Show when={props.title}>
-        <div class="font-bold text-sm pb-2">Downloads</div>
-      </Show>
-      <div class={props.compact ? "flex gap-2" : "grid grid-cols-2 gap-2"}>
+      <div class="font-bold text-sm pb-2 md:hidden">Downloads</div>
+      <div class="flex gap-2 md:(grid grid-cols-2)">
         <SplitButton
           disabled={disabled()}
-          compact={props.compact}
           onPng={async (resizeWidth, resizeHeight) => {
             try {
               const blob = await pngBlob(resizeWidth, resizeHeight);
@@ -243,9 +240,9 @@ function DownloadButtons(props: DownloadProps) {
           }}
           onSvg={downloadSvg}
         />
-        <Show when={!props.compact && render()?.type === "svg"}>
+        <Show when={render()?.type === "svg"}>
           <FlatButton
-            class="flex-1 inline-flex justify-center items-center gap-1 px-3 py-2"
+            class="hidden md:inline-flex flex-1 justify-center items-center gap-1 px-3 py-2"
             disabled={disabled()}
             onClick={downloadSvg}
           >
@@ -253,60 +250,59 @@ function DownloadButtons(props: DownloadProps) {
             SVG
           </FlatButton>
         </Show>
-        <Show when={props.compact}>
-          <FlatButton
-            class="inline-flex justify-center items-center gap-1 px-6 py-2"
+        <FlatButton
+          class="md:hidden inline-flex justify-center items-center gap-1 px-6 py-2"
+          disabled={disabled()}
+          title="Share"
+          onClick={async () => {
+            let blob;
+            try {
+              blob = await pngBlob(0, 0);
+              if (blob == null) throw "toBlob returned null";
+            } catch (e) {
+              toastError(
+                "Failed to create image",
+                typeof e === "string" ? e : "pngBlob failed"
+              );
+              return;
+            }
+            try {
+              const shareData = {
+                files: [
+                  new File([blob], `${filename()}.png`, {
+                    type: "image/png",
+                  }),
+                ],
+              };
+              if (!navigator.canShare(shareData)) {
+                throw new Error();
+              }
+              navigator.share(shareData);
+            } catch (e) {
+              console.log(e);
+              toastError(
+                "Native sharing failed",
+                "File sharing not supported by browser"
+              );
+            }
+          }}
+        >
+          <Share2 size={20} />
+        </FlatButton>
+        <Popover gutter={4}>
+          <Popover.Trigger
+            class="md:hidden border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2 disabled:(pointer-events-none opacity-50)"
             disabled={disabled()}
-            title="Share"
-            onClick={async () => {
-              let blob;
-              try {
-                blob = await pngBlob(0, 0);
-                if (blob == null) throw "toBlob returned null";
-              } catch (e) {
-                toastError("Failed to create image", e as string);
-                return;
-              }
-              try {
-                const shareData = {
-                  files: [
-                    new File([blob], `${filename()}.png`, {
-                      type: "image/png",
-                    }),
-                  ],
-                };
-                if (!navigator.canShare(shareData)) {
-                  throw new Error();
-                }
-                navigator.share(shareData);
-              } catch (e) {
-                console.log(e);
-                toastError(
-                  "Native sharing failed",
-                  "File sharing not supported by browser"
-                );
-              }
-            }}
+            title="QR Metadata"
           >
-            <Share2 size={20} />
-          </FlatButton>
-        </Show>
-        <Show when={props.compact}>
-          <Popover gutter={4}>
-            <Popover.Trigger
-              class="border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2 disabled:(pointer-events-none opacity-50)"
-              disabled={disabled()}
-              title="QR Metadata"
-            >
-              <Info size={20} />
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content class="z-50 bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
-                <Metadata />
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover>
-        </Show>
+            <Info size={20} />
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content class="z-50 bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
+              <Metadata />
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover>
       </div>
     </div>
   );

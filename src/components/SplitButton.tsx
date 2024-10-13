@@ -3,18 +3,17 @@ import { NumberField } from "@kobalte/core/number-field";
 import { Popover } from "@kobalte/core/popover";
 import ChevronDown from "lucide-solid/icons/chevron-down";
 import Download from "lucide-solid/icons/download";
-import { createSignal, Show } from "solid-js";
+import { createSignal } from "solid-js";
 import { FillButton } from "./Button";
 
 type Props = {
   onPng: (resizeWidth, resizeHeight) => void;
   onSvg: () => void;
-  compact: boolean;
   disabled: boolean;
 };
 export function SplitButton(props: Props) {
-  const [customWidth, setCustomWidth] = createSignal(1000);
-  const [customHeight, setCustomHeight] = createSignal(1000);
+  const [customWidth, setCustomWidth] = createSignal(2000);
+  const [customHeight, setCustomHeight] = createSignal(2000);
 
   const onPng = (resizeWidth, resizeHeight) => {
     props.onPng(resizeWidth, resizeHeight);
@@ -33,7 +32,8 @@ export function SplitButton(props: Props) {
         disabled={props.disabled}
       >
         <Download size={20} />
-        {props.compact ? "Download" : "PNG"}
+        <span class="md:hidden">Download</span>
+        <span class="hidden md:inline">PNG</span>
       </Button>
       <Popover gutter={4} open={open()} onOpenChange={setOpen}>
         <Popover.Trigger
@@ -48,31 +48,24 @@ export function SplitButton(props: Props) {
         <Popover.Portal>
           <Popover.Content class="z-50 bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
             <div class="flex flex-col gap-2">
-              <Show
-                when={props.compact}
-                fallback={
-                  <>
-                    <div class="text-sm font-bold">Select size</div>
-                    <FillButton
-                      class="w-full p-2"
-                      onClick={() => onPng(300, 300)}
-                    >
-                      300x300
-                    </FillButton>
-                    <FillButton
-                      class="w-full p-2"
-                      onClick={() => onPng(500, 500)}
-                    >
-                      500x500
-                    </FillButton>
-                  </>
-                }
-              >
+              <div class="hidden md:contents">
+                <div class="text-sm font-bold">Select size</div>
+                <FillButton class="w-full p-2" onClick={() => onPng(500, 500)}>
+                  500x500
+                </FillButton>
+                <FillButton
+                  class="w-full p-2"
+                  onClick={() => onPng(1000, 1000)}
+                >
+                  1000x1000
+                </FillButton>
+              </div>
+              <div class="contents md:hidden">
                 <div class="text-sm font-bold">Alternate file type</div>
                 <FillButton class="w-full p-2" onClick={onSvg}>
                   SVG
                 </FillButton>
-              </Show>
+              </div>
               <hr />
               <div class="text-sm font-bold">Custom size</div>
               <div class="flex gap-2">
