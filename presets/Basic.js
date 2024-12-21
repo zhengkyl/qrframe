@@ -55,7 +55,7 @@ export const paramsSchema = {
 };
 
 export async function renderSVG(qr, params) {
-  const matrixWidth = qr.version * 4 + 17;
+  const rowLen = qr.version * 4 + 17;
   const margin = params["Margin"];
   const fg = params["Foreground"];
   const bg = params["Background"];
@@ -65,7 +65,7 @@ export async function renderSVG(qr, params) {
   const logoRatio = params["Logo size"];
   const showLogoData = params["Show data behind logo"];
 
-  const size = matrixWidth + 2 * margin;
+  const size = rowLen + 2 * margin;
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
   svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
@@ -91,8 +91,8 @@ export async function renderSVG(qr, params) {
 
   for (const [x, y] of [
     [0, 0],
-    [matrixWidth - 7, 0],
-    [0, matrixWidth - 7],
+    [rowLen - 7, 0],
+    [0, rowLen - 7],
   ]) {
     if (defaultShape) {
       svg += roundedRect(x, y, 7, lgRadius, true);
@@ -113,10 +113,10 @@ export async function renderSVG(qr, params) {
   if (!defaultShape || !roundness) svg += `<path d="`;
 
   const logoInner = Math.floor(((1 - logoRatio) * size) / 2 - margin);
-  const logoUpper = matrixWidth - logoInner;
+  const logoUpper = rowLen - logoInner;
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
       if (
         file &&
         !showLogoData &&
@@ -127,7 +127,7 @@ export async function renderSVG(qr, params) {
       ) {
         continue;
       }
-      const module = qr.matrix[y * matrixWidth + x];
+      const module = qr.matrix[y * rowLen + x];
       if (!(module & Module.ON)) continue;
       if (module & Module.FINDER) continue;
 

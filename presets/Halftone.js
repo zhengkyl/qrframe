@@ -55,7 +55,7 @@ export async function renderCanvas(qr, params, canvas) {
   const unit = 3;
   const pixel = 1;
 
-  const matrixWidth = qr.version * 4 + 17;
+  const rowLen = qr.version * 4 + 17;
   const margin = params["Margin"];
   const fg = params["Foreground"];
   const bg = params["Background"];
@@ -69,7 +69,7 @@ export async function renderCanvas(qr, params, canvas) {
   }
   const image = await createImageBitmap(file);
 
-  const pixelWidth = matrixWidth + 2 * margin;
+  const pixelWidth = rowLen + 2 * margin;
   const canvasSize = pixelWidth * unit;
   const ctx = canvas.getContext("2d");
   ctx.canvas.width = canvasSize;
@@ -79,9 +79,9 @@ export async function renderCanvas(qr, params, canvas) {
   ctx.fillRect(0, 0, canvasSize, canvasSize);
   if (params["QR background"]) {
     ctx.fillStyle = fg;
-    for (let y = 0; y < matrixWidth; y++) {
-      for (let x = 0; x < matrixWidth; x++) {
-        const module = qr.matrix[y * matrixWidth + x];
+    for (let y = 0; y < rowLen; y++) {
+      for (let x = 0; x < rowLen; x++) {
+        const module = qr.matrix[y * rowLen + x];
         if (module & Module.ON) {
           const px = x + margin;
           const py = y + margin;
@@ -141,9 +141,9 @@ export async function renderCanvas(qr, params, canvas) {
 
   const dataOffset = (unit - pixel) / 2;
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
-      const module = qr.matrix[y * matrixWidth + x];
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
+      const module = qr.matrix[y * rowLen + x];
       if (module & Module.ON) {
         ctx.fillStyle = fg;
       } else {

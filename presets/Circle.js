@@ -65,7 +65,7 @@ export const paramsSchema = {
 const fmt = (n) => n.toFixed(2).replace(/.00$/, "");
 
 export async function renderSVG(qr, params) {
-  const matrixWidth = qr.version * 4 + 17;
+  const rowLen = qr.version * 4 + 17;
   const margin = params["Margin"];
   const fg = params["Foreground"];
   const bg = params["Background"];
@@ -76,21 +76,21 @@ export async function renderSVG(qr, params) {
   const rand = getSeededRand(params["Seed"]);
   const range = (min, max) => rand() * (max - min) + min;
 
-  const size = matrixWidth + 2 * margin;
+  const size = rowLen + 2 * margin;
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
   svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
   // nearest odd number
-  let diameter = Math.round(Math.sqrt(2) * matrixWidth) + 2 * rOffset;
+  let diameter = Math.round(Math.sqrt(2) * rowLen) + 2 * rOffset;
   if (!(diameter & 1)) diameter += 1;
 
   const frameThick = params["Frame thickness"];
   if (frameThick) {
     const frameR = diameter / 2 + 1 + frameThick / 2;
-    svg += `<circle cx="${matrixWidth / 2}" cy="${matrixWidth / 2}" r="${frameR}" fill="none" stroke="${fg}" stroke-width="${frameThick}"/>`;
+    svg += `<circle cx="${rowLen / 2}" cy="${rowLen / 2}" r="${frameR}" fill="none" stroke="${fg}" stroke-width="${frameThick}"/>`;
     if (rOffset < -1) {
-      const c = matrixWidth / 2;
+      const c = rowLen / 2;
       const offset = (frameR * Math.sqrt(2)) / 2;
       const r = (-rOffset + 1) * Math.max(frameThick / 2, 1);
       svg += `<circle cx="${c - offset}" cy="${c - offset}" r="${r}" fill="${bg}"/>`;
@@ -105,8 +105,8 @@ export async function renderSVG(qr, params) {
   if (params["Finder pattern"] !== "Default") {
     for (const [x, y] of [
       [0, 0],
-      [matrixWidth - 7, 0],
-      [0, matrixWidth - 7],
+      [rowLen - 7, 0],
+      [0, rowLen - 7],
     ]) {
       if (params["Finder pattern"] === "Circle") {
         svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="3" fill="none" stroke="${fg}" stroke-width="1"/>`;
@@ -118,12 +118,12 @@ export async function renderSVG(qr, params) {
   }
   svg += `<path fill="${fg}" d="`;
 
-  const maxDist = Math.sqrt(2) * (matrixWidth / 2);
-  const lower = Math.min(-(diameter - matrixWidth) / 2, 0);
-  const upper = Math.max(diameter - lower, matrixWidth);
+  const maxDist = Math.sqrt(2) * (rowLen / 2);
+  const lower = Math.min(-(diameter - rowLen) / 2, 0);
+  const upper = Math.max(diameter - lower, rowLen);
 
   const logoInner = Math.floor(((1 - logoRatio) * size) / 2 - margin);
-  const logoUpper = matrixWidth - logoInner;
+  const logoUpper = rowLen - logoInner;
   for (let y = lower; y < upper; y++) {
     for (let x = lower; x < upper; x++) {
       if (
@@ -140,23 +140,23 @@ export async function renderSVG(qr, params) {
       // Quiet zone around qr
       const xRange1 = x >= -1 && x < 8;
       const yRange1 = y >= -1 && y < 8;
-      const yRange2 = y > matrixWidth - 9 && y <= matrixWidth;
-      const xRange2 = x > matrixWidth - 9 && x <= matrixWidth;
+      const yRange2 = y > rowLen - 9 && y <= rowLen;
+      const xRange2 = x > rowLen - 9 && x <= rowLen;
       if (
         (x === -1 && (yRange1 || yRange2)) ||
         (y === -1 && (xRange1 || xRange2)) ||
-        (x === matrixWidth && yRange1) ||
-        (y === matrixWidth && xRange1)
+        (x === rowLen && yRange1) ||
+        (y === rowLen && xRange1)
       ) {
         continue;
       }
 
-      const dx = x - (matrixWidth - 1) / 2;
-      const dy = y - (matrixWidth - 1) / 2;
+      const dx = x - (rowLen - 1) / 2;
+      const dy = y - (rowLen - 1) / 2;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (x >= 0 && x < matrixWidth && y >= 0 && y < matrixWidth) {
-        const module = qr.matrix[y * matrixWidth + x];
+      if (x >= 0 && x < rowLen && y >= 0 && y < rowLen) {
+        const module = qr.matrix[y * rowLen + x];
         if (!(module & Module.ON)) continue;
 
         if (params["Finder pattern"] !== "Default" && module & Module.FINDER) {

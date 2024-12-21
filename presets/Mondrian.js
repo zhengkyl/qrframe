@@ -42,8 +42,8 @@ export function renderSVG(qr, params) {
   const margin = params["Margin"];
 
   const unit = 20;
-  const matrixWidth = qr.version * 4 + 17 + 2 * margin;
-  const size = matrixWidth * unit;
+  const rowLen = qr.version * 4 + 17 + 2 * margin;
+  const size = rowLen * unit;
 
   const gap = params["Line thickness"];
   const offset = gap / 2;
@@ -56,54 +56,54 @@ export function renderSVG(qr, params) {
     (color) => `<path fill="${color}" d="`
   );
 
-  const visited = Array.from({ length: matrixWidth * matrixWidth }).fill(false);
-  const matrix = Array.from({ length: matrixWidth * matrixWidth }).fill(0);
+  const visited = Array.from({ length: rowLen * rowLen }).fill(false);
+  const matrix = Array.from({ length: rowLen * rowLen }).fill(0);
   const qrWidth = qr.version * 4 + 17;
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
       if (
         y >= margin &&
-        y < matrixWidth - margin &&
+        y < rowLen - margin &&
         x >= margin &&
-        x < matrixWidth - margin
+        x < rowLen - margin
       ) {
-        matrix[y * matrixWidth + x] =
+        matrix[y * rowLen + x] =
           qr.matrix[(y - margin) * qrWidth + (x - margin)];
       }
     }
   }
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
-      const module = matrix[y * matrixWidth + x];
-      if (visited[y * matrixWidth + x]) continue;
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
+      const module = matrix[y * rowLen + x];
+      if (visited[y * rowLen + x]) continue;
 
       let layer = "";
       const on = module & Module.ON;
-      visited[y * matrixWidth + x] = true;
+      visited[y * rowLen + x] = true;
 
       let width = 1;
       let height = 1;
 
       while (
-        x + width < matrixWidth &&
-        (matrix[y * matrixWidth + x + width] & Module.ON) === on &&
-        !visited[y * matrixWidth + x + width]
+        x + width < rowLen &&
+        (matrix[y * rowLen + x + width] & Module.ON) === on &&
+        !visited[y * rowLen + x + width]
       ) {
-        visited[y * matrixWidth + x + width] = true;
+        visited[y * rowLen + x + width] = true;
         width++;
       }
 
-      outer: while (y + height < matrixWidth) {
+      outer: while (y + height < rowLen) {
         for (let i = 0; i < width; i++) {
-          if ((matrix[(y + height) * matrixWidth + x + i] & Module.ON) !== on) {
+          if ((matrix[(y + height) * rowLen + x + i] & Module.ON) !== on) {
             break outer;
           }
         }
 
         for (let i = 0; i < width; i++) {
-          visited[(y + height) * matrixWidth + x + i] = true;
+          visited[(y + height) * rowLen + x + i] = true;
         }
         height++;
       }

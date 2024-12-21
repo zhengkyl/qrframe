@@ -108,167 +108,98 @@ export function renderSVG(qr, params) {
   });
 
   let matrix = qr.matrix;
-  let matrixWidth = qr.version * 4 + 17;
+  let rowLen = qr.version * 4 + 17;
 
   if (params["Invert"]) {
-    matrixWidth += 2;
+    rowLen += 2;
     matrix = [];
-    for (let y = 0; y < matrixWidth; y++) {
-      for (let x = 0; x < matrixWidth; x++) {
-        if (
-          x === 0 ||
-          y === 0 ||
-          x === matrixWidth - 1 ||
-          y === matrixWidth - 1
-        ) {
+    for (let y = 0; y < rowLen; y++) {
+      for (let x = 0; x < rowLen; x++) {
+        if (x === 0 || y === 0 || x === rowLen - 1 || y === rowLen - 1) {
           matrix.push(0);
         } else {
-          matrix.push(qr.matrix[(y - 1) * (matrixWidth - 2) + x - 1]);
+          matrix.push(qr.matrix[(y - 1) * (rowLen - 2) + x - 1]);
         }
       }
     }
   }
 
-  const visited = new Uint16Array(matrixWidth * matrixWidth);
+  const visited = new Uint16Array(rowLen * rowLen);
   const unit = 10;
   const margin = params["Margin"] * unit;
-  const size = matrixWidth * unit + 2 * margin;
+  const size = rowLen * unit + 2 * margin;
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
-
   svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${params["Background"]}"/>`;
 
-  const xMax = matrixWidth - 1;
-  const yMax = matrixWidth - 1;
+  const xMax = rowLen - 1;
+  const yMax = rowLen - 1;
 
   let baseX;
   let baseY;
 
   const on = params["Invert"]
-    ? (x, y) => (matrix[y * matrixWidth + x] & Module.ON) === 0
-    : (x, y) => (matrix[y * matrixWidth + x] & Module.ON) !== 0;
+    ? (x, y) => (matrix[y * rowLen + x] & Module.ON) === 0
+    : (x, y) => (matrix[y * rowLen + x] & Module.ON) !== 0;
 
-  function goRight(x, y, shape, cw) {
-    let sx = x;
+  function go(x, y, dx, dy, path, cw) {
+    visited[y * rowLen + x] = path;
+    let concave = false;
 
-    let vert = false;
-    visited[y * matrixWidth + x] = shape;
-    while (x < xMax) {
-      const right = on(x + 1, y);
-      const vertRight = y > 0 && on(x + 1, y - 1);
-      if (!right || vertRight) {
-        vert = right && vertRight;
+    let nx = x + dx;
+    let ny = y + dy;
+    while (nx >= 0 && nx <= xMax && ny >= 0 && ny <= yMax) {
+      const next = on(nx, ny);
+      const cx = nx + dy;
+      const cy = ny - dx;
+      const diag = cx >= 0 && cx <= xMax && cy >= 0 && cy <= yMax && on(cx, cy);
+      if (!next || diag) {
+        concave = next && diag;
         break;
       }
-      x++;
-      visited[y * matrixWidth + x] = shape;
+      visited[ny * rowLen + nx] = path;
+      nx += dx;
+      ny += dy;
     }
 
-    paths[shape] += `h${(x - sx + 1) * unit}`;
-    if (vert) {
-      goUp(x + 1, y - 1, shape, cw);
-    } else {
-      goDown(x, y, shape, cw);
-    }
-  }
-
-  function goLeft(x, y, shape, cw) {
-    let sx = x;
-
-    let vert = false;
-    visited[y * matrixWidth + x] = shape;
-    while (x > 0) {
-      const left = on(x - 1, y);
-      const vertLeft = y < yMax && on(x - 1, y + 1);
-      if (!left || vertLeft) {
-        vert = left && vertLeft;
-        break;
+    if (nx - dx === baseX && ny - dy === baseY) {
+      if ((cw && dy === -1) || (!cw && dx === -1)) {
+        paths[path] += "z";
+        return;
       }
-      x--;
-      visited[y * matrixWidth + x] = shape;
-    }
-    if (!cw && x === baseX && y === baseY) {
-      paths[shape] += "z";
-      return;
     }
 
-    paths[shape] += `h${(x - sx - 1) * unit}`;
-    if (vert) {
-      goDown(x - 1, y + 1, shape, cw);
+    if (dx !== 0) {
+      paths[path] += `h${(nx - x) * unit}`;
     } else {
-      goUp(x, y, shape, cw);
-    }
-  }
-
-  function goUp(x, y, shape, cw) {
-    let sy = y;
-    let horz = false;
-    visited[y * matrixWidth + x] = shape;
-    while (y > 0) {
-      const up = on(x, y - 1);
-      const horzUp = x > 0 && on(x - 1, y - 1);
-      if (!up || horzUp) {
-        horz = up && horzUp;
-        break;
-      }
-      y--;
-      visited[y * matrixWidth + x] = shape;
-    }
-    if (cw && x === baseX && y === baseY) {
-      paths[shape] += "z";
-      return;
+      paths[path] += `v${(ny - y) * unit}`;
     }
 
-    paths[shape] += `v${(y - sy - 1) * unit}`;
-    if (horz) {
-      goLeft(x - 1, y - 1, shape, cw);
+    if (concave) {
+      go(nx + dy, ny - dx, dy, -dx, path, cw);
     } else {
-      goRight(x, y, shape, cw);
-    }
-  }
-
-  function goDown(x, y, shape, cw) {
-    let sy = y;
-    let horz = false;
-    visited[y * matrixWidth + x] = shape;
-    while (y < yMax) {
-      const down = on(x, y + 1);
-      const horzDown = x < xMax && on(x + 1, y + 1);
-      if (!down || horzDown) {
-        horz = down && horzDown;
-        break;
-      }
-      y++;
-      visited[y * matrixWidth + x] = shape;
-    }
-
-    paths[shape] += `v${(y - sy + 1) * unit}`;
-    if (horz) {
-      goRight(x + 1, y + 1, shape, cw);
-    } else {
-      goLeft(x, y, shape, cw);
+      go(nx - dx, ny - dy, -dy, dx, path, cw);
     }
   }
 
   const stack = [];
-  for (let x = 0; x < matrixWidth; x++) {
+  for (let x = 0; x < rowLen; x++) {
     if (!on(x, 0)) stack.push([x, 0]);
   }
   for (let y = 1; y < yMax; y++) {
     if (!on(0, y)) stack.push([0, y]);
     if (!on(xMax, y)) stack.push([xMax, y]);
   }
-  for (let x = 0; x < matrixWidth; x++) {
+  for (let x = 0; x < rowLen; x++) {
     if (!on(x, yMax)) stack.push([x, yMax]);
   }
 
-  // recursion dfs limited to ~4000
   // visit all whitespace connected to edges
   function dfsOff() {
     while (stack.length > 0) {
       const [x, y] = stack.pop();
-      if (visited[y * matrixWidth + x]) continue;
-      visited[y * matrixWidth + x] = 1;
+      if (visited[y * rowLen + x]) continue;
+      visited[y * rowLen + x] = 1;
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dy === 0 && dx === 0) continue;
@@ -284,37 +215,35 @@ export function renderSVG(qr, params) {
   dfsOff();
 
   const paths = [""];
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
-      if (visited[y * matrixWidth + x]) continue;
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
+      if (visited[y * rowLen + x]) continue;
 
       if (!on(x, y)) {
-        const shape = visited[y * matrixWidth + x - 1];
-        paths[shape] += `M${x * unit},${y * unit}`;
+        const path = visited[y * rowLen + x - 1];
+        paths[path] += `M${x * unit},${y * unit}`;
 
         baseY = y - 1;
         baseX = x;
-        goDown(x - 1, y, shape, false);
+        go(x - 1, y, 0, 1, path, false);
         stack.push([x, y]);
         dfsOff();
         continue;
       }
 
-      if (y > 0 && on(x, y - 1) && visited[(y - 1) * matrixWidth + x]) {
-        visited[y * matrixWidth + x] = visited[(y - 1) * matrixWidth + x];
+      if (y > 0 && on(x, y - 1) && visited[(y - 1) * rowLen + x]) {
+        visited[y * rowLen + x] = visited[(y - 1) * rowLen + x];
         continue;
       }
-      if (x > 0 && on(x - 1, y) && visited[y * matrixWidth + x - 1]) {
-        visited[y * matrixWidth + x] = visited[y * matrixWidth + x - 1];
+      if (x > 0 && on(x - 1, y) && visited[y * rowLen + x - 1]) {
+        visited[y * rowLen + x] = visited[y * rowLen + x - 1];
         continue;
       }
 
       paths.push(`M${x * unit},${y * unit}`);
-
       baseY = y;
       baseX = x;
-
-      goRight(x, y, paths.length - 1, true);
+      go(x, y, 1, 0, paths.length - 1, true);
     }
   }
 

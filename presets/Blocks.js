@@ -54,7 +54,7 @@ export const paramsSchema = {
 };
 
 export function renderSVG(qr, params) {
-  const matrixWidth = qr.version * 4 + 17;
+  const rowLen = qr.version * 4 + 17;
   const margin = params["Margin"];
   const bg = params["Background"];
   const fc = params["Finder"];
@@ -71,7 +71,7 @@ export function renderSVG(qr, params) {
   const ct = params["Cross thickness"];
   const co = ct / Math.sqrt(8); // offset
 
-  const size = matrixWidth + 2 * margin;
+  const size = rowLen + 2 * margin;
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
   svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
@@ -80,22 +80,22 @@ export function renderSVG(qr, params) {
   let hLayer = `<g fill="${hc}">`;
 
   function matrix(x, y) {
-    return qr.matrix[y * matrixWidth + x];
+    return qr.matrix[y * rowLen + x];
   }
 
-  const visitedMatrix = Array(matrixWidth * matrixWidth).fill(false);
+  const visitedMatrix = Array(rowLen * rowLen).fill(false);
   function visited(x, y) {
-    return visitedMatrix[y * matrixWidth + x];
+    return visitedMatrix[y * rowLen + x];
   }
   function setVisited(x, y) {
-    visitedMatrix[y * matrixWidth + x] = true;
+    visitedMatrix[y * rowLen + x] = true;
   }
 
   svg += `<g fill="${fc}">`;
   for (const [x, y] of [
     [0, 0],
-    [matrixWidth - 7, 0],
-    [0, matrixWidth - 7],
+    [rowLen - 7, 0],
+    [0, rowLen - 7],
   ]) {
     svg += `<rect x="${x + 2}" y="${y}" width="3" height="1"/>`;
     svg += `<rect x="${x + 2}" y="${y + 2}" width="3" height="3"/>`;
@@ -105,8 +105,8 @@ export function renderSVG(qr, params) {
   }
   svg += `</g>`;
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
       const module = matrix(x, y);
       if (module & Module.FINDER) continue;
       if (!(module & Module.ON)) continue;
@@ -114,8 +114,8 @@ export function renderSVG(qr, params) {
       setVisited(x, y);
 
       if (
-        y < matrixWidth - 2 &&
-        x < matrixWidth - 2 &&
+        y < rowLen - 2 &&
+        x < rowLen - 2 &&
         matrix(x + 2, y) &
           matrix(x, y + 2) &
           matrix(x + 1, y + 1) &
@@ -141,8 +141,8 @@ export function renderSVG(qr, params) {
         }
       }
       if (
-        y < matrixWidth - 1 &&
-        x < matrixWidth - 1 &&
+        y < rowLen - 1 &&
+        x < rowLen - 1 &&
         matrix(x + 1, y) & matrix(x, y + 1) & matrix(x + 1, y + 1) & Module.ON
       ) {
         if (
@@ -163,7 +163,7 @@ export function renderSVG(qr, params) {
       }
 
       let ny = y + 1;
-      while (ny < matrixWidth && matrix(x, ny) & Module.ON && !visited(x, ny)) {
+      while (ny < rowLen && matrix(x, ny) & Module.ON && !visited(x, ny)) {
         ny++;
       }
       if (ny - y > 2) {
@@ -176,7 +176,7 @@ export function renderSVG(qr, params) {
       }
 
       let nx = x + 1;
-      while (nx < matrixWidth && matrix(nx, y) & Module.ON && !visited(nx, y)) {
+      while (nx < rowLen && matrix(nx, y) & Module.ON && !visited(nx, y)) {
         setVisited(nx, y);
         nx++;
       }

@@ -39,19 +39,19 @@ export function renderSVG(qr, params) {
   const range = (min, max) =>
     Math.trunc(100 * (rand() * (max - min) + min)) / 100;
 
-  const matrixWidth = qr.version * 4 + 17;
+  const rowLen = qr.version * 4 + 17;
   const margin = params["Margin"];
   const bg = params["Background"];
   const fg = params["Foreground"];
 
-  const size = matrixWidth + 2 * margin;
+  const size = rowLen + 2 * margin;
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
   svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
   for (const [x, y] of [
     [0, 0],
-    [matrixWidth - 7, 0],
-    [0, matrixWidth - 7],
+    [rowLen - 7, 0],
+    [0, rowLen - 7],
   ]) {
     svg += `<g fill="${fg}">`;
     svg += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="1.5"/>`;
@@ -86,31 +86,29 @@ export function renderSVG(qr, params) {
   let dotsLayer = `<g fill="${fg}">`;
 
   function on(x, y) {
-    return (qr.matrix[y * matrixWidth + x] & Module.ON) !== 0;
+    return (qr.matrix[y * rowLen + x] & Module.ON) !== 0;
   }
 
-  const visitArray = Array.from({ length: matrixWidth * matrixWidth }).fill(
-    false
-  );
+  const visitArray = Array.from({ length: rowLen * rowLen }).fill(false);
 
   function visited(x, y) {
-    return visitArray[y * matrixWidth + x];
+    return visitArray[y * rowLen + x];
   }
   function visitCenter(x, y) {
-    visitArray[y * matrixWidth + x] = true;
+    visitArray[y * rowLen + x] = true;
     dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="${range(0.3, 0.5)}"/>`;
   }
   function visit(x, y) {
-    visitArray[y * matrixWidth + x] = true;
+    visitArray[y * rowLen + x] = true;
     dotsLayer += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="0.2"/>`;
   }
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
-      const module = qr.matrix[y * matrixWidth + x];
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
+      const module = qr.matrix[y * rowLen + x];
       if (module & Module.FINDER) continue;
 
-      if (params["Particles"] && y < matrixWidth - 2 && x < matrixWidth - 2) {
+      if (params["Particles"] && y < rowLen - 2 && x < rowLen - 2) {
         let xCross = false;
         let tCross = false;
 

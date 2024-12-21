@@ -19,7 +19,7 @@ export const paramsSchema = {
 };
 
 export function renderSVG(qr, params) {
-  const matrixWidth = qr.version * 4 + 17;
+  const rowLen = qr.version * 4 + 17;
   const unit = 10;
   const dataSize = params["Data pixel size"];
   const margin = params["Margin"] * unit;
@@ -27,7 +27,7 @@ export function renderSVG(qr, params) {
   const fg = "#000";
   const bg = "#fff";
 
-  const size = matrixWidth * unit + 2 * margin;
+  const size = rowLen * unit + 2 * margin;
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
   if (params["Background"]) {
     svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
@@ -36,8 +36,8 @@ export function renderSVG(qr, params) {
 
   for (const [x, y] of [
     [0, 0],
-    [matrixWidth - 7, 0],
-    [0, matrixWidth - 7],
+    [rowLen - 7, 0],
+    [0, rowLen - 7],
   ]) {
     svg += `M${(x + 3) * unit},${y * unit}h${unit}v${unit}h-${unit}z`;
     svg += `M${x * unit},${(y + 3) * unit}h${unit}v${unit}h-${unit}z`;
@@ -48,9 +48,9 @@ export function renderSVG(qr, params) {
   }
 
   const offset = (unit - dataSize) / 2;
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
-      const module = qr.matrix[y * matrixWidth + x];
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
+      const module = qr.matrix[y * rowLen + x];
 
       if (module & Module.FINDER) {
         continue;

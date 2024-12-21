@@ -71,20 +71,20 @@ export function renderSVG(qr, params) {
 
   const rand = getSeededRand(params["Seed"]);
   const rangeStr = (min, max) => (rand() * (max - min) + min).toFixed(2);
-  const matrixWidth = qr.version * 4 + 17;
+  const rowLen = qr.version * 4 + 17;
   const margin = params["Margin"] * unit;
   const colors = params["Foreground"];
   const bg = params["Background"];
 
-  const size = matrixWidth * unit + 2 * margin;
+  const size = rowLen * unit + 2 * margin;
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
 
-  const center = (matrixWidth * unit) / 2;
+  const center = (rowLen * unit) / 2;
   svg += `<defs><g id="dots">`;
 
   const dotRadius = 1;
   const dotSpace = 2.2;
-  const maxRadius = Math.sqrt((unit * unit * matrixWidth * matrixWidth) / 2);
+  const maxRadius = Math.sqrt((unit * unit * rowLen * rowLen) / 2);
   for (let r = 0.1; r < maxRadius; r += dotSpace) {
     const angleInc = dotSpace / r;
     for (let theta = 0; theta < 2 * Math.PI - angleInc / 2; theta += angleInc) {
@@ -92,10 +92,10 @@ export function renderSVG(qr, params) {
       const y = r * Math.sin(theta);
       const qx = Math.floor((x + center) / unit);
       const qy = Math.floor((y + center) / unit);
-      if (qx >= 0 && qx < matrixWidth && qy >= 0 && qy < matrixWidth) {
-        if (qr.matrix[qy * matrixWidth + qx] & Module.ON) {
+      if (qx >= 0 && qx < rowLen && qy >= 0 && qy < rowLen) {
+        if (qr.matrix[qy * rowLen + qx] & Module.ON) {
           const rad =
-            qr.matrix[qy * matrixWidth + qx] & Module.FINDER
+            qr.matrix[qy * rowLen + qx] & Module.FINDER
               ? params["Finder clarity"]
               : dotRadius;
           svg += `<circle cx="${(center + x).toFixed(2)}" cy="${(center + y).toFixed(2)}" r="${rad}" />`;

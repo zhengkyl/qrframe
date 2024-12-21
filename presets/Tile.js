@@ -39,62 +39,62 @@ export function renderSVG(qr, params) {
   const offset = gap / 2;
 
   const margin = params["Margin"];
-  const qrWidth = qr.version * 4 + 17;
-  const matrixWidth = qrWidth + 2 * margin;
+  const qrRowLen = qr.version * 4 + 17;
+  const rowLen = qrRowLen + 2 * margin;
 
   const fg = params["Foreground"];
   const bg = params["Background"];
   const grout = params["Grout"];
 
-  const newMatrix = Array.from({ length: matrixWidth * matrixWidth }).fill(0);
+  const newMatrix = Array.from({ length: rowLen * rowLen }).fill(0);
 
   const start = margin;
-  const end = matrixWidth - 1 - margin;
+  const end = rowLen - 1 - margin;
   const inner = params["Inner square"];
   const outer = params["Outer square"];
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
       // outer square
       if (y === start - outer && x >= start - outer && x <= end + outer) {
-        newMatrix[y * matrixWidth + x] = Module.ON;
+        newMatrix[y * rowLen + x] = Module.ON;
       } else if (
         (x === start - outer || x === end + outer) &&
         y >= start - outer + 1 &&
         y <= end + outer - 1
       ) {
-        newMatrix[y * matrixWidth + x] = Module.ON;
-        newMatrix[y * matrixWidth + x] = Module.ON;
+        newMatrix[y * rowLen + x] = Module.ON;
+        newMatrix[y * rowLen + x] = Module.ON;
       } else if (y === end + outer && x >= start - outer && x <= end + outer) {
-        newMatrix[y * matrixWidth + x] = Module.ON;
+        newMatrix[y * rowLen + x] = Module.ON;
       }
       // inner square
       else if (y === start - inner && x >= start - inner && x <= end + inner) {
-        newMatrix[y * matrixWidth + x] = Module.ON;
+        newMatrix[y * rowLen + x] = Module.ON;
       } else if (
         (x === start - inner || x === end + inner) &&
         y >= start - inner + 1 &&
         y <= end + inner - 1
       ) {
-        newMatrix[y * matrixWidth + x] = Module.ON;
-        newMatrix[y * matrixWidth + x] = Module.ON;
+        newMatrix[y * rowLen + x] = Module.ON;
+        newMatrix[y * rowLen + x] = Module.ON;
       } else if (y === end + inner && x >= start - inner && x <= end + inner) {
-        newMatrix[y * matrixWidth + x] = Module.ON;
+        newMatrix[y * rowLen + x] = Module.ON;
       }
       // qr code w/ quiet zone
       else if (
         y >= margin - inner &&
-        y < matrixWidth - margin + inner &&
+        y < rowLen - margin + inner &&
         x >= margin - inner &&
-        x < matrixWidth - margin + inner
+        x < rowLen - margin + inner
       ) {
         if (
           y >= margin &&
-          y < matrixWidth - margin &&
+          y < rowLen - margin &&
           x >= margin &&
-          x < matrixWidth - margin
+          x < rowLen - margin
         ) {
-          newMatrix[y * matrixWidth + x] =
-            qr.matrix[(y - margin) * qrWidth + x - margin];
+          newMatrix[y * rowLen + x] =
+            qr.matrix[(y - margin) * qrRowLen + x - margin];
         }
       }
       // between squares
@@ -105,30 +105,30 @@ export function renderSVG(qr, params) {
         x < end + outer
       ) {
         if ((x + y) & 1) {
-          newMatrix[y * matrixWidth + x] = Module.ON;
+          newMatrix[y * rowLen + x] = Module.ON;
         }
         // outside squares
       } else {
         if (x % 4 && y % 4) {
           if ((x % 8 < 4 && y % 8 < 4) || (x % 8 > 4 && y % 8 > 4)) {
-            newMatrix[y * matrixWidth + x] = Module.ON;
+            newMatrix[y * rowLen + x] = Module.ON;
           }
         } else {
-          newMatrix[y * matrixWidth + x] = Module.ON;
+          newMatrix[y * rowLen + x] = Module.ON;
         }
       }
     }
   }
 
-  const size = matrixWidth * unit;
+  const size = rowLen * unit;
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">`;
   svg += `<rect width="${size}" height="${size}" fill="${grout}"/>`;
   svg += `<path fill="${fg}" d="`;
   let layer = `<path fill="${bg}" d="`;
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
-      const module = newMatrix[y * matrixWidth + x];
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
+      const module = newMatrix[y * rowLen + x];
       let tiles;
       if (module & Module.ON) {
         if (module & Module.FINDER) {

@@ -34,13 +34,13 @@ export function renderSVG(qr, params) {
   const rand = getSeededRand(params["Seed"]);
   const rangeStr = (min, max) => (rand() * (max - min) + min).toFixed(2);
 
-  const matrixWidth = qr.version * 4 + 17;
+  const rowLen = qr.version * 4 + 17;
   const margin = params["Margin"];
   const bg = params["Background"];
   const dots = params["Dots"];
   const lines = params["Lines"];
 
-  const size = matrixWidth + 2 * margin;
+  const size = rowLen + 2 * margin;
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-margin} ${-margin} ${size} ${size}">`;
   svg += `<rect x="${-margin}" y="${-margin}" width="${size}" height="${size}" fill="${bg}"/>`;
 
@@ -48,28 +48,28 @@ export function renderSVG(qr, params) {
   let dotsLayer = `<g fill="${dots}">`;
 
   function matrix(x, y) {
-    return qr.matrix[y * matrixWidth + x];
+    return qr.matrix[y * rowLen + x];
   }
 
-  const rightVisited = Array(matrixWidth * matrixWidth).fill(false);
-  const leftVisited = Array(matrixWidth * matrixWidth).fill(false);
+  const rightVisited = Array(rowLen * rowLen).fill(false);
+  const leftVisited = Array(rowLen * rowLen).fill(false);
   function visited1(x, y) {
-    return rightVisited[y * matrixWidth + x];
+    return rightVisited[y * rowLen + x];
   }
   function visited2(x, y) {
-    return leftVisited[y * matrixWidth + x];
+    return leftVisited[y * rowLen + x];
   }
   function setVisited1(x, y) {
-    rightVisited[y * matrixWidth + x] = true;
+    rightVisited[y * rowLen + x] = true;
   }
   function setVisited2(x, y) {
-    leftVisited[y * matrixWidth + x] = true;
+    leftVisited[y * rowLen + x] = true;
   }
 
   for (const [x, y] of [
     [0, 0],
-    [matrixWidth - 7, 0],
-    [0, matrixWidth - 7],
+    [rowLen - 7, 0],
+    [0, rowLen - 7],
   ]) {
     dotsLayer += `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="1.5"/>`;
 
@@ -88,8 +88,8 @@ export function renderSVG(qr, params) {
     linesLayer += `<line x1="${x + 6.5}" y1="${y + 0.5}" x2="${x + 0.5}" y2="${y + 6.5}" stroke-width="${rangeStr(0.3, 0.6)}"/>`;
   }
 
-  for (let y = 0; y < matrixWidth; y++) {
-    for (let x = 0; x < matrixWidth; x++) {
+  for (let y = 0; y < rowLen; y++) {
+    for (let x = 0; x < rowLen; x++) {
       const module = matrix(x, y);
       if (module & Module.FINDER) continue;
 
@@ -100,8 +100,8 @@ export function renderSVG(qr, params) {
         let nx = x + 1;
         let ny = y + 1;
         while (
-          nx < matrixWidth &&
-          ny < matrixWidth &&
+          nx < rowLen &&
+          ny < rowLen &&
           matrix(nx, ny) & Module.ON &&
           !visited1(nx, ny)
         ) {
@@ -119,7 +119,7 @@ export function renderSVG(qr, params) {
         let ny = y + 1;
         while (
           nx >= 0 &&
-          ny < matrixWidth &&
+          ny < rowLen &&
           matrix(nx, ny) & Module.ON &&
           !visited2(nx, ny)
         ) {
