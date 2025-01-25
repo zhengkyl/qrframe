@@ -36,7 +36,7 @@ function Temp() {
     });
   });
 
-  let qrPreview: HTMLDivElement;
+  let qrPreview!: HTMLDivElement;
   let textRef: HTMLTextAreaElement;
 
   const [textFocused, setTextFocused] = createSignal(false);

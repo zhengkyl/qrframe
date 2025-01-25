@@ -461,7 +461,7 @@ export function Editor(props: Props) {
                         label={key}
                         active={renderKey() === key}
                       >
-                        <img class="rounded-sm" src={thumbs[key]} />
+                        <img class="rounded-sm" src={thumbs[key]} alt="" />
                       </Preview>
                     </ContentMenuTrigger>
                   )}

@@ -39,6 +39,7 @@ export function SplitButton(props: Props) {
         <Popover.Trigger
           class="group border rounded-md rounded-s-none hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2 disabled:(pointer-events-none opacity-50)"
           disabled={props.disabled}
+          aria-label="More download options"
         >
           <ChevronDown
             size={20}
