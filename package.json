@@ -24,7 +24,7 @@
     "@unocss/reset": "^0.59.4",
     "codemirror": "^6.0.1",
     "fuqr": "^1.0.0",
-    "lucide-solid": "^0.378.0",
+    "lucide-solid": "^0.474.0",
     "solid-js": "^1.9.2",
     "unocss": "^0.59.4",
     "vinxi": "^0.3.11"

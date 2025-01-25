@@ -58,8 +58,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       lucide-solid:
-        specifier: ^0.378.0
-        version: 0.378.0(solid-js@1.9.2)
+        specifier: ^0.474.0
+        version: 0.474.0(solid-js@1.9.2)
       solid-js:
         specifier: ^1.9.2
         version: 1.9.2
@@ -2340,8 +2340,8 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
-  lucide-solid@0.378.0:
-    resolution: {integrity: sha512-flJIh53qIVnHMsq4WipY+5dlclhnAIrVIIatK3TjUD+9aNNwvb8dSOYw5+Gyxdy69k0A4fWKmtU3k6O9AUdgLA==}
+  lucide-solid@0.474.0:
+    resolution: {integrity: sha512-sSEzUW2TVHpbYRehLfPuWtL+mGeBUQRZWPE0020aealCIxaNSuZOWts3NdS+R+itWr5JenTcwi1+Q3OcLTIZXg==}
     peerDependencies:
       solid-js: ^1.4.7
 
@@ -5639,7 +5639,7 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
-  lucide-solid@0.378.0(solid-js@1.9.2):
+  lucide-solid@0.474.0(solid-js@1.9.2):
     dependencies:
       solid-js: 1.9.2
 
@@ -5737,7 +5737,7 @@ snapshots:
       acorn: 8.11.3
       pathe: 1.1.2
       pkg-types: 1.1.0
-      ufo: 1.5.3
+      ufo: 1.5.4
 
   mri@1.2.0: {}
 
@@ -5894,7 +5894,7 @@ snapshots:
     dependencies:
       destr: 2.0.3
       node-fetch-native: 1.6.4
-      ufo: 1.5.3
+      ufo: 1.5.4
 
   ohash@1.1.3: {}
 

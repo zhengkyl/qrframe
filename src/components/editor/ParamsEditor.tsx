@@ -1,8 +1,12 @@
 import {
-  closestCenter, createSortable, DragDropProvider,
+  closestCenter,
+  createSortable,
+  DragDropProvider,
   DragDropSensors,
   DragOverlay,
-  SortableProvider, transformStyle, useDragDropContext
+  SortableProvider,
+  transformStyle,
+  useDragDropContext,
 } from "@thisbeyond/solid-dnd";
 import GripVertical from "lucide-solid/icons/grip-vertical";
 import Minus from "lucide-solid/icons/minus";
@@ -16,7 +20,7 @@ import { FlatButton } from "../Button";
 export function ParamsEditor() {
   const { paramsSchema, params, setParams } = useRenderContext();
   return (
-    <div class="flex flex-col gap-2 mb-4">
+    <div class="flex flex-col gap-2">
       <For each={Object.entries(paramsSchema())}>
         {([label, { type, ...other }]) => {
           if (type === "array") {
@@ -125,7 +129,10 @@ function ArrayParam({ label, other }) {
                       value={v()}
                       setValue={(v: any) => setParams(label, i, v)}
                     />
-                    <div class="px-1 cursor-move touch-none" {...sortable.dragActivators}>
+                    <div
+                      class="px-1 cursor-move touch-none"
+                      {...sortable.dragActivators}
+                    >
                       <GripVertical />
                     </div>
                   </div>

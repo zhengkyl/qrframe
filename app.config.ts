@@ -1,29 +1,18 @@
-import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "@solidjs/start/config";
 import UnoCSS from "unocss/vite";
 import wasmpack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
   server: {
+    static: true,
     preset: "cloudflare-pages",
     rollupConfig: {
-      external: ["node:async_hooks"]
-    }
+      external: ["node:async_hooks"],
+    },
   },
-  ssr: true,
+  ssr: false,
   vite: {
     plugins: [UnoCSS(), wasmpack([], ["fuqr"]), blobRewriter()],
-    resolve: {
-      alias: {
-        // https://christopher.engineering/en/blog/lucide-icons-with-vite-dev-server/
-        "lucide-solid/icons": fileURLToPath(
-          new URL(
-            "./node_modules/lucide-solid/dist/source/icons",
-            import.meta.url
-          )
-        ),
-      },
-    },
   },
 });
 

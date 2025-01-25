@@ -220,90 +220,87 @@ function DownloadButtons() {
   };
 
   return (
-    <div>
-      <div class="font-bold text-sm pb-2 md:hidden">Downloads</div>
-      <div class="flex gap-2 md:(grid grid-cols-2)">
-        <SplitButton
-          disabled={disabled()}
-          onPng={async (resizeWidth, resizeHeight) => {
-            try {
-              const blob = await pngBlob(resizeWidth, resizeHeight);
-              if (blob == null) throw "toBlob returned null";
+    <div class="flex gap-2 md:(grid grid-cols-2)">
+      <SplitButton
+        disabled={disabled()}
+        onPng={async (resizeWidth, resizeHeight) => {
+          try {
+            const blob = await pngBlob(resizeWidth, resizeHeight);
+            if (blob == null) throw "toBlob returned null";
 
-              const url = URL.createObjectURL(blob);
-              download(url, `${filename()}.png`);
-              URL.revokeObjectURL(url);
-            } catch (e) {
-              toastError("Failed to create image", e as string);
-              return;
-            }
-          }}
-          onSvg={downloadSvg}
-        />
-        <Show when={render()?.type === "svg"}>
-          <FlatButton
-            class="hidden md:inline-flex flex-1 justify-center items-center gap-1 px-3 py-2"
-            disabled={disabled()}
-            onClick={downloadSvg}
-          >
-            <Download size={20} />
-            SVG
-          </FlatButton>
-        </Show>
+            const url = URL.createObjectURL(blob);
+            download(url, `${filename()}.png`);
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            toastError("Failed to create image", e as string);
+            return;
+          }
+        }}
+        onSvg={downloadSvg}
+      />
+      <Show when={render()?.type === "svg"}>
         <FlatButton
-          class="md:hidden inline-flex justify-center items-center gap-1 px-6 py-2"
+          class="hidden md:inline-flex flex-1 justify-center items-center gap-1 px-3 py-2"
           disabled={disabled()}
-          title="Share"
-          onClick={async () => {
-            let blob;
-            try {
-              blob = await pngBlob(0, 0);
-              if (blob == null) throw "toBlob returned null";
-            } catch (e) {
-              toastError(
-                "Failed to create image",
-                typeof e === "string" ? e : "pngBlob failed"
-              );
-              return;
-            }
-            try {
-              const shareData = {
-                files: [
-                  new File([blob], `${filename()}.png`, {
-                    type: "image/png",
-                  }),
-                ],
-              };
-              if (!navigator.canShare(shareData)) {
-                throw new Error();
-              }
-              navigator.share(shareData);
-            } catch (e) {
-              console.log(e);
-              toastError(
-                "Native sharing failed",
-                "File sharing not supported by browser"
-              );
-            }
-          }}
+          onClick={downloadSvg}
         >
-          <Share2 size={20} />
+          <Download size={20} />
+          SVG
         </FlatButton>
-        <Popover gutter={4}>
-          <Popover.Trigger
-            class="md:hidden border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2 disabled:(pointer-events-none opacity-50)"
-            disabled={disabled()}
-            title="QR Metadata"
-          >
-            <Info size={20} />
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Content class="z-50 bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
-              <Metadata />
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover>
-      </div>
+      </Show>
+      <FlatButton
+        class="md:hidden inline-flex justify-center items-center gap-1 px-6 py-2"
+        disabled={disabled()}
+        title="Share"
+        onClick={async () => {
+          let blob;
+          try {
+            blob = await pngBlob(0, 0);
+            if (blob == null) throw "toBlob returned null";
+          } catch (e) {
+            toastError(
+              "Failed to create image",
+              typeof e === "string" ? e : "pngBlob failed"
+            );
+            return;
+          }
+          try {
+            const shareData = {
+              files: [
+                new File([blob], `${filename()}.png`, {
+                  type: "image/png",
+                }),
+              ],
+            };
+            if (!navigator.canShare(shareData)) {
+              throw new Error();
+            }
+            navigator.share(shareData);
+          } catch (e) {
+            console.log(e);
+            toastError(
+              "Native sharing failed",
+              "File sharing not supported by browser"
+            );
+          }
+        }}
+      >
+        <Share2 size={20} />
+      </FlatButton>
+      <Popover gutter={4}>
+        <Popover.Trigger
+          class="md:hidden border rounded-md hover:bg-fore-base/5 focus-visible:(outline-none ring-2 ring-fore-base ring-offset-2 ring-offset-back-base) p-2 disabled:(pointer-events-none opacity-50)"
+          disabled={disabled()}
+          title="QR Metadata"
+        >
+          <Info size={20} />
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content class="z-50 bg-back-base rounded-md border p-2 outline-none min-w-150px leading-tight">
+            <Metadata />
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover>
     </div>
   );
 }

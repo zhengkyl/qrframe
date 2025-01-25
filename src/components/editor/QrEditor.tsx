@@ -1,6 +1,15 @@
 import Pencil from "lucide-solid/icons/pencil";
 import Trash2 from "lucide-solid/icons/trash-2";
-import { For, Show, batch, createSignal, onMount, type JSX } from "solid-js";
+import {
+  For,
+  Show,
+  Suspense,
+  batch,
+  createSignal,
+  lazy,
+  onMount,
+  type JSX,
+} from "solid-js";
 import { createStore } from "solid-js/store";
 import {
   deepEqualObj,
@@ -17,9 +26,15 @@ import { Collapsible } from "../Collapsible";
 import { ContentMenuTrigger, ContextMenuProvider } from "../ContextMenu";
 import { ControlledDialog, DialogButton } from "../Dialog";
 import { TextInput, TextareaInput } from "../TextInput";
-import { CodeEditor } from "./CodeEditor";
 import { ParamsEditor } from "./ParamsEditor";
 import { Settings } from "./Settings";
+import { Switch } from "../Switch";
+
+const CodeEditor = lazy(() => {
+  return import("./CodeEditor").then((module) => ({
+    default: module.CodeEditor,
+  }));
+});
 
 import "virtual:blob-rewriter";
 
@@ -286,6 +301,8 @@ export function Editor(props: Props) {
     saveAndRun(code, true, true);
   };
 
+  const [showCode, setShowCode] = createSignal(false);
+
   return (
     <div class={props.class}>
       <TextareaInput
@@ -310,7 +327,7 @@ export function Editor(props: Props) {
             const [rename, setRename] = createSignal(key);
             const [duplicate, setDuplicate] = createSignal(false);
 
-            let ref: HTMLInputElement;
+            let ref!: HTMLInputElement;
             onMount(() => ref.focus());
 
             const onSubmit = () => {
@@ -340,7 +357,7 @@ export function Editor(props: Props) {
               <>
                 <TextInput
                   class="mt-2"
-                  ref={ref!}
+                  ref={ref}
                   defaultValue={rename()}
                   onInput={(s) => {
                     if (duplicate()) setDuplicate(false);
@@ -397,8 +414,8 @@ export function Editor(props: Props) {
             );
           }}
         </ControlledDialog>
-        <div class="py-4">
-          <div class="mb-4 h-[180px] md:(h-unset)">
+        <div class="py-4 flex flex-col gap-4">
+          <div class="h-[180px] md:(h-unset)">
             <div class="flex justify-between">
               <div class="text-sm py-2 border border-transparent">Presets</div>
               <div class="flex gap-2">
@@ -429,7 +446,7 @@ export function Editor(props: Props) {
                 </Show>
               </div>
             </div>
-            <div class="flex gap-3 pt-2 pb-4 md:(flex-wrap static ml-0 px-0 overflow-x-visible) absolute max-w-full overflow-x-auto -ml-6 px-6">
+            <div class="flex gap-3 py-2 md:(flex-wrap static ml-0 px-0 overflow-x-visible) absolute max-w-full overflow-x-auto -ml-6 px-6">
               <ContextMenuProvider
                 disabled={isPreset(dialogKey())}
                 onRename={() => setRenameOpen(true)}
@@ -466,16 +483,27 @@ export function Editor(props: Props) {
             </div>
           </div>
           <ParamsEditor />
-          <CodeEditor
-            initialValue={code()}
-            onSave={(code, updateThumbnail) => {
-              if (presetKeys.includes(renderKey())) {
-                createAndSelectFunc(renderKey(), code);
-              } else {
-                saveAndRun(code, true, updateThumbnail);
-              }
-            }}
-          />
+          <div>
+            <Switch
+              label="Code editor"
+              value={showCode()}
+              setValue={setShowCode}
+            />
+            <Show when={showCode()}>
+              <Suspense fallback={<p>Loading...</p>}>
+                <CodeEditor
+                  initialValue={code()}
+                  onSave={(code, updateThumbnail) => {
+                    if (presetKeys.includes(renderKey())) {
+                      createAndSelectFunc(renderKey(), code);
+                    } else {
+                      saveAndRun(code, true, updateThumbnail);
+                    }
+                  }}
+                />
+              </Suspense>
+            </Show>
+          </div>
         </div>
       </Collapsible>
     </div>
