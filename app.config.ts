@@ -4,13 +4,12 @@ import wasmpack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
   server: {
-    static: true,
-    preset: "cloudflare-pages",
+    preset: "cloudflare-pages-static",
     rollupConfig: {
       external: ["node:async_hooks"],
     },
   },
-  ssr: false,
+  ssr: true,
   vite: {
     plugins: [UnoCSS(), wasmpack([], ["fuqr"]), blobRewriter()],
   },
