@@ -1,0 +1,9 @@
+node_modules
+.output
+.vinxi
+.solid
+dist
+.git
+.wrangler
+.env
+.env*.local
